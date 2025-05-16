@@ -1,0 +1,10 @@
+This directory is for storing GGUF model files.
+
+Recommended model for development:
+TheBloke/MiniCPM-2B-SFT-GGUF/minicpm-2b-sft.Q2_K.gguf
+
+Download it from Hugging Face:
+https://huggingface.co/TheBloke/MiniCPM-2B-SFT-GGUF/resolve/main/minicpm-2b-sft.Q2_K.gguf
+
+Or use huggingface-cli:
+huggingface-cli download TheBloke/MiniCPM-2B-SFT-GGUF minicpm-2b-sft.Q2_K.gguf --local-dir ./models
