@@ -37,6 +37,19 @@ log "INFO" "Running test-sample-package workflow..."
 gh workflow run test-sample-package.yml --ref main -F version="$TEST_VERSION"
 check_success "Package test workflow triggered"
 
+# Wait briefly for the workflow to be registered
+sleep 5
+
+# Get the run ID of the workflow we just triggered
+log "INFO" "Getting workflow run ID..."
+run_id=$(gh run list --workflow=test-sample-package.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+if [ -z "$run_id" ]; then
+    log "ERROR" "Could not find workflow run ID"
+    exit 1
+fi
+check_success "Got workflow run ID: $run_id"
+
 # Monitor test-sample-package workflow
-gh run watch --exit-status
+log "INFO" "Monitoring workflow run $run_id..."
+gh run watch "$run_id" --exit-status
 check_success "Package tests completed"
