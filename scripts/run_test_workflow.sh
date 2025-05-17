@@ -52,21 +52,37 @@ log "INFO" "Running execute test workflow..."
 gh workflow run execute-test-workflow.yml --ref main -F version="$TEST_VERSION"
 check_success "Test workflow triggered"
 
-# Monitor workflow status
-log "INFO" "Monitoring workflow execution..."
-gh run watch
-check_success "Workflow monitoring completed"
+# Wait for workflow to start
+log "INFO" "Waiting for workflow to start..."
+sleep 10
 
-# Get workflow results
-log "INFO" "Fetching test results..."
-gh run list --workflow=execute-test-workflow.yml --limit 1
-check_success "Test results fetched"
-
-# Check workflow status
-latest_run=$(gh run list --workflow=execute-test-workflow.yml --limit 1 --json conclusion --jq '.[0].conclusion')
-if [ "$latest_run" = "success" ]; then
-    log "INFO" "✨ Test workflow execution completed successfully!"
-else
-    log "ERROR" "❌ Test workflow execution failed with status: $latest_run"
+# Get workflow run ID
+log "INFO" "Getting workflow run ID..."
+run_id=$(gh run list --workflow=execute-test-workflow.yml --limit 1 --json databaseId --jq '.[0].databaseId')
+if [ -z "$run_id" ]; then
+    log "ERROR" "Could not find workflow run ID"
     exit 1
 fi
+check_success "Got workflow run ID: $run_id"
+
+# Monitor workflow status
+log "INFO" "Monitoring workflow execution..."
+while true; do
+    status=$(gh run view "$run_id" --json status,conclusion --jq '.status')
+    conclusion=$(gh run view "$run_id" --json status,conclusion --jq '.conclusion')
+    
+    log "INFO" "Current status: $status, conclusion: $conclusion"
+    
+    if [ "$status" = "completed" ]; then
+        if [ "$conclusion" = "success" ]; then
+            log "INFO" "✨ Workflow completed successfully!"
+            break
+        else
+            log "ERROR" "❌ Workflow failed with conclusion: $conclusion"
+            gh run view "$run_id"
+            exit 1
+        fi
+    fi
+    
+    sleep 10
+done
