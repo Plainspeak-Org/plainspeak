@@ -1,0 +1,107 @@
+name: Test Assets
+
+on:
+  push:
+    paths:
+      - 'assets/**'
+      - 'tests/test_assets.py'
+      - '.github/workflows/test-assets.yml'
+      - 'tests/requirements-tests.txt'
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'tests/test_assets.py'
+      - '.github/workflows/test-assets.yml'
+      - 'tests/requirements-tests.txt'
+  workflow_dispatch:
+
+jobs:
+  test-assets:
+    name: Validate Assets
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev \
+            libxml2-utils \
+            imagemagick
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/requirements-tests.txt
+
+      - name: Run asset tests
+        run: |
+          pytest tests/test_assets.py -v --color=yes
+
+      - name: Check image quality
+        run: |
+          # Check PNG optimization
+          find assets -name "*.png" -exec identify -format "%f: %Q\n" {} \; | \
+            awk '$2 < 85 {print "Warning: Low quality PNG: " $0}'
+          
+          # Check file sizes
+          find assets -name "*.png" -size +500k | \
+            awk '{print "Warning: Large file: " $0}'
+          
+          # Check color profiles
+          find assets -name "*.png" -exec identify -verbose {} \; | \
+            grep -A 1 "Colorspace:" | \
+            grep -v "sRGB" && echo "Warning: Non-sRGB images found"
+
+      - name: Validate SVG files
+        run: |
+          find assets -name "*.svg" -exec xmllint --noout {} \;
+
+      - name: Generate report
+        if: always()
+        run: |
+          echo "# Asset Validation Report" > asset-report.md
+          echo "## Test Results" >> asset-report.md
+          pytest tests/test_assets.py --quiet >> asset-report.md
+          
+          echo "## File Statistics" >> asset-report.md
+          echo "\`\`\`" >> asset-report.md
+          find assets -type f -exec file {} \; >> asset-report.md
+          echo "\`\`\`" >> asset-report.md
+          
+          echo "## Size Report" >> asset-report.md
+          echo "\`\`\`" >> asset-report.md
+          find assets -type f -exec du -h {} \; >> asset-report.md
+          echo "\`\`\`" >> asset-report.md
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: asset-validation-report
+          path: asset-report.md
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('asset-report.md', 'utf8');
+            const comment = `## Asset Validation Results\n\n${report}`;
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

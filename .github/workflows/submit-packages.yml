@@ -1,0 +1,219 @@
+name: Submit Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to submit'
+        required: true
+      channels:
+        description: 'Distribution channels (comma-separated)'
+        default: 'all'
+        required: false
+      dry_run:
+        description: 'Dry run (no actual submissions)'
+        type: boolean
+        default: true
+      skip_test:
+        description: 'Skip Test PyPI'
+        type: boolean
+        default: false
+
+jobs:
+  prepare:
+    name: Prepare Submission
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      channels: ${{ steps.validate.outputs.channels }}
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate Version
+        id: validate
+        run: |
+          # Version format check
+          if [[ ! ${{ github.event.inputs.version }} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: ${{ github.event.inputs.version }}"
+            exit 1
+          fi
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          
+          # Channel validation
+          CHANNELS="${{ github.event.inputs.channels }}"
+          if [ "$CHANNELS" = "all" ]; then
+            CHANNELS="pypi,windows,macos,homebrew,linux"
+          fi
+          echo "channels=$CHANNELS" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build Packages
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements-packaging.txt
+      
+      - name: Build packages
+        run: python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --skip-test --dry-run
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-${{ matrix.os }}
+          path: |
+            dist/
+            packaging/
+
+  submit-pypi:
+    name: Submit to PyPI
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: contains(needs.prepare.outputs.channels, 'pypi')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ubuntu-latest
+          path: dist
+      
+      - name: Submit to PyPI
+        if: ${{ !github.event.inputs.dry_run }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m pip install --upgrade pip twine
+          if [ "${{ github.event.inputs.skip_test }}" = "false" ]; then
+            python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+          fi
+          python -m twine upload dist/*
+
+  submit-windows:
+    name: Submit to Microsoft Store
+    needs: [prepare, build]
+    runs-on: windows-latest
+    if: contains(needs.prepare.outputs.channels, 'windows')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-windows-latest
+          path: dist
+      
+      - name: Submit to Microsoft Store
+        if: ${{ !github.event.inputs.dry_run }}
+        env:
+          MS_STORE_TOKEN: ${{ secrets.MS_STORE_TOKEN }}
+        run: |
+          python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --channels windows
+
+  submit-macos:
+    name: Submit to Mac App Store
+    needs: [prepare, build]
+    runs-on: macos-latest
+    if: contains(needs.prepare.outputs.channels, 'macos')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-macos-latest
+          path: dist
+      
+      - name: Submit to App Store
+        if: ${{ !github.event.inputs.dry_run }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --channels macos
+
+  submit-homebrew:
+    name: Submit to Homebrew
+    needs: [prepare, build]
+    runs-on: macos-latest
+    if: contains(needs.prepare.outputs.channels, 'homebrew')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create Homebrew PR
+        if: ${{ !github.event.inputs.dry_run }}
+        env:
+          HOMEBREW_GITHUB_API_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
+        run: |
+          python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --channels homebrew
+
+  submit-linux:
+    name: Submit Linux Packages
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    if: contains(needs.prepare.outputs.channels, 'linux')
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ubuntu-latest
+          path: dist
+      
+      - name: Submit Linux packages
+        if: ${{ !github.event.inputs.dry_run }}
+        run: |
+          python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --channels linux
+
+  notify:
+    name: Send Notifications
+    needs: [submit-pypi, submit-windows, submit-macos, submit-homebrew, submit-linux]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Notify Team
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const results = {
+              pypi: '${{ needs.submit-pypi.result }}',
+              windows: '${{ needs.submit-windows.result }}',
+              macos: '${{ needs.submit-macos.result }}',
+              homebrew: '${{ needs.submit-homebrew.result }}',
+              linux: '${{ needs.submit-linux.result }}'
+            };
+            
+            const summary = Object.entries(results)
+              .map(([channel, result]) => `${channel}: ${result}`)
+              .join('\n');
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Package Submission Results\n\n${summary}`
+            });

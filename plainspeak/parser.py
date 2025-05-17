@@ -4,12 +4,16 @@ Command Parser for PlainSpeak.
 This module handles the parsing of natural language into shell commands
 using the LLM interface and prompt templates.
 """
-from typing import Optional, Dict, Any, Tuple
-import platform
-import os
+import time
+from typing import Optional, Dict, Any, Tuple, Union
+from datetime import datetime
 
 from .llm_interface import LLMInterface
 from .prompts import get_shell_command_prompt
+from .context import session_context
+from .plugins.manager import plugin_manager
+from .learning import learning_store, FeedbackEntry
+from .ast import ast_builder, Command, Pipeline
 
 
 class CommandParser:
@@ -47,25 +51,12 @@ class CommandParser:
         Returns:
             str: Description of the current system environment.
         """
-        os_type = platform.system().lower()
-        if os_type == "darwin":
-            os_type = "macOS"
-        
-        shell = os.environ.get("SHELL", "").lower()
-        if "bash" in shell:
-            shell_type = "Bash"
-        elif "zsh" in shell:
-            shell_type = "Zsh"
-        elif "fish" in shell:
-            shell_type = "Fish"
-        else:
-            shell_type = "standard shell"
+        # Use the session context to get a rich context for the LLM
+        return session_context.get_context_for_llm()
 
-        return f"{os_type} system using {shell_type}"
-
-    def parse_to_command(self, input_text: str) -> Tuple[bool, str]:
+    def parse_to_ast(self, input_text: str) -> Union[Command, Pipeline]:
         """
-        Parse natural language input into a shell command.
+        Parse natural language input into an AST.
 
         Args:
             input_text (str): Natural language description of the desired command.
@@ -78,41 +69,117 @@ class CommandParser:
         if not input_text.strip():
             return False, "ERROR: Empty input"
 
+        # Try to find similar examples from learning store
+        similar = learning_store.get_similar_examples(input_text, limit=3)
+        if similar:
+            # Use the highest-scoring match as a template
+            template_text, template_cmd, score = similar[0]
+            if score > 0.8:  # High confidence match
+                try:
+                    # Parse the template command into AST
+                    ast = ast_builder.from_command_string(
+                        template_cmd,
+                        original_text=template_text
+                    )
+                    ast.input_text = input_text
+                    return ast
+                except ValueError:
+                    pass  # Fall through to other methods
+
         # Get system-specific context
         context = self._get_system_context()
-        
-        # Generate the full prompt using the template
-        prompt = get_shell_command_prompt(input_text, context)
-        
-        # Get the command from the LLM
-        result = self.llm.generate(prompt, **self.generation_params)
-        
-        if result is None:
-            return False, "ERROR: Failed to generate command"
 
-        # Clean up the result
-        command = result.strip()
+        start_time = time.time()
         
-        # Check for error markers
-        if command.startswith("ERROR:"):
-            return False, command
+        # Try parsing with plugin system
+        try:
+            ast = ast_builder.from_natural_language(input_text, {
+                "context": context,
+                "similar_examples": similar
+            })
+            return ast
+        except ValueError:
+            pass  # Fall through to LLM method
             
-        # Basic safety checks
-        unsafe_patterns = [
-            "rm -rf",  # Dangerous file deletion
-            "mkfs",    # Filesystem formatting
-            ">",       # Output redirection (for now)
-            "sudo",    # Privilege escalation
-            ";",       # Command chaining
-            "&&",      # Command chaining
-            "||",      # Command chaining
-            "|",       # Pipes (for initial version)
-            "`",       # Command substitution
-            "$(",      # Command substitution
-        ]
+        # Generate command using LLM
+        prompt = get_shell_command_prompt(input_text, context)
+        generated = self.llm.generate(prompt, **self.generation_params)
         
-        for pattern in unsafe_patterns:
-            if pattern in command:
-                return False, f"ERROR: Generated command contains unsafe pattern: {pattern}"
+        if generated is None or generated.strip().startswith("ERROR:"):
+            elapsed = time.time() - start_time
+            learning_store.record_feedback(FeedbackEntry(
+                original_text=input_text,
+                generated_command="",
+                final_command=None,
+                success=False,
+                error_message="Failed to generate command",
+                execution_time=elapsed,
+                feedback_type="reject",
+                timestamp=datetime.now()
+            ))
+            raise ValueError("Failed to generate command")
 
-        return True, command
+        command = generated.strip()
+        try:
+            ast = ast_builder.from_command_string(command, original_text=input_text)
+            elapsed = time.time() - start_time
+            learning_store.record_feedback(FeedbackEntry(
+                original_text=input_text,
+                generated_command=command,
+                final_command=command,
+                success=True,
+                error_message=None,
+                execution_time=elapsed,
+                feedback_type="accept",
+                timestamp=datetime.now()
+            ))
+            return ast
+        except ValueError as e:
+            elapsed = time.time() - start_time
+            learning_store.record_feedback(FeedbackEntry(
+                original_text=input_text,
+                generated_command=command,
+                final_command=None,
+                success=False,
+                error_message=str(e),
+                execution_time=elapsed,
+                feedback_type="reject",
+                timestamp=datetime.now()
+            ))
+            raise
+            
+    def parse_to_command(self, input_text: str) -> Tuple[bool, str]:
+        """
+        Parse natural language input into a shell command.
+        
+        This is the legacy interface, using the new AST-based parsing internally.
+        """
+        try:
+            ast = self.parse_to_ast(input_text)
+            if isinstance(ast, Pipeline):
+                # Join pipeline commands with pipes
+                return True, " | ".join(
+                    plugin_manager.generate_command(cmd.name, {
+                        arg.name: arg.value for arg in cmd.args if arg.name
+                    })[1] for cmd in ast.commands
+                )
+            elif isinstance(ast, Command):
+                if ast.type == CommandType.PLUGIN:
+                    # Use plugin to generate final command
+                    return plugin_manager.generate_command(
+                        ast.name,
+                        {arg.name: arg.value for arg in ast.args if arg.name}
+                    )
+                else:
+                    # Reconstruct shell command
+                    cmd_parts = [ast.name]
+                    for arg in ast.args:
+                        if arg.type == ArgumentType.OPTION:
+                            cmd_parts.append(f"--{arg.name}={arg.value}")
+                        elif arg.type == ArgumentType.FLAG:
+                            cmd_parts.append(f"-{arg.value}")
+                        else:
+                            cmd_parts.append(str(arg.value))
+                    return True, " ".join(cmd_parts)
+        except ValueError as e:
+            return False, f"ERROR: {str(e)}"

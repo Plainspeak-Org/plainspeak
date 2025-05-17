@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block header %}Your Plugin Has Been Judged{% endblock %}
+
+{% block content %}
+<h2>Hello {{ name }},</h2>
+
+<p>The judging panel has completed their review of your plugin submission for the PlainSpeak Plugin Development Contest.</p>
+
+<div style="background: #e3f2fd; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <h3 style="margin-top: 0;">Final Score</h3>
+    <p style="font-size: 24px; color: #1565c0; margin: 10px 0;">{{ score }}/100</p>
+</div>
+
+<h3>Detailed Feedback</h3>
+<div style="background: #f5f5f5; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    {{ feedback|safe }}
+</div>
+
+<h3>Score Breakdown</h3>
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr>
+        <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Category</th>
+        <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">Weight</th>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Innovation</td>
+        <td style="text-align: right; padding: 8px;">25%</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Utility</td>
+        <td style="text-align: right; padding: 8px;">25%</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Implementation</td>
+        <td style="text-align: right; padding: 8px;">25%</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px;">Integration</td>
+        <td style="text-align: right; padding: 8px;">25%</td>
+    </tr>
+</table>
+
+<h3>Next Steps</h3>
+<ul>
+    <li>Review your detailed feedback in the dashboard</li>
+    <li>Winners will be announced next week</li>
+    <li>All participants will receive certificates of participation</li>
+    <li>Top plugins will be featured in the PlainSpeak Plugin Directory</li>
+</ul>
+
+<p>Regardless of the outcome, we appreciate your contribution to making computing more accessible through natural language interfaces. Your participation helps advance the field and inspire others.</p>
+
+<h3>Stay Connected</h3>
+<ul>
+    <li>Join our Discord community to connect with other developers</li>
+    <li>Watch for announcements about future contests</li>
+    <li>Consider contributing to other PlainSpeak projects</li>
+</ul>
+
+<p style="margin-top: 30px;">Thank you for participating in the PlainSpeak Plugin Development Contest!</p>
+
+<p>Best regards,<br>
+The PlainSpeak Judging Panel</p>
+
+<div style="font-size: 12px; color: #666; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p>Note: If you have any questions about your score or feedback, please respond to this email within 48 hours.</p>
+</div>
+{% endblock %}

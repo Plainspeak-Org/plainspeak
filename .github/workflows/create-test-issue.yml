@@ -1,0 +1,35 @@
+name: Create Test Issue
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Test version number'
+        required: true
+        default: '0.1.0-test'
+
+jobs:
+  create-issue:
+    name: Create Test Submission Issue
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements-test-submission.txt
+      
+      - name: Create test issue
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/create_test_issue.py \
+            --version ${{ github.event.inputs.version }}

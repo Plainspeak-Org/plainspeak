@@ -1,0 +1,29 @@
+name: plugin-name
+description: A brief description of your plugin's functionality
+version: 0.1.0
+author: Your Name
+verbs:
+  - example-verb
+  - another-verb
+dependencies: {}  # Add any required dependencies
+entrypoint: plainspeak.plugins.example.ExamplePlugin
+commands:
+  example-verb:
+    template: "example_cmd {{ '--option=' + option if option else '' }} {{ arg }}"
+    description: Description of what this command does
+    examples:
+      - "a natural language example of using this command"
+      - "another example with different parameters"
+    required_args:
+      - arg
+    optional_args:
+      option: ""
+      
+  another-verb:
+    template: "another_cmd {{ '--flag' if flag else '' }}"
+    description: Description of another command
+    examples:
+      - "example of using this command"
+    required_args: []
+    optional_args:
+      flag: false

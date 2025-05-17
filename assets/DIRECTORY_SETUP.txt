@@ -1,0 +1,39 @@
+PlainSpeak Asset Directory Setup
+
+Please create the following directory structure manually using mkdir -p:
+
+mkdir -p assets/{brand/{logo,colors,typography},icons/{windows,macos,source},screenshots/{windows,macos,features},store/{microsoft,apple,web},marketing/{press,blog,social},docs/{tutorials,diagrams,guides}}
+
+Directory Structure to Create:
+.
+├── brand/
+│   ├── logo/
+│   ├── colors/
+│   └── typography/
+├── icons/
+│   ├── windows/
+│   ├── macos/
+│   └── source/
+├── screenshots/
+│   ├── windows/
+│   ├── macos/
+│   └── features/
+├── store/
+│   ├── microsoft/
+│   ├── apple/
+│   └── web/
+├── marketing/
+│   ├── press/
+│   ├── blog/
+│   └── social/
+└── docs/
+    ├── tutorials/
+    ├── diagrams/
+    └── guides/
+
+Note: Place a .gitkeep file in each empty directory to maintain the structure in version control:
+
+touch assets/{brand,icons,screenshots,store,marketing,docs}/.gitkeep
+touch assets/{brand/{logo,colors,typography},icons/{windows,macos,source},screenshots/{windows,macos,features},store/{microsoft,apple,web},marketing/{press,blog,social},docs/{tutorials,diagrams,guides}}/.gitkeep
+
+This ensures all necessary directories are tracked in git even when empty.

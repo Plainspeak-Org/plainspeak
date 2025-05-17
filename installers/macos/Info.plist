@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Basic Application Information -->
+    <key>CFBundleName</key>
+    <string>PlainSpeak</string>
+    <key>CFBundleDisplayName</key>
+    <string>PlainSpeak</string>
+    <key>CFBundleIdentifier</key>
+    <string>org.plainspeak.app</string>
+    <key>CFBundleVersion</key>
+    <string>0.1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>PLSP</string>
+    <key>CFBundleExecutable</key>
+    <string>plainspeak</string>
+    <key>CFBundleIconFile</key>
+    <string>plainspeak.icns</string>
+
+    <!-- System Requirements -->
+    <key>LSMinimumSystemVersion</key>
+    <string>10.12.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.developer-tools</string>
+
+    <!-- Launch Configuration -->
+    <key>LSBackgroundOnly</key>
+    <false/>
+    <key>NSSupportsAutomaticTermination</key>
+    <true/>
+    <key>NSSupportsSuddenTermination</key>
+    <false/>
+
+    <!-- Document Types -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>PlainSpeak Command File</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>pscmd</string>
+            </array>
+            <key>CFBundleTypeIconFile</key>
+            <string>plainspeak-cmd.icns</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
+
+    <!-- URL Types -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>org.plainspeak.app</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>plainspeak</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Permissions -->
+    <key>NSAppleEventsUsageDescription</key>
+    <string>PlainSpeak needs to control system events to execute your commands.</string>
+    
+    <key>NSCalendarsUsageDescription</key>
+    <string>PlainSpeak needs calendar access for calendar-related commands (when using the calendar plugin).</string>
+    
+    <key>NSRemindersUsageDescription</key>
+    <string>PlainSpeak needs reminders access for task-related commands (when using the calendar plugin).</string>
+    
+    <key>NSHomeDirectoryUsageDescription</key>
+    <string>PlainSpeak needs access to your home directory to execute file operations and store configuration.</string>
+
+    <!-- Required Capabilities -->
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>hardisk</string>
+    </array>
+
+    <!-- App Transport Security -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSExceptionDomains</key>
+        <dict>
+            <key>plainspeak.org</key>
+            <dict>
+                <key>NSIncludesSubdomains</key>
+                <true/>
+                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+                <false/>
+                <key>NSTemporaryExceptionMinimumTLSVersion</key>
+                <string>TLSv1.2</string>
+            </dict>
+        </dict>
+    </dict>
+
+    <!-- Copyright -->
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 PlainSpeak Organization. All rights reserved.</string>
+
+    <!-- Localization -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+    </array>
+</dict>
+</plist>

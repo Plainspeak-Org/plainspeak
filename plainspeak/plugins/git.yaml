@@ -1,0 +1,143 @@
+name: git
+description: Git version control operations
+version: 0.1.0
+author: PlainSpeak Team
+verbs:
+  - git-init
+  - git-clone
+  - git-status
+  - git-add
+  - git-commit
+  - git-push
+  - git-pull
+  - git-branch
+  - git-checkout
+  - git-merge
+  - git-log
+dependencies:
+  git: ">=2.0.0"
+entrypoint: plainspeak.plugins.git.GitPlugin
+commands:
+  git-init:
+    template: "git init {{ '--quiet' if quiet else '' }}"
+    description: Initialize a new Git repository
+    examples:
+      - "create a new git repository here"
+      - "initialize git in this folder"
+    required_args: []
+    optional_args:
+      quiet: false
+
+  git-clone:
+    template: "git clone {{ '--depth ' + depth if depth else '' }} {{ url }} {{ path if path else '' }}"
+    description: Clone a Git repository
+    examples:
+      - "clone the repository from https://github.com/user/repo"
+      - "git clone this URL: git@github.com:user/repo.git"
+    required_args:
+      - url
+    optional_args:
+      path: ""
+      depth: ""
+
+  git-status:
+    template: "git status {{ '--short' if short else '' }}"
+    description: Show working tree status
+    examples:
+      - "show git status"
+      - "what's the status of my git repository"
+    required_args: []
+    optional_args:
+      short: false
+
+  git-add:
+    template: "git add {{ '-u' if update else '' }} {{ path }}"
+    description: Add files to Git staging area
+    examples:
+      - "stage all changes"
+      - "add modified files to git"
+      - "git add src/main.py"
+    required_args:
+      - path
+    optional_args:
+      update: false
+
+  git-commit:
+    template: "git commit {{ '-m \"' + message + '\"' if message else '' }} {{ '--amend' if amend else '' }}"
+    description: Record changes to the repository
+    examples:
+      - "commit changes with message 'fix bug in parser'"
+      - "amend the last commit"
+    required_args:
+      - message
+    optional_args:
+      amend: false
+
+  git-push:
+    template: "git push {{ remote if remote else '' }} {{ branch if branch else '' }} {{ '--force' if force else '' }}"
+    description: Update remote repository
+    examples:
+      - "push changes to origin"
+      - "push to remote master branch"
+    required_args: []
+    optional_args:
+      remote: ""
+      branch: ""
+      force: false
+
+  git-pull:
+    template: "git pull {{ remote if remote else '' }} {{ branch if branch else '' }}"
+    description: Fetch and merge changes from remote
+    examples:
+      - "pull latest changes"
+      - "update from origin master"
+    required_args: []
+    optional_args:
+      remote: ""
+      branch: ""
+
+  git-branch:
+    template: "git branch {{ name if name else '' }} {{ '--delete' if delete else '' }}"
+    description: List, create, or delete branches
+    examples:
+      - "show all branches"
+      - "create a new branch called feature"
+      - "delete the old-feature branch"
+    required_args: []
+    optional_args:
+      name: ""
+      delete: false
+
+  git-checkout:
+    template: "git checkout {{ '-b' if new_branch else '' }} {{ branch }}"
+    description: Switch or create branches
+    examples:
+      - "switch to master branch"
+      - "create and checkout new-feature branch"
+    required_args:
+      - branch
+    optional_args:
+      new_branch: false
+
+  git-merge:
+    template: "git merge {{ branch }} {{ '--no-ff' if no_ff else '' }}"
+    description: Join two or more development histories together
+    examples:
+      - "merge feature branch into current branch"
+      - "merge development branch with no fast forward"
+    required_args:
+      - branch
+    optional_args:
+      no_ff: false
+
+  git-log:
+    template: "git log {{ '--oneline' if oneline else '' }} {{ '-n ' + limit if limit else '' }}"
+    description: Show commit logs
+    examples:
+      - "show commit history"
+      - "show last 5 commits"
+      - "display git log"
+    required_args: []
+    optional_args:
+      oneline: false
+      limit: ""

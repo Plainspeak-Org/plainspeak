@@ -1,0 +1,100 @@
+name: Execute Test Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to test'
+        required: true
+        default: '0.1.0-test1'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  packages: read
+  actions: write
+
+jobs:
+  prepare-environment:
+    name: Prepare Test Environment
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.get-timestamp.outputs.timestamp }}
+    
+    steps:
+      - name: Get timestamp
+        id: get-timestamp
+        run: echo "timestamp=$(date -u +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+
+  run-test-workflow:
+    name: Run Test Workflow
+    needs: prepare-environment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
+      
+      - name: Configure GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth setup-git
+          gh auth status
+      
+      - name: Run test workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_VERSION: ${{ inputs.version }}-${{ needs.prepare-environment.outputs.timestamp }}
+        run: |
+          # Make script executable
+          chmod +x scripts/run_test_workflow.sh
+          
+          # Run the test workflow
+          ./scripts/run_test_workflow.sh
+      
+      - name: Process results
+        run: |
+          echo "## Test Workflow Results" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Timestamp: ${{ needs.prepare-environment.outputs.timestamp }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Add workflow run details
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Workflow Runs" >> $GITHUB_STEP_SUMMARY
+          gh run list --limit 5 --workflow=test-sample-package.yml >> $GITHUB_STEP_SUMMARY
+          
+          # Parse test results
+          python scripts/parse_test_results.py \
+            --results-dir results \
+            --output test-results.json \
+            --summary test-summary.md
+          
+          if [ -f "test-summary.md" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat test-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results-${{ needs.prepare-environment.outputs.timestamp }}
+          path: |
+            test-results.json
+            test-summary.md

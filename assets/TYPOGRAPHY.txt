@@ -1,0 +1,123 @@
+PlainSpeak Typography Guidelines
+
+Primary Font Family: JetBrains Mono
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Purpose: Main programming font for terminal/code display
+Weights: Regular (400), Medium (500), Bold (700)
+Use cases: Terminal output, code snippets, command display
+Fallback: Consolas, Monaco, monospace
+
+Secondary Font Family: Inter
+━━━━━━━━━━━━━━━━━━━━━━
+Purpose: UI elements and documentation
+Weights: Regular (400), Medium (500), Semi-Bold (600), Bold (700)
+Use cases: Buttons, labels, documentation
+Fallback: -apple-system, BlinkMacSystemFont, system-ui
+
+Font Sizes and Line Heights
+━━━━━━━━━━━━━━━━━━━━━━━━
+Terminal/Code:
+- Base: 14px/1.6
+- Small: 12px/1.4
+- Large: 16px/1.8
+
+UI Elements:
+- Base: 16px/1.5
+- Small: 14px/1.4
+- Large: 18px/1.6
+- Headers: 24px/1.4, 20px/1.4, 18px/1.4
+
+Documentation:
+- Body: 16px/1.7
+- Code: 14px/1.6
+- Headers: 32px/1.3, 24px/1.4, 20px/1.4
+
+CSS Variables:
+```css
+:root {
+  /* Font Families */
+  --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui;
+
+  /* Font Sizes */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  /* Line Heights */
+  --leading-tight: 1.3;
+  --leading-snug: 1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+  --leading-loose: 1.7;
+}
+```
+
+Font Loading Strategy:
+1. Self-host fonts for optimal performance
+2. Include WOFF2 format with WOFF fallback
+3. Use font-display: swap for text visibility
+4. Preload critical fonts
+
+Example Font Loading:
+```html
+<link rel="preload" href="/fonts/JetBrainsMono-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
+```
+
+Accessibility Guidelines:
+- Minimum text size: 12px
+- Minimum contrast ratio: 4.5:1
+- Line height: At least 1.5 for body text
+- Letter spacing: Adjusted for better readability
+- Font smoothing: Enable for clearer text
+
+Usage Examples:
+1. Terminal Output:
+   ```css
+   .terminal {
+     font-family: var(--font-mono);
+     font-size: var(--text-sm);
+     line-height: var(--leading-relaxed);
+   }
+   ```
+
+2. UI Elements:
+   ```css
+   .button {
+     font-family: var(--font-sans);
+     font-size: var(--text-base);
+     line-height: var(--leading-normal);
+     font-weight: 500;
+   }
+   ```
+
+3. Documentation:
+   ```css
+   .docs-content {
+     font-family: var(--font-sans);
+     font-size: var(--text-base);
+     line-height: var(--leading-loose);
+   }
+   ```
+
+Dark Mode Considerations:
+- Slightly increase font weight for light text on dark backgrounds
+- Adjust letter spacing for better contrast
+- Consider using lighter font weights for headers
+
+Performance Optimization:
+- Subset fonts to include only needed characters
+- Use variable fonts where appropriate
+- Implement progressive font loading
+- Cache fonts appropriately
+
+Future Considerations:
+- Variable font support
+- Additional language character sets
+- Dynamic font scaling for accessibility
+- Custom terminal font with programming ligatures

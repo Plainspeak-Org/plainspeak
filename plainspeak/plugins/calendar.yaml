@@ -1,0 +1,105 @@
+name: calendar
+description: Calendar operations for managing events and appointments
+version: 0.1.0
+author: PlainSpeak Team
+verbs:
+  - list-events
+  - add-event
+  - edit-event
+  - delete-event
+  - search-events
+  - show-calendar
+  - import-calendar
+dependencies:
+  icalendar: ">=5.0.0"
+  python-dateutil: ">=2.8.0"
+entrypoint: plainspeak.plugins.calendar.CalendarPlugin
+commands:
+  list-events:
+    template: "cal_list {{ '--start=' + start if start else '' }} {{ '--end=' + end if end else '' }} {{ '--today' if today else '' }} {{ '--week' if week else '' }} {{ '--month' if month else '' }}"
+    description: List calendar events
+    examples:
+      - "show my events for today"
+      - "list events this week"
+      - "what's on my calendar for next month"
+    required_args: []
+    optional_args:
+      start: ""
+      end: ""
+      today: false
+      week: false
+      month: false
+
+  add-event:
+    template: "cal_add {{ '--title=\"' + title + '\"' }} {{ '--start=' + start }} {{ '--end=' + end if end else '' }} {{ '--location=\"' + location + '\"' if location else '' }} {{ '--description=\"' + description + '\"' if description else '' }}"
+    description: Add a new calendar event
+    examples:
+      - "add meeting with team tomorrow at 2pm"
+      - "schedule dentist appointment for next Tuesday at 10am"
+    required_args:
+      - title
+      - start
+    optional_args:
+      end: ""
+      location: ""
+      description: ""
+
+  edit-event:
+    template: "cal_edit {{ '--id=' + id }} {{ '--title=\"' + title + '\"' if title else '' }} {{ '--start=' + start if start else '' }} {{ '--end=' + end if end else '' }} {{ '--location=\"' + location + '\"' if location else '' }}"
+    description: Edit an existing calendar event
+    examples:
+      - "change team meeting time to 3pm"
+      - "update location of tomorrow's appointment"
+    required_args:
+      - id
+    optional_args:
+      title: ""
+      start: ""
+      end: ""
+      location: ""
+
+  delete-event:
+    template: "cal_delete {{ '--id=' + id }} {{ '--confirm=' + str(confirm).lower() }}"
+    description: Delete a calendar event
+    examples:
+      - "cancel tomorrow's meeting"
+      - "delete the dentist appointment"
+    required_args:
+      - id
+    optional_args:
+      confirm: false
+
+  search-events:
+    template: "cal_search {{ '--query=\"' + query + '\"' }} {{ '--from=' + start_date if start_date else '' }} {{ '--to=' + end_date if end_date else '' }}"
+    description: Search calendar events
+    examples:
+      - "find all team meetings this month"
+      - "search for appointments with Dr. Smith"
+    required_args:
+      - query
+    optional_args:
+      start_date: ""
+      end_date: ""
+
+  show-calendar:
+    template: "cal_show {{ '--view=' + view }} {{ '--date=' + date if date else '' }}"
+    description: Display calendar in different views
+    examples:
+      - "show month view"
+      - "display weekly calendar"
+      - "show today's schedule"
+    required_args:
+      - view
+    optional_args:
+      date: ""
+
+  import-calendar:
+    template: "cal_import {{ '--file=' + file }} {{ '--format=' + format if format else '' }}"
+    description: Import calendar data from file
+    examples:
+      - "import calendar from meetings.ics"
+      - "load calendar backup file"
+    required_args:
+      - file
+    optional_args:
+      format: "ical"  # Default to iCalendar format

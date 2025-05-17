@@ -1,0 +1,34 @@
+PlainSpeak Icon Placeholder
+
+App Icon Design:
+💬 Chat bubble (representing natural language interface)
+💻 Terminal (representing command-line functionality)
+⌨️  Command prompt
+▮ Cursor
+
+Color Scheme:
+- Dark Slate Blue (background)
+- Light Blue (chat bubble)
+- Gray (terminal elements)
+- Green (cursor)
+
+This placeholder represents the design concept for the PlainSpeak icon. When implemented, it will be created as SVG/PNG/ICO files in the following sizes:
+
+Windows:
+- 16x16
+- 32x32
+- 48x48
+- 256x256
+
+macOS:
+- 16x16
+- 32x32
+- 128x128
+- 256x256
+- 512x512
+- 1024x1024
+
+Web/Documentation:
+- 32x32 (favicon)
+- 192x192 (PWA icon)
+- 512x512 (social media)

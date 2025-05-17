@@ -1,0 +1,18 @@
+# Test Dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.1
+Pillow>=10.0.0     # For image testing
+pytest-image>=0.1.1  # Image comparison utilities
+pytest-check>=2.2.0  # Multiple assertions per test
+
+# Optional XML validation
+lxml>=4.9.3        # For SVG validation if xmllint not available
+
+# Code Quality
+black>=23.7.0      # Code formatting
+flake8>=6.1.0      # Code linting
+mypy>=1.5.1        # Type checking
+
+# Asset Generation (for test data)
+-r ../scripts/requirements-assets.txt

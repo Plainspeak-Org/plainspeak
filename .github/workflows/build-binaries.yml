@@ -1,0 +1,212 @@
+name: Build Platform Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-windows:
+    name: Build Windows Binary
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install
+        poetry install pyinstaller upx
+        
+    - name: Build binary
+      run: |
+        pyinstaller plainspeak.spec
+        
+    - name: Run binary tests
+      run: |
+        pip install psutil pytest
+        cd tests/binaries
+        pytest test_binary.py -v
+        
+    - name: Sign Binary
+      env:
+        CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+        CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+      run: |
+        echo $CERTIFICATE_BASE64 | base64 -d > certificate.pfx
+        signtool sign /f certificate.pfx /p $CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "dist\plainspeak\plainspeak.exe"
+
+    - name: Create installer
+      run: |
+        iscc "installers/windows/installer.iss"
+
+    - name: Sign Installer
+      run: |
+        signtool sign /f certificate.pfx /p $CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "dist\PlainSpeak-Setup.exe"
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: windows-binary
+        path: |
+          dist/plainspeak
+          dist/PlainSpeak-Setup.exe
+
+  build-macos:
+    name: Build macOS Binary
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry install
+        poetry install pyinstaller
+        brew install upx create-dmg
+        
+    - name: Build binary
+      run: |
+        pyinstaller plainspeak.spec
+        
+    - name: Run binary tests
+      run: |
+        pip install psutil pytest
+        cd tests/binaries
+        pytest test_binary.py -v
+        
+    - name: Sign and Notarize App
+      env:
+        APPLE_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
+        APPLE_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: |
+        # Import certificate
+        echo $APPLE_CERTIFICATE | base64 -d > certificate.p12
+        security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+        security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+        
+        # Sign app bundle
+        codesign --force --sign "Developer ID Application: PlainSpeak Organization" \
+                --options runtime \
+                --entitlements "installers/macos/entitlements.plist" \
+                --timestamp \
+                "dist/PlainSpeak.app"
+        
+        # Notarize
+        ditto -c -k --keepParent "dist/PlainSpeak.app" "dist/PlainSpeak.zip"
+        xcrun notarytool submit "dist/PlainSpeak.zip" \
+              --apple-id "$APPLE_ID" \
+              --password "$APP_SPECIFIC_PASSWORD" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+        xcrun stapler staple "dist/PlainSpeak.app"
+
+    - name: Create DMG
+      run: |
+        # Create and sign DMG
+        create-dmg \
+          --volname "PlainSpeak" \
+          --volicon "assets/icons/plainspeak.icns" \
+          --window-pos 200 120 \
+          --window-size 800 400 \
+          --icon-size 100 \
+          --icon "PlainSpeak.app" 200 190 \
+          --hide-extension "PlainSpeak.app" \
+          --app-drop-link 600 185 \
+          "dist/PlainSpeak.dmg" \
+          "dist/PlainSpeak.app"
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-binary
+        path: |
+          dist/PlainSpeak.app
+          dist/PlainSpeak.dmg
+
+  create-release:
+    name: Create Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: PlainSpeak ${{ github.ref }}
+        draft: true
+        prerelease: false
+        
+    - name: Upload Windows Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./windows-binary/PlainSpeak-Setup.exe
+        asset_name: PlainSpeak-Setup.exe
+        asset_content_type: application/octet-stream
+        
+    - name: Upload macOS Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-binary/PlainSpeak.dmg
+        asset_name: PlainSpeak.dmg
+        asset_content_type: application/octet-stream
+        
+    - name: Generate Checksums
+      run: |
+        cd windows-binary && sha256sum PlainSpeak-Setup.exe > windows.sha256
+        cd ../macos-binary && sha256sum PlainSpeak.dmg > macos.sha256
+        
+    - name: Upload Checksums
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./windows-binary/windows.sha256
+        asset_name: windows.sha256
+        asset_content_type: text/plain
+      
+    - name: Upload Checksums (macOS)
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./macos-binary/macos.sha256
+        asset_name: macos.sha256
+        asset_content_type: text/plain

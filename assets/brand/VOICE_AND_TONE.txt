@@ -1,0 +1,154 @@
+PlainSpeak Voice and Tone Guidelines
+
+Brand Voice
+━━━━━━━━━━
+Our voice is: Clear, Friendly, Knowledgeable, and Empowering
+
+Core Traits:
+1. CLEAR
+   ✓ Use plain language
+   ✓ Avoid jargon unless necessary
+   ✓ Explain technical concepts simply
+   ✗ Don't be overly complex
+   ✗ Don't use unnecessary technical terms
+
+2. FRIENDLY
+   ✓ Be conversational but professional
+   ✓ Use "you" and "we"
+   ✓ Show enthusiasm
+   ✗ Don't be overly casual
+   ✗ Don't use slang
+
+3. KNOWLEDGEABLE
+   ✓ Be accurate and precise
+   ✓ Provide helpful context
+   ✓ Link to documentation
+   ✗ Don't be condescending
+   ✗ Don't assume expertise
+
+4. EMPOWERING
+   ✓ Focus on user capabilities
+   ✓ Encourage learning
+   ✓ Celebrate user success
+   ✗ Don't be patronizing
+   ✗ Don't hide complexity
+
+Tone Guidelines
+━━━━━━━━━━━━━
+Adjust tone based on context:
+
+1. SUCCESS MESSAGES
+   Tone: Positive, Encouraging
+   Example: "Command completed successfully! ✨"
+
+2. ERROR MESSAGES
+   Tone: Clear, Helpful
+   Example: "Hmm, that command wasn't found. Try 'help' for a list of commands."
+
+3. WARNINGS
+   Tone: Cautious, Informative
+   Example: "This command will modify system files. Review and confirm?"
+
+4. HELP TEXT
+   Tone: Instructive, Patient
+   Example: "Let's break this down step by step..."
+
+5. DOCUMENTATION
+   Tone: Clear, Thorough
+   Example: "Here's how the file command works..."
+
+Writing Examples
+━━━━━━━━━━━━━━
+DO:
+✓ "I'll help you find those files."
+✓ "Let me show you what this command does."
+✓ "Would you like to see more examples?"
+✓ "Here's what happened and how to fix it."
+
+DON'T:
+✗ "Error 0x4F: Invalid input detected"
+✗ "You're doing it wrong"
+✗ "That's not how you use this command"
+✗ "Obviously, you should use grep"
+
+Message Templates
+━━━━━━━━━━━━━━━
+1. CONFIRMATIONS
+   "I'll {action}. Should I proceed?"
+   "About to {action}. Look good?"
+
+2. SUCCESS
+   "Done! {action} completed."
+   "Success! {result}"
+
+3. ERRORS
+   "I couldn't {action} because {reason}."
+   "Looks like {issue}. Try {suggestion}."
+
+4. HELP
+   "Need help with {topic}? Here's how it works..."
+   "Let me explain how to {action}..."
+
+Interface Text Guidelines
+━━━━━━━━━━━━━━━━━━━━━
+1. BUTTONS
+   - Use action verbs
+   - Be concise
+   - Be specific
+
+2. LABELS
+   - Be descriptive
+   - Use sentence case
+   - Be consistent
+
+3. TOOLTIPS
+   - Provide useful information
+   - Keep it brief
+   - Explain why, not just what
+
+4. PROMPTS
+   - Be clear about what's needed
+   - Provide examples
+   - Indicate optional/required
+
+Localization Considerations
+━━━━━━━━━━━━━━━━━━━━━━━
+- Write for translation
+- Avoid idioms
+- Use consistent terminology
+- Provide context for translators
+- Consider cultural differences
+
+Content Structure
+━━━━━━━━━━━━━━━
+1. Start with the most important information
+2. Break down complex concepts
+3. Use progressive disclosure
+4. Provide next steps
+5. Link to related information
+
+Grammar and Style
+━━━━━━━━━━━━━━━
+- Use active voice
+- Write in present tense
+- Use parallel structure
+- Be consistent with terminology
+- Follow standard punctuation
+
+Accessibility
+━━━━━━━━━━━━
+- Write meaningful alt text
+- Use descriptive links
+- Provide text alternatives
+- Consider screen readers
+- Use clear hierarchy
+
+Review Checklist
+━━━━━━━━━━━━━
+□ Is it clear?
+□ Is it friendly?
+□ Is it accurate?
+□ Is it empowering?
+□ Is it consistent?
+□ Is it accessible?
+□ Is it translatable?

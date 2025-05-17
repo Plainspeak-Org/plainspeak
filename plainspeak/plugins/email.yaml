@@ -1,0 +1,77 @@
+name: email
+description: Email operations for sending and reading emails
+version: 0.1.0
+author: PlainSpeak Team
+verbs:
+  - send-email
+  - read-email
+  - list-emails
+  - search-emails
+  - email-settings
+dependencies:
+  python-email-validator: ">=1.0.0"
+entrypoint: plainspeak.plugins.email.EmailPlugin
+commands:
+  send-email:
+    template: "send_mail {{ '--to=' + to }} {{ '--subject=\"' + subject + '\"' if subject else '' }} {{ '--body=\"' + body + '\"' if body else '' }} {{ '--attach=' + attachment if attachment else '' }}"
+    description: Send an email to specified recipients
+    examples:
+      - "send an email to user@example.com with subject 'Hello' and body 'How are you?'"
+      - "email John about the meeting tomorrow"
+    required_args:
+      - to
+    optional_args:
+      subject: ""
+      body: ""
+      attachment: ""
+
+  read-email:
+    template: "read_mail {{ '--id=' + id if id else '' }} {{ '--index=' + index if index else '' }} {{ '--mark-read=' + str(mark_read).lower() }}"
+    description: Read a specific email
+    examples:
+      - "read latest email"
+      - "show me the last email from John"
+    required_args: []
+    optional_args:
+      id: ""
+      index: "1"  # Default to latest
+      mark_read: true
+
+  list-emails:
+    template: "list_mail {{ '--folder=' + folder if folder else '' }} {{ '--limit=' + limit if limit else '' }} {{ '--unread-only=' + str(unread_only).lower() }}"
+    description: List emails in a folder
+    examples:
+      - "show my inbox"
+      - "list unread emails"
+      - "display last 10 emails"
+    required_args: []
+    optional_args:
+      folder: "INBOX"
+      limit: "10"
+      unread_only: false
+
+  search-emails:
+    template: "search_mail {{ '--query=\"' + query + '\"' }} {{ '--folder=' + folder if folder else '' }} {{ '--limit=' + limit if limit else '' }}"
+    description: Search emails using a query
+    examples:
+      - "find emails about project planning"
+      - "search for emails from John about the meeting"
+    required_args:
+      - query
+    optional_args:
+      folder: "INBOX"
+      limit: "10"
+
+  email-settings:
+    template: "email_config {{ '--show' if show else '' }} {{ '--smtp-server=' + smtp_server if smtp_server else '' }} {{ '--imap-server=' + imap_server if imap_server else '' }} {{ '--username=' + username if username else '' }} {{ '--password-prompt' if password_prompt else '' }}"
+    description: Configure email settings
+    examples:
+      - "show email settings"
+      - "set up my email account"
+    required_args: []
+    optional_args:
+      show: false
+      smtp_server: ""
+      imap_server: ""
+      username: ""
+      password_prompt: false

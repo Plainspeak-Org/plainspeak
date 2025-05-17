@@ -1,0 +1,47 @@
+# Package Building
+build>=0.10.0
+wheel>=0.40.0
+twine>=4.0.2
+setuptools>=68.0.0
+
+# Binary Packaging
+pyinstaller>=6.0.0
+cx_Freeze>=6.15.0  # Alternative freezer
+py2app>=0.28.0     # macOS specific
+py2exe>=0.13.0.0   # Windows specific
+
+# Code Signing
+sigstore>=1.0.0   # For package signing
+signify>=0.5.0    # OpenBSD signing tool
+
+# Store Submission
+msstore-cli>=1.0.0     # Microsoft Store submissions
+xcrun>=1.0.0          # Apple store submissions
+create-dmg>=1.2.0     # macOS DMG creation
+
+# Linux Packaging
+stdeb>=0.10.0      # Debian packages
+python-rpm-spec>=0.16.0  # RPM packages
+archlinux-python>=0.5.0  # Arch Linux packages
+
+# Validation & Testing
+check-wheel-contents>=0.4.0
+twine-verify>=1.2.0
+auditwheel>=5.4.0   # Linux wheel validation
+delocate>=0.10.0    # macOS wheel validation
+
+# Version Management
+bump2version>=1.0.1
+setuptools-scm>=7.1.0
+
+# Dependencies
+requests>=2.31.0
+cryptography>=40.0.0
+packaging>=23.1
+tomli>=2.0.1        # TOML parsing
+ruamel.yaml>=0.17.32  # YAML handling
+
+# Optional Tools
+fpm>=1.15.1         # Flexible package manager
+makedeb>=1.0.0      # Debian package creation helper
+rpmbuild>=1.0.0     # RPM build tools

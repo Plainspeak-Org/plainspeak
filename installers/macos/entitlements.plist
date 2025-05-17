@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Allow Just-In-Time compilation for LLM model -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Required for LLM model execution -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Allow loading of third-party libraries -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- Required for PyInstaller bundled Python -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+
+    <!-- Allow automation for system commands -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+
+    <!-- Basic app sandbox entitlements -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+
+    <!-- File access permissions -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+
+    <!-- Network access -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <key>com.apple.security.network.server</key>
+    <true/>
+
+    <!-- Shell command access -->
+    <key>com.apple.security.temporary-exception.apple-events</key>
+    <string>com.apple.terminal</string>
+
+    <!-- Plugin system requirements -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- Home directory access for config and data -->
+    <key>com.apple.security.files.home-relative-path.read-write</key>
+    <array>
+        <string>/.plainspeak/</string>
+        <string>/.config/plainspeak/</string>
+        <string>/Library/Application Support/PlainSpeak/</string>
+    </array>
+
+    <!-- Hardware access -->
+    <key>com.apple.security.device.camera</key>
+    <false/>
+    <key>com.apple.security.device.microphone</key>
+    <false/>
+    <key>com.apple.security.device.usb</key>
+    <false/>
+
+    <!-- Process info access -->
+    <key>com.apple.security.temporary-exception.sbpl</key>
+    <string>(allow process-info-pidinfo)</string>
+
+    <!-- System event monitoring -->
+    <key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+    <array>
+        <string>com.apple.coreservices.launchservicesd</string>
+        <string>com.apple.systemconfiguration.configd</string>
+    </array>
+</dict>
+</plist>

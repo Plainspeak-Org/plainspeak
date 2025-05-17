@@ -1,0 +1,4 @@
+# Asset Generation Requirements
+cairosvg>=2.7.1    # SVG to PNG conversion
+Pillow>=10.0.0     # Image processing
+svgutils>=0.3.1    # SVG manipulation

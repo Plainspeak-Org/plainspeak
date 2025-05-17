@@ -1,0 +1,157 @@
+name: Binary Testing
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to test'
+        required: true
+        type: string
+      package_type:
+        description: 'Package type to test (pypi, windows, macos, linux)'
+        required: true
+        type: string
+      artifact_name:
+        description: 'Artifact name'
+        required: true
+        type: string
+
+jobs:
+  test-binary:
+    name: Test Binary Package
+    runs-on: ${{ inputs.package_type == 'windows' && 'windows-latest' || inputs.package_type == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Download package artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: dist
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -r tests/requirements-tests.txt
+      
+      # PyPI Package Tests
+      - name: Test PyPI Package
+        if: inputs.package_type == 'pypi'
+        run: |
+          # Install from wheel
+          pip install dist/*.whl
+          
+          # Run tests
+          pytest tests/binaries/test_binary.py::TestPyPIPackage -v
+      
+      # Windows Package Tests
+      - name: Test Windows Package
+        if: inputs.package_type == 'windows'
+        shell: pwsh
+        run: |
+          # Extract MSIX
+          $msixPath = Get-ChildItem dist/*.msix | Select-Object -First 1
+          Add-AppxPackage -Register $msixPath
+          
+          # Run tests
+          pytest tests/binaries/test_binary.py::TestWindowsPackage -v
+          
+          # Test installer
+          $installerPath = Get-ChildItem dist/*.exe | Select-Object -First 1
+          Start-Process -FilePath $installerPath -ArgumentList "/VERYSILENT" -Wait
+          
+          # Verify installation
+          $installed = Test-Path "C:\Program Files\PlainSpeak\plainspeak.exe"
+          if (-not $installed) {
+            throw "Installation failed"
+          }
+          
+          # Run installed binary tests
+          pytest tests/binaries/test_binary.py::TestWindowsInstallation -v
+      
+      # macOS Package Tests
+      - name: Test macOS Package
+        if: inputs.package_type == 'macos'
+        run: |
+          # Mount DMG
+          hdiutil attach dist/*.dmg
+          
+          # Copy app to Applications
+          cp -R "/Volumes/PlainSpeak/PlainSpeak.app" /Applications/
+          
+          # Run tests
+          pytest tests/binaries/test_binary.py::TestMacOSPackage -v
+          
+          # Verify code signing
+          codesign --verify --verbose /Applications/PlainSpeak.app
+          
+          # Test notarization
+          xcrun stapler validate /Applications/PlainSpeak.app
+      
+      # Linux Package Tests
+      - name: Test Linux Package
+        if: inputs.package_type == 'linux'
+        run: |
+          # Test .deb package
+          sudo apt-get update
+          sudo apt-get install -y lintian
+          lintian dist/*.deb
+          sudo dpkg -i dist/*.deb
+          pytest tests/binaries/test_binary.py::TestDebianPackage -v
+          
+          # Test .rpm package
+          sudo apt-get install -y rpm
+          rpm -K dist/*.rpm
+          sudo alien -i dist/*.rpm
+          pytest tests/binaries/test_binary.py::TestRPMPackage -v
+          
+          # Test PKGBUILD
+          mkdir -p build_arch && cd build_arch
+          cp ../packaging/linux/PKGBUILD .
+          makepkg -si --noconfirm
+          pytest ../tests/binaries/test_binary.py::TestArchPackage -v
+      
+      # Common Test Results
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ inputs.package_type }}
+          path: |
+            .pytest_cache/
+            test-results.xml
+            coverage.xml
+
+  report:
+    name: Generate Test Report
+    needs: test-binary
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          name: test-results-${{ inputs.package_type }}
+      
+      - name: Process results
+        id: results
+        run: |
+          echo "status=$(cat test-results.xml | grep -c '<failure')" >> $GITHUB_OUTPUT
+      
+      - name: Create summary
+        run: |
+          echo "## Binary Test Results for ${{ inputs.package_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Status: ${{ steps.results.outputs.status == '0' && '✅ Pass' || '❌ Fail' }}" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Set output
+        run: |
+          echo "result=${{ steps.results.outputs.status == '0' && 'success' || 'failure' }}" >> $GITHUB_OUTPUT

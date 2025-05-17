@@ -1,0 +1,41 @@
+PlainSpeak Assets Directory Structure
+
+📁 assets/
+├── 📁 brand/                # Brand identity assets
+│   ├── 📁 logo/            # Logo variations (placeholder)
+│   ├── 📁 colors/          # Color palettes (placeholder)
+│   └── 📁 typography/      # Font files and guidelines (placeholder)
+│
+├── 📁 icons/               # Application icons
+│   ├── 📁 windows/         # Windows-specific icons (placeholder)
+│   ├── 📁 macos/          # macOS-specific icons (placeholder)
+│   └── 📁 source/         # Source files (SVG/AI) (placeholder)
+│
+├── 📁 screenshots/         # Application screenshots
+│   ├── 📁 windows/        # Windows platform (placeholder)
+│   ├── 📁 macos/          # macOS platform (placeholder)
+│   └── 📁 features/       # Feature-specific shots (placeholder)
+│
+├── 📁 store/              # Store listing assets
+│   ├── 📁 microsoft/      # Microsoft Store assets (placeholder)
+│   ├── 📁 apple/         # Mac App Store assets (placeholder)
+│   └── 📁 web/           # Website assets (placeholder)
+│
+├── 📁 marketing/          # Marketing materials
+│   ├── 📁 press/         # Press kit materials (placeholder)
+│   ├── 📁 blog/          # Blog post assets (placeholder)
+│   └── 📁 social/        # Social media assets (placeholder)
+│
+└── 📁 docs/              # Documentation assets
+    ├── 📁 tutorials/     # Tutorial images (placeholder)
+    ├── 📁 diagrams/     # Technical diagrams (placeholder)
+    └── 📁 guides/       # User guide images (placeholder)
+
+Note: This file serves as a placeholder for the assets directory structure. 
+Each (placeholder) directory will be populated with appropriate assets during development.
+
+Required File Types:
+- Icons: SVG, PNG, ICO, ICNS
+- Screenshots: PNG, WEBP
+- Marketing: JPG, PNG, SVG
+- Documentation: PNG, SVG

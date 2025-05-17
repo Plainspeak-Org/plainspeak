@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block header %}Plugin Submission Received{% endblock %}
+
+{% block content %}
+<h2>Hello {{ name }},</h2>
+
+<p>Great news! We have successfully received your plugin submission for the PlainSpeak Plugin Development Contest.</p>
+
+<div style="background: #e8f5e9; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <p style="color: #2e7d32; margin: 0;">
+        <strong>✓ Submission Status: Complete</strong>
+    </p>
+</div>
+
+<h3>What Happens Next?</h3>
+<ol>
+    <li><strong>Initial Verification:</strong> Our system will verify that your submission meets all technical requirements (usually within 24 hours)</li>
+    <li><strong>Code Review:</strong> During the judging period (Week 4), our panel will review your code for:
+        <ul>
+            <li>Code quality and best practices</li>
+            <li>Documentation completeness</li>
+            <li>Test coverage</li>
+            <li>Innovation and utility</li>
+        </ul>
+    </li>
+    <li><strong>Results:</strong> You will receive detailed feedback and your score by the end of the judging period</li>
+</ol>
+
+<h3>Important Information</h3>
+<ul>
+    <li>You can view your submission status anytime on your dashboard</li>
+    <li>No changes can be made to your submission after the deadline</li>
+    <li>Winners will be announced in Week 1 of Month 6</li>
+</ul>
+
+<h3>Need Help?</h3>
+<p>If you have any questions or concerns about your submission, you can:</p>
+<ul>
+    <li>Contact us at support@plainspeak.org</li>
+    <li>Visit our Discord channel for community support</li>
+    <li>Check the FAQ in your dashboard</li>
+</ul>
+
+<p>Thank you for contributing to the PlainSpeak ecosystem! We look forward to reviewing your plugin.</p>
+
+<p>Best regards,<br>
+The PlainSpeak Team</p>
+{% endblock %}

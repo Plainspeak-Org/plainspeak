@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block header %}🏆 Congratulations - You're a Winner! 🏆{% endblock %}
+
+{% block content %}
+<h2>Congratulations {{ name }}!</h2>
+
+<div style="background: #ffd700; padding: 20px; border-radius: 4px; margin: 20px 0; text-align: center;">
+    <h3 style="color: #000; margin-top: 0;">Winner: {{ category }} Category</h3>
+    <p style="font-size: 20px; color: #000; margin: 10px 0;">{{ prize }}</p>
+</div>
+
+<p>We are thrilled to announce that your plugin submission has been selected as a winner in the PlainSpeak Plugin Development Contest! Your exceptional work stood out among many impressive submissions.</p>
+
+<h3>Your Winning Package Includes:</h3>
+<ul>
+    <li><strong>Cash Prize:</strong> {{ '$1,000' if prize == 'Grand Prize' else '$500' }}</li>
+    <li><strong>Featured Plugin Status:</strong> Your plugin will be highlighted in the PlainSpeak Plugin Directory</li>
+    <li><strong>Custom Developer Badge:</strong> A unique digital badge for your GitHub profile</li>
+    {% if prize == 'Grand Prize' %}
+    <li><strong>Future Development Role:</strong> Invitation to join PlainSpeak's core development team</li>
+    {% endif %}
+</ul>
+
+<h3>Next Steps</h3>
+<ol>
+    <li><strong>Prize Distribution:</strong>
+        <ul>
+            <li>Complete the prize claim form (link below)</li>
+            <li>Submit your payment details</li>
+            <li>Expect payment within 5-7 business days</li>
+        </ul>
+    </li>
+    <li><strong>Plugin Integration:</strong>
+        <ul>
+            <li>Your plugin will be featured in our next release</li>
+            <li>Our team will contact you for any necessary adjustments</li>
+        </ul>
+    </li>
+    <li><strong>Public Announcement:</strong>
+        <ul>
+            <li>Winners will be announced on our website next week</li>
+            <li>Social media announcements will follow</li>
+        </ul>
+    </li>
+</ol>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://contest.plainspeak.org/winners/claim/{{ participant_id }}" class="button">
+        Claim Your Prize
+    </a>
+</p>
+
+<h3>Winner's Showcase Event</h3>
+<p>You're invited to present your plugin at our virtual Winner's Showcase event next month. This is a great opportunity to:</p>
+<ul>
+    <li>Demonstrate your plugin to the community</li>
+    <li>Share your development experience</li>
+    <li>Network with other winners and the PlainSpeak team</li>
+    <li>Get early access to upcoming PlainSpeak features</li>
+</ul>
+
+<h3>Community Recognition</h3>
+<ul>
+    <li>Your winning plugin will be featured on our blog</li>
+    <li>Interview opportunity for our developer spotlight series</li>
+    <li>Special recognition in the PlainSpeak documentation</li>
+    <li>Priority support for future plugin development</li>
+</ul>
+
+<div style="background: #f5f5f5; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <h4 style="margin-top: 0;">Important Dates</h4>
+    <ul style="margin-bottom: 0;">
+        <li><strong>Prize Claim Deadline:</strong> Within 7 days</li>
+        <li><strong>Public Announcement:</strong> Next week</li>
+        <li><strong>Winner's Showcase Event:</strong> Next month (details to follow)</li>
+    </ul>
+</div>
+
+<p>Once again, congratulations on your outstanding achievement! Your contribution helps make computing more accessible to everyone through natural language.</p>
+
+<p>Best regards,<br>
+The PlainSpeak Team</p>
+
+<div style="font-size: 12px; color: #666; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p>Note: Please respond to confirm your attendance at the Winner's Showcase event. If you have any questions about your prize package, contact us at winners@plainspeak.org</p>
+</div>
+{% endblock %}

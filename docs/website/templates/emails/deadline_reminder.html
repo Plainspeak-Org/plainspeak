@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block header %}Plugin Submission Deadline Approaching{% endblock %}
+
+{% block content %}
+<h2>Hello {{ name }},</h2>
+
+<div style="background: #fff3e0; padding: 20px; border-radius: 4px; margin: 20px 0; text-align: center;">
+    <h3 style="color: #e65100; margin-top: 0;">⚠️ Time is Running Out!</h3>
+    <p style="font-size: 24px; color: #e65100; margin: 10px 0;">
+        {{ days_left }} {% if days_left == 1 %}Day{% else %}Days{% endif %} Until Submission Deadline
+    </p>
+</div>
+
+<p>This is a friendly reminder that the submission deadline for the PlainSpeak Plugin Development Contest is approaching quickly. We noticed that you haven't submitted your plugin yet.</p>
+
+<h3>Important Deadlines</h3>
+<ul>
+    <li><strong>Submission Deadline:</strong> {{ (now + timedelta(days=days_left)).strftime('%B %d, %Y at %H:%M UTC') }}</li>
+    <li><strong>Judging Period:</strong> Week 4</li>
+    <li><strong>Winners Announced:</strong> Week 1 of Month 6</li>
+</ul>
+
+<h3>Submission Checklist</h3>
+<ul>
+    <li>✓ Complete plugin implementation</li>
+    <li>✓ Documentation (README, examples, API reference)</li>
+    <li>✓ Test suite with >80% coverage</li>
+    <li>✓ Cross-platform compatibility verified</li>
+    <li>✓ Code follows style guidelines</li>
+</ul>
+
+<p style="text-align: center; margin: 30px 0;">
+    <a href="https://contest.plainspeak.org/submit" class="button">
+        Submit Your Plugin
+    </a>
+</p>
+
+<h3>Need Help?</h3>
+<p>If you're experiencing any issues or need assistance:</p>
+<ul>
+    <li>Join our Discord channel for immediate support</li>
+    <li>Check the documentation at <a href="https://contest.plainspeak.org/docs">contest.plainspeak.org/docs</a></li>
+    <li>Email us at support@plainspeak.org</li>
+</ul>
+
+<div style="background: #e3f2fd; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <h4 style="margin-top: 0;">Quick Tips</h4>
+    <ul style="margin-bottom: 0;">
+        <li>Use our plugin template as a starting point</li>
+        <li>Run the test suite locally before submitting</li>
+        <li>Double-check all requirements in the guidelines</li>
+        <li>Make sure your documentation is complete</li>
+    </ul>
+</div>
+
+<h3>Why Submit Early?</h3>
+<ul>
+    <li>Get early feedback on technical requirements</li>
+    <li>Have time to fix any issues found during verification</li>
+    <li>Avoid last-minute technical problems</li>
+    <li>Reduce stress and ensure your best work is submitted</li>
+</ul>
+
+{% if days_left <= 2 %}
+<div style="background: #ffebee; padding: 20px; border-radius: 4px; margin: 20px 0;">
+    <p style="color: #c62828; margin: 0;">
+        <strong>Critical Notice:</strong> After the deadline, no submissions or changes will be accepted. Make sure to submit your work before the cutoff time!
+    </p>
+</div>
+{% endif %}
+
+<p>We're excited to see your plugin and how it will contribute to making computing more accessible through natural language!</p>
+
+<p>Best regards,<br>
+The PlainSpeak Team</p>
+
+<div style="font-size: 12px; color: #666; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+    <p>Note: If you've already submitted your plugin, please disregard this reminder. If you no longer plan to participate, you can unsubscribe from contest emails using the link in our footer.</p>
+</div>
+{% endblock %}

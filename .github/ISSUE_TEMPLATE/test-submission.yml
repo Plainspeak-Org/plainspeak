@@ -1,0 +1,87 @@
+name: Test Package Submission
+description: Run a test submission workflow for packages
+title: "Test Submission: [VERSION]"
+labels: ["test", "packages", "submission"]
+assignees: "test-runner"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template helps run test submissions for PlainSpeak packages across all distribution channels.
+        
+        Please ensure all pre-requisites are met before starting the test:
+        - All required secrets are configured
+        - Test environments are available
+        - Build pipeline is functional
+
+  - type: input
+    id: version
+    attributes:
+      label: Test Version
+      description: Version number to use for test submission
+      placeholder: "0.1.0-test1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: channels
+    attributes:
+      label: Distribution Channels
+      description: Select which channels to test
+      multiple: true
+      options:
+        - PyPI
+        - Windows Store
+        - Mac App Store
+        - Homebrew
+        - Linux Packages
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites Check
+      description: Please verify these items before proceeding
+      options:
+        - label: Build pipeline is passing
+          required: true
+        - label: All required secrets are configured
+          required: true
+        - label: Test environments are available
+          required: true
+        - label: Legal documents are up to date
+          required: true
+
+  - type: textarea
+    id: special_instructions
+    attributes:
+      label: Special Instructions
+      description: Any specific testing requirements or notes
+      placeholder: |
+        - Focus areas for testing
+        - Known issues to verify
+        - Special configurations needed
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Next Steps
+        
+        1. This will create a test submission workflow
+        2. Results will be posted as comments
+        3. Review test results carefully
+        4. Address any issues found
+        5. Run additional tests if needed
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this test request, you agree to follow our rules
+      options:
+        - label: I agree to monitor the test progress and respond to issues
+          required: true
+        - label: I will document any issues found and create follow-up tasks
+          required: true
+        - label: I understand this is a test submission and won't affect production

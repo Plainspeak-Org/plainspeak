@@ -1,0 +1,124 @@
+name: Test Sample Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Sample package version'
+        required: true
+        default: '0.1.0-test'
+
+jobs:
+  create-sample:
+    name: Create Sample Package
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scripts/requirements-packaging.txt
+      
+      - name: Create sample package
+        run: |
+          # Create minimal package with basic functionality
+          mkdir -p sample_pkg/plainspeak
+          
+          # Create __init__.py
+          echo "def version(): return '${{ github.event.inputs.version }}'" > sample_pkg/plainspeak/__init__.py
+          
+          # Create main.py
+          cat > sample_pkg/plainspeak/__main__.py << 'EOL'
+          def main():
+              print("PlainSpeak Sample Package")
+              print("Version:", __import__('plainspeak').version())
+          
+          if __name__ == '__main__':
+              main()
+          EOL
+          
+          # Create setup files
+          cat > sample_pkg/pyproject.toml << EOL
+          [build-system]
+          requires = ["hatchling"]
+          build-backend = "hatchling.build"
+          
+          [project]
+          name = "plainspeak"
+          version = "${{ github.event.inputs.version }}"
+          description = "Sample package for testing submission workflows"
+          readme = "README.md"
+          requires-python = ">=3.9"
+          
+          [project.scripts]
+          plainspeak = "plainspeak.__main__:main"
+          EOL
+          
+          # Create README
+          echo "# PlainSpeak Sample Package" > sample_pkg/README.md
+          
+          # Build package
+          cd sample_pkg
+          python -m build
+      
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: sample-package
+          path: sample_pkg/dist/*
+
+  test-submission:
+    name: Test Package Submission
+    needs: create-sample
+    uses: ./.github/workflows/test-submissions.yml
+    with:
+      version: ${{ github.event.inputs.version }}
+    secrets: inherit
+
+  validate-results:
+    name: Validate Test Results
+    needs: test-submission
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          name: test-results-*
+          path: results
+      
+      - name: Process results
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Check each package type
+          for type in pypi windows macos linux; do
+            if [ -f "results/test-results-$type/test-results.xml" ]; then
+              failures=$(grep -c '<failure' "results/test-results-$type/test-results.xml" || echo "0")
+              if [ "$failures" = "0" ]; then
+                echo "✅ $type: PASS" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ $type: FAIL ($failures failures)" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "⚠️ $type: NO RESULTS" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # Final status
+          total_failures=$(find results -name 'test-results.xml' -exec grep -c '<failure' {} \; | awk '{s+=$1} END {print s}')
+          if [ "$total_failures" = "0" ]; then
+            echo "✨ All tests passed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "💥 Found $total_failures total failures" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
