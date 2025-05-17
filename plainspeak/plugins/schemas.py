@@ -46,23 +46,27 @@ class PluginManifest(BaseModel):
         pattern=r"^[a-zA-Z][a-zA-Z0-9_-]*$",
     )
     description: str = Field(
-        ..., description="Human-readable description of the plugin"
+        default=..., description="Human-readable description of the plugin"
     )
     version: str = Field(
-        ..., description="Plugin version (semver)", pattern=r"^\d+\.\d+\.\d+$"
+        default=...,
+        description="Plugin version (semver)",
+        pattern=r"^\d+\.\d+\.\d+$"
     )
-    author: str = Field(..., description="Plugin author")
+    author: str = Field(default=..., description="Plugin author")
     verbs: List[str] = Field(
-        ..., description="List of verbs this plugin provides", min_items=1
+        default=...,
+        description="List of verbs this plugin provides",
+        min_items=1
     )
     commands: Dict[str, CommandConfig] = Field(
-        ..., description="Command configurations keyed by verb"
+        default=..., description="Command configurations keyed by verb"
     )
     dependencies: Dict[str, str] = Field(
         default_factory=dict, description="Plugin dependencies with version constraints"
     )
     entrypoint: str = Field(
-        ...,
+        default=...,
         description="Python import path to the plugin class",
         pattern=r"^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$",
     )
@@ -80,7 +84,7 @@ class PluginManifest(BaseModel):
     @field_validator("commands")
     def validate_commands(
         cls, v: Dict[str, CommandConfig], values: Dict[str, Any]
-    ) -> Dict[str, CommandConfig]:
+    ) -> Dict[str, CommandConfig]:  # type: ignore[misc]
         """Validate that all verbs have corresponding commands."""
         if "verbs" in values:
             missing = set(values["verbs"]) - set(v.keys())

@@ -46,7 +46,7 @@ class LLMConfig(BaseModel):
 
     @field_validator("model_path", mode="before")
     @classmethod
-    def resolve_model_path(cls, v: Optional[str], values: Dict[str, Any]) -> str:
+    def resolve_model_path(cls, v: Optional[str], values: Dict[str, Any]) -> str:  # type: ignore[misc]
         """
         If model_path is relative, try to resolve it relative to:
         1. Project root (if PLAINSPEAK_PROJECT_ROOT is set, e.g., during dev)
@@ -86,7 +86,18 @@ class LLMConfig(BaseModel):
 class AppConfig(BaseModel):
     """Main application configuration."""
 
-    llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
+    # Use a proper default factory to create a new LLMConfig instance
+    llm: LLMConfig = Field(default_factory=lambda: LLMConfig(
+        model_path=DEFAULT_MODEL_FILE_PATH,
+        model_type="llama",
+        gpu_layers=0,
+        max_new_tokens=100,
+        temperature=0.2,
+        top_k=50,
+        top_p=0.9,
+        repetition_penalty=1.1,
+        stop=["\n"]
+    ))
     # Add other app-level configs here, e.g., log_level, etc.
 
 
