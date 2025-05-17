@@ -64,14 +64,16 @@ while true; do
             
             # Show test results
             log "${YELLOW}Test Results:${NC}"
-            gh run view "$run_id" --log | grep -A 50 "===.*test session starts.*==="
+            gh run view "$run_id" --log > workflow.log
+            cat workflow.log
             exit 0
         else
             log "${RED}Tests failed with conclusion: $conclusion${NC}"
             
-            # Show failure logs
-            log "${YELLOW}Failure Details:${NC}"
-            gh run view "$run_id" --log | grep -A 50 "===.*FAILURES.*==="
+            # Show full failure logs
+            log "${YELLOW}Full Workflow Log:${NC}"
+            gh run view "$run_id" --log > workflow.log
+            cat workflow.log
             exit 1
         fi
     fi
