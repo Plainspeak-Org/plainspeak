@@ -41,21 +41,33 @@ jobs:
 
       - name: Build binary
         run: |
-          # Build the binary
+          # Debug info
+          echo "Current directory: $(pwd)"
+          echo "Contents of plainspeak/:"
+          ls -la plainspeak/
+          
+          # Build the binary with debug info
           pyinstaller --name plainspeak \
                      --onefile \
+                     --clean \
+                     --log-level DEBUG \
                      --add-data "plainspeak/plugins:plugins" \
                      --add-data "plainspeak/prompts:prompts" \
                      plainspeak/cli.py
 
-          # Set up binary directory structure expected by tests
+          # Show PyInstaller output
+          echo "Contents of dist/:"
+          ls -la dist/
+          
+          # Create final binary structure
+          rm -rf dist/plainspeak
           mkdir -p dist/plainspeak
-          cp dist/plainspeak dist/plainspeak/plainspeak
-          chmod +x dist/plainspeak/plainspeak
+          cp "dist/plainspeak" "dist/plainspeak/plainspeak"
+          chmod +x "dist/plainspeak/plainspeak"
 
-          # Show binary info
-          echo "Binary details:"
-          ls -l dist/plainspeak/plainspeak
+          # Verify final structure
+          echo "Final binary structure:"
+          ls -lR dist/
           file dist/plainspeak/plainspeak
         env:
           PYTHONPATH: ${{ github.workspace }}
