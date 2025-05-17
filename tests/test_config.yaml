@@ -1,0 +1,31 @@
+# Test Configuration File
+settings:
+  max_history: 100
+  log_level: DEBUG
+  test_mode: true
+  no_llm: true
+
+plugins:
+  enabled:
+    - file
+    - system
+    - text
+    - platform
+
+model:
+  path: tests/test_model
+  type: local
+  name: test_model
+  context_size: 1024
+  temperature: 0.7
+
+paths:
+  plugins: plainspeak/plugins
+  prompts: plainspeak/prompts
+  data: tests/test_data
+  logs: tests/test_logs
+
+history:
+  enabled: true
+  max_entries: 100
+  file: tests/test_history.json

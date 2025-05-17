@@ -41,11 +41,40 @@ gh workflow run execute-test-workflow.yml --ref main -F version="0.1.0-test$(dat
 
 # Monitor workflow
 log "${YELLOW}Monitoring workflow execution...${NC}"
-gh run watch --exit-status $(gh run list --workflow=execute-test-workflow.yml --limit 1 --json databaseId --jq '.[0].databaseId')
 
-if [ $? -eq 0 ]; then
-    log "${GREEN}Tests completed successfully!${NC}"
-else
-    log "${RED}Tests failed!${NC}"
+# Get the run ID
+run_id=$(gh run list --workflow=execute-test-workflow.yml --limit 1 --json databaseId,status --jq '.[0].databaseId')
+if [ -z "$run_id" ]; then
+    log "${RED}Failed to get workflow run ID${NC}"
     exit 1
 fi
+
+log "${YELLOW}Watching run ID: $run_id${NC}"
+
+# Monitor until complete
+while true; do
+    status=$(gh run view "$run_id" --json status,conclusion --jq '.status')
+    conclusion=$(gh run view "$run_id" --json status,conclusion --jq '.conclusion')
+    
+    log "${YELLOW}Status: $status, Conclusion: $conclusion${NC}"
+    
+    if [ "$status" = "completed" ]; then
+        if [ "$conclusion" = "success" ]; then
+            log "${GREEN}Tests completed successfully!${NC}"
+            
+            # Show test results
+            log "${YELLOW}Test Results:${NC}"
+            gh run view "$run_id" --log | grep -A 50 "===.*test session starts.*==="
+            exit 0
+        else
+            log "${RED}Tests failed with conclusion: $conclusion${NC}"
+            
+            # Show failure logs
+            log "${YELLOW}Failure Details:${NC}"
+            gh run view "$run_id" --log | grep -A 50 "===.*FAILURES.*==="
+            exit 1
+        fi
+    fi
+    
+    sleep 5
+done

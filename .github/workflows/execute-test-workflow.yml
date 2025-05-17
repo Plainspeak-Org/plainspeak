@@ -34,9 +34,31 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r tests/requirements-tests.txt
+          pip install pyinstaller
           pip install -e .
         env:
           PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+      - name: Build binary
+        run: |
+          # Build the binary
+          pyinstaller --name plainspeak \
+                     --onefile \
+                     --add-data "plainspeak/plugins:plugins" \
+                     --add-data "plainspeak/prompts:prompts" \
+                     plainspeak/cli.py
+
+          # Set up binary directory structure expected by tests
+          mkdir -p dist/plainspeak
+          cp dist/plainspeak dist/plainspeak/plainspeak
+          chmod +x dist/plainspeak/plainspeak
+
+          # Show binary info
+          echo "Binary details:"
+          ls -l dist/plainspeak/plainspeak
+          file dist/plainspeak/plainspeak
+        env:
+          PYTHONPATH: ${{ github.workspace }}
 
       - name: Run tests
         id: run-tests
@@ -46,6 +68,11 @@ jobs:
           
           # Store exit code
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+        env:
+          PLAINSPEAK_TEST: 1
+          PLAINSPEAK_CONFIG: ${{ github.workspace }}/tests/test_config.yaml
+          PLAINSPEAK_NO_LLM: 1  # Skip actual LLM calls in tests
+          PLAINSPEAK_MODEL_PATH: ${{ github.workspace }}/tests/test_model
         continue-on-error: true
       
       - name: Create test report
