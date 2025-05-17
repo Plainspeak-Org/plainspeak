@@ -83,7 +83,7 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         """Execute a generated command."""
         command = command.strip()
         if not command:
-            console.print("No command to execute", style="red")
+            console.print("Error: Empty input", style="red")
             return
 
         # Use subprocess for better control and security
@@ -91,16 +91,19 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         try:
             # Using shell=True for now to allow complex commands, but this has security implications
             # if the command is not properly sanitized.
-            # For a "century masterpiece", we'd want to parse the command into args
-            # and run with shell=False if possible, or use a more robust shell-like parser.
-            # This is a known area for future improvement.
             process = subprocess.run(command, shell=True, check=False, capture_output=True, text=True)
             if process.stdout:
                 console.print(process.stdout, end="")
             if process.stderr:
-                console.print(f"Error output:\n{process.stderr}", style="yellow", end="")
-            if process.returncode != 0:
-                console.print(f"Command exited with code {process.returncode}", style="red")
+                console.print(process.stderr, end="")
+            if process.returncode == 0:
+                console.print("Command executed successfully", style="green")
+            else:
+                console.print(f"Command failed with exit code {process.returncode}", style="red")
+                if process.stderr:
+                    console.print(process.stderr, style="red")
+        except subprocess.SubprocessError as e:
+            console.print(f"Error executing command: {e}", style="red")
         except FileNotFoundError:
             console.print(f"Error: Command not found: {command.split()[0]}", style="red")
         except Exception as e:
@@ -108,8 +111,12 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
 
     def default(self, statement):
         """Handle unknown commands as natural language input."""
-        # Convert raw statement to translate command
-        return self.onecmd(f'translate {statement}')
+        # Get the original input text from the statement object
+        text = getattr(statement, 'raw', str(statement)).strip()
+        if text:
+            # Pass the entire input to translate
+            return self.onecmd(f'translate {text}')
+        return False
 
     def do_exit(self, _):
         """Exit the shell."""
@@ -123,17 +130,15 @@ def translate(
         "--execute", "-e",
         help="Execute the translated command"
     ),
-    model_path: Optional[str] = typer.Option(
-        None,
-        "--model", "-m",
-        help="Path to a custom GGUF model file"
-    ),
 ):
     """Translate natural language into a shell command."""
-    # Create LLM interface with custom model if specified
-    llm = LLMInterface(model_path=model_path) if model_path else None
-    parser = CommandParser(llm=llm)
-    
+    # Check for empty input first
+    if not text.strip():
+        console.print("Error: Empty input", style="red")
+        raise typer.Exit(1)
+
+    # CommandParser will use LLMInterface, which now uses app_config by default
+    parser = CommandParser()
     success, result = parser.parse_to_command(text)
     
     if success:
@@ -142,32 +147,58 @@ def translate(
         
         if execute:
             console.print("\nExecuting command:", style="yellow")
-            # Use subprocess for better control and security
             import subprocess
             try:
-                process = subprocess.run(result, shell=True, check=False, capture_output=True, text=True)
+                process = subprocess.run(
+                    result,
+                    shell=True,
+                    check=False,
+                    capture_output=True,
+                    text=True
+                )
                 if process.stdout:
                     console.print(process.stdout, end="")
                 if process.stderr:
-                    console.print(f"Error output:\n{process.stderr}", style="yellow", end="")
-                if process.returncode != 0:
-                    console.print(f"Command exited with code {process.returncode}", style="red")
+                    console.print(process.stderr, end="")
+                if process.returncode == 0:
+                    console.print("Command executed successfully", style="green")
+                else:
+                    console.print(f"Command failed with exit code {process.returncode}", style="red")
+                    if process.stderr:
+                        console.print(process.stderr, style="red")
+                    raise typer.Exit(1)
+            except subprocess.SubprocessError as e:
+                console.print(f"Error executing command: {e}", style="red")
+                raise typer.Exit(1)
             except FileNotFoundError:
                 console.print(f"Error: Command not found: {result.split()[0]}", style="red")
-            except Exception as e: # This was the missing part of the try block
+                raise typer.Exit(1)
+            except Exception as e:
                 console.print(f"Error executing command: {e}", style="red")
+                raise typer.Exit(1)
     else:
         console.print(Panel(result, title="Error", border_style="red"))
-        sys.exit(1)
+        raise typer.Exit(1)
 
 @app.command()
 def shell():
     """Start an interactive shell for natural language command translation."""
-    PlainSpeakShell().cmdloop()
+    try:
+        PlainSpeakShell().cmdloop()
+    except KeyboardInterrupt:
+        console.print("\nExiting shell...", style="yellow")
+        sys.exit(0)
+    except Exception as e:
+        console.print(f"\nError in shell: {e}", style="red")
+        sys.exit(1)
 
 def main():
     """Entry point for the CLI."""
-    app()
+    try:
+        app()
+    except Exception as e:
+        console.print(f"Error: {e}", style="red")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

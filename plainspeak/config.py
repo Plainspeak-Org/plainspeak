@@ -5,7 +5,7 @@ This module handles loading and accessing application configuration,
 such as LLM model paths, generation parameters, and other settings.
 """
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, FilePath, validator
+from pydantic import BaseModel, Field, FilePath, field_validator
 import os
 import toml
 from pathlib import Path
@@ -40,7 +40,8 @@ class LLMConfig(BaseModel):
     repetition_penalty: float = Field(1.1, description="Repetition penalty.")
     stop: Optional[list[str]] = Field(["\n"], description="Stop sequences for generation.")
 
-    @validator('model_path', pre=True, always=True)
+    @field_validator('model_path', mode='before')
+    @classmethod
     def resolve_model_path(cls, v: Optional[str], values: Dict[str, Any]) -> str:
         """
         If model_path is relative, try to resolve it relative to:

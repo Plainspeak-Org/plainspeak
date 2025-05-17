@@ -20,6 +20,7 @@ ctransformers = "^0.2.27"
 jinja2 = "^3.1.3"
 pydantic = "^2.5.3" # Using Pydantic v2
 typer = {extras = ["all"], version = "^0.9.0"}
+toml = "^0.10.2" # Added for configuration file parsing
 # python-dotenv = "^1.0.0" # For managing API keys if needed for remote LLMs
 
 [tool.poetry.extras]
