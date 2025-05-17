@@ -14,15 +14,19 @@ log() {
     echo -e "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
+# Load environment variables from .env if present
+if [ -f .env ]; then
+    set -a  # automatically export all variables
+    source .env
+    set +a
+fi
+
 # Verify GitHub token for workflow
 if [ -z "$GITHUB_TOKEN" ]; then
     log "${RED}Error: GITHUB_TOKEN environment variable not set${NC}"
+    log "${YELLOW}Please ensure GITHUB_TOKEN is set in your .env file${NC}"
+    log "${YELLOW}Format: GITHUB_TOKEN=ghp_your_token_here${NC}"
     exit 1
-fi
-
-# Load environment variables from .env if present
-if [ -f .env ]; then
-    source .env
 fi
 
 # Install dependencies
