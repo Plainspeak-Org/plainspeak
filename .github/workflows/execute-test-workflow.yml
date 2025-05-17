@@ -41,21 +41,31 @@ jobs:
       - name: Run tests
         id: run-tests
         run: |
-          python -m pytest tests/ -v --cov=plainspeak --cov-report=term-missing
+          # Run tests and capture output
+          python -m pytest tests/ -v --cov=plainspeak --cov-report=term-missing 2>&1 | tee test_output.log
+          
+          # Store exit code
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         continue-on-error: true
       
       - name: Create test report
         if: always()
         run: |
-          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "Version: ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
-          
-          # Get test exit code from previous step
-          if [ "${{ steps.run-tests.outcome }}" = "success" ]; then
-            echo "✅ Tests passed successfully" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Some tests failed" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "See above for detailed test output and coverage report." >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Test Results"
+            echo "Version: ${{ github.event.inputs.version }}"
+            echo ""
+            
+            if [ "${{ steps.run-tests.outputs.exit_code }}" = "0" ]; then
+              echo "✅ Tests passed successfully"
+            else
+              echo "❌ Some tests failed"
+            fi
+            
+            echo ""
+            echo "### Detailed Test Output"
+            echo "\`\`\`"
+            cat test_output.log
+            echo "\`\`\`"
+            
+          } >> $GITHUB_STEP_SUMMARY
