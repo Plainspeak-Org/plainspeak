@@ -4,7 +4,7 @@ Pydantic schemas for PlainSpeak plugins.
 This module defines the schemas used for plugin configuration validation.
 """
 from typing import Dict, List, Optional, Union, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 import re
 
 
@@ -31,7 +31,7 @@ class CommandConfig(BaseModel):
         description="Optional arguments with their default values"
     )
 
-    @validator('template')
+    @field_validator('template')
     def validate_template(cls, v: str) -> str:
         """Validate that the template contains valid placeholder syntax."""
         # Check for basic Jinja2 variable syntax
@@ -45,7 +45,7 @@ class PluginManifest(BaseModel):
     name: str = Field(
         ...,
         description="Unique name of the plugin",
-        regex=r'^[a-zA-Z][a-zA-Z0-9_-]*$'
+        pattern=r'^[a-zA-Z][a-zA-Z0-9_-]*$'
     )
     description: str = Field(
         ...,
@@ -54,7 +54,7 @@ class PluginManifest(BaseModel):
     version: str = Field(
         ...,
         description="Plugin version (semver)",
-        regex=r'^\d+\.\d+\.\d+$'
+        pattern=r'^\d+\.\d+\.\d+$'
     )
     author: str = Field(
         ...,
@@ -76,10 +76,10 @@ class PluginManifest(BaseModel):
     entrypoint: str = Field(
         ...,
         description="Python import path to the plugin class",
-        regex=r'^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$'
+        pattern=r'^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$'
     )
 
-    @validator('verbs')
+    @field_validator('verbs')
     def validate_verbs(cls, v: List[str]) -> List[str]:
         """Validate that verbs are lowercase and contain no spaces."""
         for verb in v:
@@ -89,7 +89,7 @@ class PluginManifest(BaseModel):
                 )
         return v
 
-    @validator('commands')
+    @field_validator('commands')
     def validate_commands(cls, v: Dict[str, CommandConfig], values: Dict[str, Any]) -> Dict[str, CommandConfig]:
         """Validate that all verbs have corresponding commands."""
         if 'verbs' in values:

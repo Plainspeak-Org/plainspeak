@@ -13,7 +13,7 @@ from .prompts import get_shell_command_prompt
 from .context import session_context
 from .plugins.manager import plugin_manager
 from .learning import learning_store, FeedbackEntry
-from .ast import ast_builder, Command, Pipeline
+from .ast import ast_builder, Command, Pipeline, CommandType, ArgumentType
 
 
 class CommandParser:

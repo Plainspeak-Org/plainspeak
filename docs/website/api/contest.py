@@ -4,9 +4,10 @@ Contest API Backend for PlainSpeak Plugin Development Contest.
 import os
 from datetime import datetime
 from typing import Dict, List, Optional
+import uuid
 from pydantic import BaseModel, EmailStr, HttpUrl
 from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
-from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Text
+from sqlalchemy import create_engine, Column, String, DateTime, Boolean, Text, Float, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from github import Github, GithubException
@@ -16,6 +17,15 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./contest.db")
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+# Placeholder email functions - IMPLEMENT THESE
+async def send_registration_confirmation(email: str, name: str, participant_id: str):
+    """Placeholder for sending registration confirmation."""
+    print(f"Registration confirmation for {name} ({email}, ID: {participant_id}) - implement actual sending")
+
+async def send_submission_confirmation(email: str, name: str):
+    """Placeholder for sending submission confirmation."""
+    print(f"Submission confirmation for {name} ({email}) - implement actual sending")
 
 # Models
 class Participant(Base):

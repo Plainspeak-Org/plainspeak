@@ -4,15 +4,18 @@ pytest-cov>=4.1.0
 pytest-mock>=3.11.1
 pytest-check>=2.2.0  # Multiple assertions per test
 
+# Core Dependencies
+Pillow>=10.0.0     # For image handling
+ctransformers>=0.2.5  # LLM interface
+pandas>=2.0.0      # Data handling
+PyYAML>=6.0        # YAML parsing
+icalendar>=5.0.0   # Calendar operations
+keyring>=24.0.0    # Secure storage
+
 # Code Quality
 black>=23.7.0      # Code formatting
 flake8>=6.1.0      # Code linting
 mypy>=1.5.1        # Type checking
 
 # Optional Dependencies (comment out if not needed)
-# Pillow>=10.0.0     # For image testing
-# pytest-image>=0.1.1  # Image comparison utilities
 # lxml>=4.9.3        # For SVG validation if xmllint not available
-
-# Asset Generation (comment out if not needed)
-# -r ../scripts/requirements-assets.txt

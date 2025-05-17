@@ -7,6 +7,7 @@ and an interactive REPL mode for continuous command translation.
 import sys
 from typing import Optional
 import typer
+from pathlib import Path
 from cmd2 import Cmd, Cmd2ArgumentParser, with_argparser
 from rich.console import Console
 from rich.panel import Panel
