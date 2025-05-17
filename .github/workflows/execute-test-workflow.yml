@@ -8,6 +8,12 @@ on:
         required: true
         default: '0.1.0-test1'
 
+# Prevent multiple workflow runs from interfering with each other
+concurrency:
+  # Use the version input to ensure each test run is unique
+  group: ${{ github.workflow }}-${{ github.event.inputs.version }}
+  cancel-in-progress: true
+
 permissions:
   # Needed for checking out code, creating releases, etc.
   contents: write
