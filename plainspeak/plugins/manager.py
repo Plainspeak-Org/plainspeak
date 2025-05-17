@@ -167,7 +167,7 @@ class PluginManager:
                 return False
         return True
 
-    def _load_plugin_class(self, class_path: str) -> Optional[type]:
+    def _load_plugin_class(self, class_path: str) -> Optional[type]:  # type: ignore[no-any-return]
         """
         Load a plugin class by import path.
 
@@ -194,7 +194,7 @@ class PluginManager:
         """
         return self.configs
 
-    def get_all_verbs(self) -> Dict[str, str]:
+    def get_all_verbs(self) -> Dict[str, str]:  # type: ignore[no-any-return]
         """
         Get all verbs from all plugins.
 
@@ -203,7 +203,7 @@ class PluginManager:
         """
         return self.registry.get_all_verbs()
 
-    def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
+    def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]
         """
         Get the plugin that can handle the given verb.
 

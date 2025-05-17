@@ -194,6 +194,28 @@ class LLMInterface:
             print(f"Error during text generation: {e}", file=sys.stderr)
             return None
 
+    def generate_command(self, input_text: str) -> Optional[str]:
+        """
+        Generate a shell command from natural language input.
+
+        This is a convenience wrapper around generate() that formats the prompt
+        for command generation.
+
+        Args:
+            input_text: Natural language description of the desired command
+
+        Returns:
+            The generated command or None if generation failed
+        """
+        # Create a simple prompt for command generation
+        prompt = f"""Generate a shell command that accomplishes the following task:
+{input_text}
+
+Return just the command with no explanation or markdown."""
+
+        # Generate using default parameters
+        return self.generate(prompt)
+
 
 if __name__ == "__main__":
     print("Attempting to initialize LLMInterface using app_config...")

@@ -87,17 +87,19 @@ class AppConfig(BaseModel):
     """Main application configuration."""
 
     # Use a proper default factory to create a new LLMConfig instance
-    llm: LLMConfig = Field(default_factory=lambda: LLMConfig(
-        model_path=DEFAULT_MODEL_FILE_PATH,
-        model_type="llama",
-        gpu_layers=0,
-        max_new_tokens=100,
-        temperature=0.2,
-        top_k=50,
-        top_p=0.9,
-        repetition_penalty=1.1,
-        stop=["\n"]
-    ))
+    llm: LLMConfig = Field(
+        default_factory=lambda: LLMConfig(
+            model_path=DEFAULT_MODEL_FILE_PATH,
+            model_type="llama",
+            gpu_layers=0,
+            max_new_tokens=100,
+            temperature=0.2,
+            top_k=50,
+            top_p=0.9,
+            repetition_penalty=1.1,
+            stop=["\n"],
+        )
+    )
     # Add other app-level configs here, e.g., log_level, etc.
 
 

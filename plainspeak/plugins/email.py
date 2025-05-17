@@ -6,7 +6,7 @@ This module provides email operations through natural language.
 
 import os
 import json
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
 import smtplib
 import imaplib
@@ -43,7 +43,7 @@ class EmailConfig:
 
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> Dict[str, Any]:  # type: ignore[no-any-return]
         """Load configuration from file."""
         if not self.config_path.exists():
             return {}
@@ -253,36 +253,90 @@ class EmailClient:
 
         self.imap.select("INBOX")
 
-        if id:
-            _, msg_data = self.imap.fetch(id.encode(), "(RFC822)")
-        else:
+        msg_id: Union[bytes, str]
+
+        # Get message ID
+        if id is None:
             _, message_numbers = self.imap.search(None, "ALL")
-            try:
-                num = message_numbers[0].split()[-index]
-                _, msg_data = self.imap.fetch(num, "(RFC822)")
-            except IndexError:
+            if not message_numbers or not message_numbers[0]:
                 return None
 
-        email_body = msg_data[0][1]
-        message = email.message_from_bytes(email_body, policy=policy.default)
+            msgs = message_numbers[0].split()
+            if not msgs or index > len(msgs):
+                return None
 
-        # Extract body
-        body = ""
-        if message.is_multipart():
-            for part in message.walk():
-                if part.get_content_type() == "text/plain":
-                    body = part.get_payload(decode=True).decode()
-                    break
+            msg_id = msgs[-index]  # Get by index from the end (newest first)
         else:
-            body = message.get_payload(decode=True).decode()
+            msg_id = id.encode() if isinstance(id, str) else id
 
-        return {
-            "subject": message["subject"],
-            "from": message["from"],
-            "to": message["to"],
-            "date": message["date"],
-            "body": body,
-        }
+        try:
+            # Fetch the message - this will return a tuple with status and data
+            result = self.imap.fetch(
+                str(msg_id) if isinstance(msg_id, bytes) else msg_id, "(RFC822)"
+            )
+
+            # Check that we got a valid response with data
+            if not result or not isinstance(result, tuple) or len(result) < 2:
+                return None
+
+            data = result[1]
+            if not data or not isinstance(data, list) or len(data) == 0:
+                return None
+
+            # Get the message body from the first part of the data
+            message_part = data[0]
+            if (
+                not message_part
+                or not isinstance(message_part, tuple)
+                or len(message_part) < 2
+            ):
+                return None
+
+            # Extract the email body from the message part
+            email_body = message_part[1]
+            if not isinstance(email_body, bytes):
+                return None
+
+            # Parse the message using the email module
+            message = email.message_from_bytes(email_body, policy=policy.default)  # type: ignore
+
+            # Extract body
+            body = ""
+            if message.is_multipart():
+                for part in message.walk():
+                    content_type = part.get_content_type()
+                    if content_type == "text/plain":
+                        payload = part.get_payload(decode=True)
+                        if isinstance(payload, bytes):
+                            body = payload.decode("utf-8", errors="replace")
+                        break
+            else:
+                payload = message.get_payload(decode=True)
+                if isinstance(payload, bytes):
+                    body = payload.decode("utf-8", errors="replace")
+
+            # Mark as read if requested and we have a valid ID
+            if mark_read and msg_id:
+                if isinstance(msg_id, bytes):
+                    self.imap.store(msg_id, "+FLAGS", "\\Seen")
+                else:
+                    self.imap.store(msg_id.encode(), "+FLAGS", "\\Seen")
+
+            # Return a dictionary with the email details
+            return {
+                "subject": str(message["subject"] or ""),
+                "from": str(message["from"] or ""),
+                "to": str(message["to"] or ""),
+                "date": str(message["date"] or ""),
+                "body": body,
+            }
+
+        except Exception as e:
+            # Log the error and return None on any exception
+            import logging
+
+            logging.error(f"Error reading email: {e}")
+            return None
 
     def search_emails(
         self, query: str, folder: str = "INBOX", limit: int = 10

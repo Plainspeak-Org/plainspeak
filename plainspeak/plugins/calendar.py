@@ -49,7 +49,10 @@ class CalendarStore:
     def _load_calendar(self) -> None:
         """Load calendar from file."""
         with open(self.calendar_file, "rb") as f:
-            self.calendar = icalendar.Calendar.from_ical(f.read())
+            calendar_bytes = f.read()
+            # Convert bytes to string for from_ical
+            calendar_str = calendar_bytes.decode("utf-8", errors="replace")
+            self.calendar = icalendar.Calendar.from_ical(calendar_str)
 
     def _save_calendar(self) -> None:
         """Save calendar to file."""
@@ -277,7 +280,10 @@ class CalendarStore:
 
         try:
             with open(file_path, "rb") as f:
-                imported_cal = icalendar.Calendar.from_ical(f.read())
+                imported_bytes = f.read()
+                # Convert bytes to string for from_ical
+                imported_str = imported_bytes.decode("utf-8", errors="replace")
+                imported_cal = icalendar.Calendar.from_ical(imported_str)
 
             count = 0
             for component in imported_cal.walk("VEVENT"):

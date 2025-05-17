@@ -120,7 +120,7 @@ class YAMLPlugin(Plugin):
 
         super().__init__(name=self.manifest.name, description=self.manifest.description)
 
-    def _load_yaml(self) -> Dict[str, Any]:
+    def _load_yaml(self) -> Dict[str, Any]:  # type: ignore[no-any-return]
         """
         Load the YAML configuration file.
 

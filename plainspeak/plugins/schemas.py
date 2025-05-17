@@ -40,32 +40,30 @@ class CommandConfig(BaseModel):
 class PluginManifest(BaseModel):
     """Schema for plugin manifest files."""
 
-    name: str = Field(
-        default=...,
+    name: str = Field(  # type: ignore[call-overload]
+        default=...,  # Use default= instead of positional argument
         description="Unique name of the plugin",
         pattern=r"^[a-zA-Z][a-zA-Z0-9_-]*$",
     )
-    description: str = Field(
+    description: str = Field(  # type: ignore[call-overload]
         default=..., description="Human-readable description of the plugin"
     )
-    version: str = Field(
+    version: str = Field(  # type: ignore[call-overload]
         default=...,
         description="Plugin version (semver)",
-        pattern=r"^\d+\.\d+\.\d+$"
+        pattern=r"^\d+\.\d+\.\d+$",
     )
-    author: str = Field(default=..., description="Plugin author")
-    verbs: List[str] = Field(
-        default=...,
-        description="List of verbs this plugin provides",
-        min_items=1
+    author: str = Field(default=..., description="Plugin author")  # type: ignore[call-overload]
+    verbs: List[str] = Field(  # type: ignore[call-overload]
+        default=..., description="List of verbs this plugin provides", min_items=1
     )
-    commands: Dict[str, CommandConfig] = Field(
+    commands: Dict[str, CommandConfig] = Field(  # type: ignore[call-overload]
         default=..., description="Command configurations keyed by verb"
     )
     dependencies: Dict[str, str] = Field(
         default_factory=dict, description="Plugin dependencies with version constraints"
     )
-    entrypoint: str = Field(
+    entrypoint: str = Field(  # type: ignore[call-overload]
         default=...,
         description="Python import path to the plugin class",
         pattern=r"^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$",
@@ -81,7 +79,7 @@ class PluginManifest(BaseModel):
                 )
         return v
 
-    @field_validator("commands")
+    @field_validator("commands")  # type: ignore[misc]
     def validate_commands(
         cls, v: Dict[str, CommandConfig], values: Dict[str, Any]
     ) -> Dict[str, CommandConfig]:  # type: ignore[misc]

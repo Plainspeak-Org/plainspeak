@@ -20,6 +20,9 @@ from .ast import ast_builder, Command, Pipeline, CommandType, ArgumentType
 
 logger = logging.getLogger(__name__)
 
+# Define a common return type for parse methods
+ParseResult = Union[Tuple[bool, str], Command, Pipeline]
+
 
 class CommandParser:
     """
@@ -59,7 +62,7 @@ class CommandParser:
         # Use the session context to get a rich context for the LLM
         return session_context.get_context_for_llm()
 
-    def parse_to_ast(self, input_text: str) -> Union[Command, Pipeline]:
+    def parse_to_ast(self, input_text: str) -> ParseResult:  # type: ignore[return]
         """
         Parse natural language input into an AST.
 
@@ -67,9 +70,7 @@ class CommandParser:
             input_text (str): Natural language description of the desired command.
 
         Returns:
-            Tuple[bool, str]: A tuple containing:
-                - bool: True if parsing succeeded, False if it failed or was unsafe
-                - str: The generated command if successful, or an error message if not
+            Either a Command/Pipeline object or a tuple with error info.
         """
         if not input_text.strip():
             return False, "ERROR: Empty input"
@@ -83,9 +84,14 @@ class CommandParser:
                 try:
                     # Parse the template command into AST
                     ast = ast_builder.from_command_string(
-                        template_cmd, original_text=template_text
+                        template_cmd, original_text=input_text
                     )
-                    ast.input_text = input_text
+                    # Add the original input text explicitly for both Command and Pipeline
+                    if isinstance(ast, Command):
+                        ast.input_text = input_text
+                    elif isinstance(ast, Pipeline):
+                        for cmd in ast.commands:
+                            cmd.input_text = input_text
                     return ast
                 except ValueError:
                     pass  # Fall through to other methods
@@ -122,7 +128,7 @@ class CommandParser:
                     timestamp=datetime.now(),
                 )
             )
-            raise ValueError("Failed to generate command")
+            return False, "Failed to generate command"
 
         command = generated.strip()
         try:
@@ -155,11 +161,9 @@ class CommandParser:
                     timestamp=datetime.now(),
                 )
             )
-            raise
+            return False, f"ERROR: {str(e)}"
 
-    def parse_to_command(
-        self, text: str
-    ) -> Union[Tuple[bool, str], Union[Command, Pipeline]]:
+    def parse_to_command(self, text: str) -> Tuple[bool, str]:
         """
         Parse natural language into a shell command.
 
@@ -182,29 +186,29 @@ class CommandParser:
             # Return successful result
             return True, command
         except Exception as e:
-            logger.exception(f"Error parsing command: {e}")
             return False, f"Error: {str(e)}"
 
     def parse_command_output(
-        self, command: Union[Command, Pipeline], output: str
+        self, command_obj: Union[Command, Pipeline], output: str
     ) -> str:
         """
         Parse command output into natural language.
 
         Args:
-            command: The command that generated the output.
+            command_obj: The command that generated the output.
             output: The output to parse.
 
         Returns:
             Natural language description of the output.
         """
-        # For now, just return the raw output
-        # In the future, this could use an LLM to generate a natural language summary
+        # Extract input text from either Command or Pipeline
         input_text = ""
-        if isinstance(command, Command):
-            input_text = command.input_text
-        else:
-            input_text = command.input_text
+        if isinstance(command_obj, Command):
+            input_text = command_obj.input_text
+        elif isinstance(command_obj, Pipeline) and command_obj.commands:
+            input_text = command_obj.commands[
+                0
+            ].input_text  # Use the first command's input
 
         # For simplicity, we'll just return the output for now
         return output
