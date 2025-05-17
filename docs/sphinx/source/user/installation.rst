@@ -88,11 +88,11 @@ Platform-Specific Instructions
 macOS
 ~~~~~
 
-1. Install Python 3.9+ using Homebrew:
+1. Install Python 3.11+ using Homebrew:
 
    .. code-block:: bash
 
-      brew install python@3.9
+      brew install python@3.11
 
 2. Install PlainSpeak:
 
@@ -103,12 +103,12 @@ macOS
 Linux (Ubuntu/Debian)
 ~~~~~~~~~~~~~~~~~~~~
 
-1. Install Python 3.9+ and dependencies:
+1. Install Python 3.11+ and dependencies:
 
    .. code-block:: bash
 
       sudo apt update
-      sudo apt install python3.9 python3.9-dev python3-pip
+      sudo apt install python3.11 python3.11-dev python3-pip
 
 2. Install PlainSpeak:
 
@@ -119,7 +119,7 @@ Linux (Ubuntu/Debian)
 Windows
 ~~~~~~~
 
-1. Install Python 3.9+ from the `official website <https://www.python.org/downloads/>`_.
+1. Install Python 3.11+ from the `official website <https://www.python.org/downloads/>`_.
 
 2. Install PlainSpeak:
 
@@ -174,6 +174,6 @@ Other Issues
 If you encounter other issues:
 
 1. Check that all dependencies are installed
-2. Ensure you're using Python 3.9 or higher
+2. Ensure you're using Python 3.11 or higher
 3. Check the logs in ~/.config/plainspeak/logs (if available)
 4. Report issues on the GitHub repository

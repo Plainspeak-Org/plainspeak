@@ -24,7 +24,7 @@ The easiest way to install PlainSpeak is through platform-specific package manag
 
 ### Option 2: Python Package (pip)
 
-For any platform with Python 3.9+:
+For any platform with Python 3.11+:
 
 ```bash
 pip install plainspeak
@@ -36,14 +36,14 @@ Download pre-built binaries from our [releases page](https://github.com/cschanhn
 
 ## System Requirements
 
-- **Operating System**: 
+- **Operating System**:
   - macOS 10.13 (High Sierra) or later
   - Windows 10 or later
   - Linux (major distributions)
 - **CPU**: x86_64 or ARM64 processor
 - **RAM**: 8 GB minimum (16 GB recommended)
 - **Storage**: 500 MB for installation + 1-4 GB for language models
-- **Python**: 3.9 or later (if installing via pip)
+- **Python**: 3.11 or later (if installing via pip)
 
 ## After Installation
 
@@ -61,4 +61,4 @@ If you encounter any issues during installation, please refer to:
 - [Frequently Asked Questions](../faq/installation.md)
 - [GitHub Issues](https://github.com/cschanhniem/plainspeak/issues) for known problems
 
-For additional help, join our [community forum](https://github.com/cschanhniem/plainspeak/discussions). 
+For additional help, join our [community forum](https://github.com/cschanhniem/plainspeak/discussions).

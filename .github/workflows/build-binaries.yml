@@ -10,33 +10,33 @@ jobs:
   build-windows:
     name: Build Windows Binary
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install poetry
         poetry install
         poetry install pyinstaller upx
-        
+
     - name: Build binary
       run: |
         pyinstaller plainspeak.spec
-        
+
     - name: Run binary tests
       run: |
         pip install psutil pytest
         cd tests/binaries
         pytest test_binary.py -v
-        
+
     - name: Sign Binary
       env:
         CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
@@ -52,7 +52,7 @@ jobs:
     - name: Sign Installer
       run: |
         signtool sign /f certificate.pfx /p $CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "dist\PlainSpeak-Setup.exe"
-        
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -64,16 +64,16 @@ jobs:
   build-macos:
     name: Build macOS Binary
     runs-on: macos-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
         cache: 'pip'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -81,17 +81,17 @@ jobs:
         poetry install
         poetry install pyinstaller
         brew install upx create-dmg
-        
+
     - name: Build binary
       run: |
         pyinstaller plainspeak.spec
-        
+
     - name: Run binary tests
       run: |
         pip install psutil pytest
         cd tests/binaries
         pytest test_binary.py -v
-        
+
     - name: Sign and Notarize App
       env:
         APPLE_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
@@ -105,14 +105,14 @@ jobs:
         echo $APPLE_CERTIFICATE | base64 -d > certificate.p12
         security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
         security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-        
+
         # Sign app bundle
         codesign --force --sign "Developer ID Application: PlainSpeak Organization" \
                 --options runtime \
                 --entitlements "installers/macos/entitlements.plist" \
                 --timestamp \
                 "dist/PlainSpeak.app"
-        
+
         # Notarize
         ditto -c -k --keepParent "dist/PlainSpeak.app" "dist/PlainSpeak.zip"
         xcrun notarytool submit "dist/PlainSpeak.zip" \
@@ -136,7 +136,7 @@ jobs:
           --app-drop-link 600 185 \
           "dist/PlainSpeak.dmg" \
           "dist/PlainSpeak.app"
-        
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -150,11 +150,11 @@ jobs:
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    
+
     steps:
     - name: Download all artifacts
       uses: actions/download-artifact@v3
-      
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -165,7 +165,7 @@ jobs:
         release_name: PlainSpeak ${{ github.ref }}
         draft: true
         prerelease: false
-        
+
     - name: Upload Windows Release Asset
       uses: actions/upload-release-asset@v1
       env:
@@ -175,7 +175,7 @@ jobs:
         asset_path: ./windows-binary/PlainSpeak-Setup.exe
         asset_name: PlainSpeak-Setup.exe
         asset_content_type: application/octet-stream
-        
+
     - name: Upload macOS Release Asset
       uses: actions/upload-release-asset@v1
       env:
@@ -185,12 +185,12 @@ jobs:
         asset_path: ./macos-binary/PlainSpeak.dmg
         asset_name: PlainSpeak.dmg
         asset_content_type: application/octet-stream
-        
+
     - name: Generate Checksums
       run: |
         cd windows-binary && sha256sum PlainSpeak-Setup.exe > windows.sha256
         cd ../macos-binary && sha256sum PlainSpeak.dmg > macos.sha256
-        
+
     - name: Upload Checksums
       uses: actions/upload-release-asset@v1
       env:
@@ -200,7 +200,7 @@ jobs:
         asset_path: ./windows-binary/windows.sha256
         asset_name: windows.sha256
         asset_content_type: text/plain
-      
+
     - name: Upload Checksums (macOS)
       uses: actions/upload-release-asset@v1
       env:

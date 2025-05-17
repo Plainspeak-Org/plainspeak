@@ -37,7 +37,7 @@ PlainSpeak is a revolutionary natural language interface that transforms how you
 
 **Technical Details:**
 • Runs on Windows 10 and newer
-• Requires Python 3.9+
+• Requires Python 3.11+
 • Minimal system resource usage
 • Extensive plugin API
 • MIT Licensed
@@ -102,7 +102,7 @@ support@plainspeak.org
 - Processor: Dual Core 2.0 GHz
 - Memory: 4 GB RAM
 - Storage: 500 MB available space
-- Python 3.9 or newer
+- Python 3.11 or newer
 
 ### Recommended
 - OS: Windows 11 (64-bit)

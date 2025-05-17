@@ -6,15 +6,15 @@ This module provides calendar operations through natural language.
 
 import os
 import json
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, List, Any, Optional, Union, cast
 from pathlib import Path
 from datetime import datetime, date, timedelta
 import uuid
-import icalendar
-from dateutil.parser import parse as parse_date
-from dateutil.relativedelta import relativedelta
+import icalendar  # type: ignore[import-untyped]
+from dateutil.parser import parse as parse_date  # type: ignore[import-untyped]
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 import re
-import pytz
+import pytz  # type: ignore[import-untyped]
 
 from .base import Plugin, registry, YAMLPlugin
 from .platform import platform_manager
@@ -290,6 +290,27 @@ class CalendarStore:
 
         except Exception as e:
             raise ValueError(f"Failed to import calendar: {str(e)}")
+
+    def _format_event_time(
+        self, start: Union[str, datetime], end: Optional[Union[str, datetime]] = None
+    ) -> str:
+        """Format event time for display."""
+        if isinstance(start, str):
+            start = parse_date(start)
+
+        if end is None:
+            return start.strftime("%Y-%m-%d %H:%M")
+
+        if isinstance(end, str):
+            end = parse_date(end)
+
+        # Now both start and end are datetime objects
+        if start.date() == end.date():
+            return f"{start.strftime('%Y-%m-%d %H:%M')} - {end.strftime('%H:%M')}"
+        else:
+            return (
+                f"{start.strftime('%Y-%m-%d %H:%M')} - {end.strftime('%Y-%m-%d %H:%M')}"
+            )
 
 
 class CalendarPlugin(YAMLPlugin):

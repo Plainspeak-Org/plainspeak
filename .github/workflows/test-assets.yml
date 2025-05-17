@@ -19,7 +19,7 @@ jobs:
   test-assets:
     name: Validate Assets
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install system dependencies
@@ -53,11 +53,11 @@ jobs:
           # Check PNG optimization
           find assets -name "*.png" -exec identify -format "%f: %Q\n" {} \; | \
             awk '$2 < 85 {print "Warning: Low quality PNG: " $0}'
-          
+
           # Check file sizes
           find assets -name "*.png" -size +500k | \
             awk '{print "Warning: Large file: " $0}'
-          
+
           # Check color profiles
           find assets -name "*.png" -exec identify -verbose {} \; | \
             grep -A 1 "Colorspace:" | \
@@ -73,12 +73,12 @@ jobs:
           echo "# Asset Validation Report" > asset-report.md
           echo "## Test Results" >> asset-report.md
           pytest tests/test_assets.py --quiet >> asset-report.md
-          
+
           echo "## File Statistics" >> asset-report.md
           echo "\`\`\`" >> asset-report.md
           find assets -type f -exec file {} \; >> asset-report.md
           echo "\`\`\`" >> asset-report.md
-          
+
           echo "## Size Report" >> asset-report.md
           echo "\`\`\`" >> asset-report.md
           find assets -type f -exec du -h {} \; >> asset-report.md

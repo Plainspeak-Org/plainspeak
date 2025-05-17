@@ -18,7 +18,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import getpass
-import keyring
+import keyring  # type: ignore
 import re
 
 from .base import Plugin, registry, YAMLPlugin

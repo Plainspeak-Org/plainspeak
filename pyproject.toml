@@ -9,7 +9,7 @@ repository = "https://github.com/cschanhniem/plainspeak"
 keywords = ["nlp", "cli", "automation", "llm"]
 
 [tool.poetry.dependencies]
-python = "^3.9" # Specify a compatible Python version, e.g., 3.9+
+python = "^3.11" # Specify a compatible Python version, e.g., 3.11+
 
 cmd2 = "^2.4.3"
 # ctransformers is a core dependency.
@@ -49,14 +49,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 88
-target-version = ['py39']
+target-version = ['py311']
 
 [tool.flake8]
 max-line-length = 88
 extend-ignore = "E203" # Whitespace before ':' - often conflicts with Black
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 # Add more mypy configurations as needed

@@ -33,7 +33,7 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.11 or higher
 - Poetry (for dependency management)
 - Git
 
@@ -189,16 +189,16 @@ Use Google-style docstrings:
 def function_name(param1: type, param2: type) -> return_type:
     """
     Short description of the function.
-    
+
     Longer description if needed.
-    
+
     Args:
         param1: Description of param1
         param2: Description of param2
-        
+
     Returns:
         Description of return value
-        
+
     Raises:
         ExceptionType: When and why this exception is raised
     """
@@ -221,10 +221,10 @@ from .base import Plugin, registry
 class MyPlugin(Plugin):
     def __init__(self):
         super().__init__("my-plugin", "My custom plugin")
-        
+
     def get_verbs(self):
         return ["my-verb", "another-verb"]
-        
+
     def generate_command(self, verb, args):
         if verb == "my-verb":
             return f"echo 'My verb with args: {args}'"

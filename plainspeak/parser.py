@@ -6,8 +6,10 @@ using the LLM interface and prompt templates.
 """
 
 import time
-from typing import Optional, Dict, Any, Tuple, Union
+from typing import Optional, Dict, Any, Tuple, Union, List, cast
 from datetime import datetime
+import logging
+from pathlib import Path
 
 from .llm_interface import LLMInterface
 from .prompts import get_shell_command_prompt
@@ -15,6 +17,8 @@ from .context import session_context
 from .plugins.manager import plugin_manager
 from .learning import learning_store, FeedbackEntry
 from .ast import ast_builder, Command, Pipeline, CommandType, ArgumentType
+
+logger = logging.getLogger(__name__)
 
 
 class CommandParser:
@@ -153,38 +157,54 @@ class CommandParser:
             )
             raise
 
-    def parse_to_command(self, input_text: str) -> Tuple[bool, str]:
+    def parse_to_command(
+        self, text: str
+    ) -> Union[Tuple[bool, str], Union[Command, Pipeline]]:
         """
-        Parse natural language input into a shell command.
+        Parse natural language into a shell command.
 
-        This is the legacy interface, using the new AST-based parsing internally.
+        Args:
+            text: The natural language description.
+
+        Returns:
+            A tuple of (success, result) where result is either a command or error message.
         """
+        # Sanitize input
+        if not text.strip():
+            return False, "Error: Empty input"
+
         try:
-            ast = self.parse_to_ast(input_text)
-            if isinstance(ast, Pipeline):
-                # Join pipeline commands with pipes
-                return True, " | ".join(
-                    plugin_manager.generate_command(
-                        cmd.name, {arg.name: arg.value for arg in cmd.args if arg.name}
-                    )[1]
-                    for cmd in ast.commands
-                )
-            elif isinstance(ast, Command):
-                if ast.type == CommandType.PLUGIN:
-                    # Use plugin to generate final command
-                    return plugin_manager.generate_command(
-                        ast.name, {arg.name: arg.value for arg in ast.args if arg.name}
-                    )
-                else:
-                    # Reconstruct shell command
-                    cmd_parts = [ast.name]
-                    for arg in ast.args:
-                        if arg.type == ArgumentType.OPTION:
-                            cmd_parts.append(f"--{arg.name}={arg.value}")
-                        elif arg.type == ArgumentType.FLAG:
-                            cmd_parts.append(f"-{arg.value}")
-                        else:
-                            cmd_parts.append(str(arg.value))
-                    return True, " ".join(cmd_parts)
-        except ValueError as e:
-            return False, f"ERROR: {str(e)}"
+            # Generate command using LLM
+            command = self.llm.generate_command(text)
+            if not command:
+                return False, "Error: Failed to generate command"
+
+            # Return successful result
+            return True, command
+        except Exception as e:
+            logger.exception(f"Error parsing command: {e}")
+            return False, f"Error: {str(e)}"
+
+    def parse_command_output(
+        self, command: Union[Command, Pipeline], output: str
+    ) -> str:
+        """
+        Parse command output into natural language.
+
+        Args:
+            command: The command that generated the output.
+            output: The output to parse.
+
+        Returns:
+            Natural language description of the output.
+        """
+        # For now, just return the raw output
+        # In the future, this could use an LLM to generate a natural language summary
+        input_text = ""
+        if isinstance(command, Command):
+            input_text = command.input_text
+        else:
+            input_text = command.input_text
+
+        # For simplicity, we'll just return the output for now
+        return output

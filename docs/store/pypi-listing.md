@@ -5,7 +5,7 @@
 **Name:** plainspeak
 **Version:** 0.1.0
 **License:** MIT
-**Python Versions:** >=3.9
+**Python Versions:** >=3.11
 **Platform:** Any
 
 ## Package Description
@@ -92,7 +92,7 @@ Natural Language → Command Translation:
 
 ## Requirements
 
-- Python 3.9 or newer
+- Python 3.11 or newer
 - 4 GB RAM recommended
 - 500 MB disk space
 
@@ -128,9 +128,8 @@ classifiers=[
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Shells",
     "Topic :: Utilities",
@@ -216,7 +215,7 @@ name = "plainspeak"
 version = "0.1.0"
 description = "Natural language interface for computing"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 keywords = ["natural language", "cli", "shell", "automation"]
 authors = [

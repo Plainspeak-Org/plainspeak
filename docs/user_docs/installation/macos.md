@@ -7,7 +7,7 @@ This guide will walk you through installing PlainSpeak on your macOS system.
 Before installing PlainSpeak, ensure you have the following:
 
 - macOS 10.13 (High Sierra) or later
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip (Python package installer)
 
 ## Installation Methods
@@ -29,11 +29,11 @@ brew install plainspeak
 You can also install PlainSpeak using pip:
 
 ```bash
-# Make sure you have Python 3.9+ installed
+# Make sure you have Python 3.11+ installed
 python3 --version
 
 # If needed, install Python using Homebrew
-brew install python@3.9
+brew install python@3.11
 
 # Install PlainSpeak
 pip3 install plainspeak
@@ -142,4 +142,4 @@ For Metal acceleration problems:
 
 - Explore the [Getting Started Guide](../getting_started/first_session.md) to learn how to use PlainSpeak
 - Try out some [example commands](../guides/examples.md)
-- Learn about [available plugins](../plugins/overview.md) 
+- Learn about [available plugins](../plugins/overview.md)

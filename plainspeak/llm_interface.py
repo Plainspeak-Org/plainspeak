@@ -9,7 +9,7 @@ It uses the global application configuration for model paths and parameters.
 import sys
 import os
 from pathlib import Path
-from ctransformers import AutoModelForCausalLM
+from ctransformers import AutoModelForCausalLM  # type: ignore[import-untyped]
 from typing import Optional, List, Dict, Any
 from .config import app_config
 
@@ -188,7 +188,8 @@ class LLMInterface:
             }
 
             result = self.model.generate(prompt, **full_generation_params)
-            return result
+            # Ensure we return a string or None
+            return str(result) if result is not None else None
         except Exception as e:
             print(f"Error during text generation: {e}", file=sys.stderr)
             return None

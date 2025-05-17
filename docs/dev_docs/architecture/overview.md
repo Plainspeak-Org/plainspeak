@@ -45,7 +45,7 @@ graph TD
 
 **Purpose:** Transforms natural language into a structured representation.
 
-**Implementation:** 
+**Implementation:**
 - Uses a local LLM (Language Model) such as MiniCPM or Llama variants
 - Implemented using `ctransformers` for efficient inference
 - Enhanced with rule-based post-processing for improved accuracy
@@ -165,10 +165,10 @@ class Plugin:
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
-        
+
     def get_verbs(self) -> List[str]:
         """Return verbs this plugin handles."""
-        
+
     def process_intent(self, intent: Intent) -> CommandResult:
         """Process an intent and return a command result."""
 ```
@@ -260,7 +260,7 @@ PlainSpeak's architecture embodies several key design principles:
 
 ## Technology Stack
 
-- **Primary Language:** Python 3.9+
+- **Primary Language:** Python 3.11+
 - **LLM Inference:** `ctransformers` with GGUF models
 - **REPL Shell:** `cmd2`
 - **Template System:** `Jinja2`

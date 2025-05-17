@@ -7,7 +7,7 @@ This guide will walk you through installing PlainSpeak on your Windows system.
 Before installing PlainSpeak, ensure you have the following:
 
 - Windows 10 or later
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip (Python package installer)
 
 ## Installation Methods
@@ -30,7 +30,7 @@ Before installing PlainSpeak, ensure you have the following:
 You can also install PlainSpeak using pip:
 
 ```cmd
-# Make sure you have Python 3.9+ installed
+# Make sure you have Python 3.11+ installed
 python --version
 
 # If needed, download and install Python from python.org
@@ -120,7 +120,7 @@ If Windows cannot find the `plainspeak` command:
 
 1. Make sure Python is in your PATH: `echo %PATH%`
 2. Reinstall Python and select "Add Python to PATH" during installation
-3. Try running with the full path: `%USERPROFILE%\AppData\Local\Programs\Python\Python39\Scripts\plainspeak.exe`
+3. Try running with the full path: `%USERPROFILE%\AppData\Local\Programs\Python\Python311\Scripts\plainspeak.exe`
 
 ### GPU Acceleration Issues
 
@@ -135,4 +135,4 @@ For CUDA acceleration problems:
 
 - Explore the [Getting Started Guide](../getting_started/first_session.md) to learn how to use PlainSpeak
 - Try out some [example commands](../guides/examples.md)
-- Learn about [available plugins](../plugins/overview.md) 
+- Learn about [available plugins](../plugins/overview.md)

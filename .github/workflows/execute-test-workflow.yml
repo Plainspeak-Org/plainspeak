@@ -23,13 +23,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -45,7 +45,7 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Contents of plainspeak/:"
           ls -la plainspeak/
-          
+
           # Build the binary with debug info
           pyinstaller --name plainspeak \
                      --onefile \
@@ -58,7 +58,7 @@ jobs:
           # Show PyInstaller output
           echo "Contents of dist/:"
           ls -la dist/
-          
+
           # Create final binary structure
           rm -rf dist/plainspeak
           mkdir -p dist/plainspeak
@@ -77,7 +77,7 @@ jobs:
         run: |
           # Run tests and capture output
           python -m pytest tests/ -v --cov=plainspeak --cov-report=term-missing 2>&1 | tee test_output.log
-          
+
           # Store exit code
           echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         env:
@@ -86,7 +86,7 @@ jobs:
           PLAINSPEAK_NO_LLM: 1  # Skip actual LLM calls in tests
           PLAINSPEAK_MODEL_PATH: ${{ github.workspace }}/tests/test_model
         continue-on-error: true
-      
+
       - name: Create test report
         if: always()
         run: |
@@ -94,17 +94,17 @@ jobs:
             echo "## Test Results"
             echo "Version: ${{ github.event.inputs.version }}"
             echo ""
-            
+
             if [ "${{ steps.run-tests.outputs.exit_code }}" = "0" ]; then
               echo "✅ Tests passed successfully"
             else
               echo "❌ Some tests failed"
             fi
-            
+
             echo ""
             echo "### Detailed Test Output"
             echo "\`\`\`"
             cat test_output.log
             echo "\`\`\`"
-            
+
           } >> $GITHUB_STEP_SUMMARY

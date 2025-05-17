@@ -125,7 +125,7 @@ PlainSpeak is designed with privacy and security as core principles:
 
 ## Technical Stack
 
-- **Language:** Python 3.9+
+- **Language:** Python 3.11+
 - **LLM Inference:** ctransformers with optimized GGUF models
 - **Terminal Interface:** cmd2 for rich REPL experience
 - **Template System:** Jinja2
@@ -137,4 +137,4 @@ PlainSpeak is designed with privacy and security as core principles:
 
 - For developers interested in creating plugins, see the [Plugin Development Guide](../../dev_docs/plugins/development.md)
 - For a deeper dive into the architecture, see the [Technical Architecture](../../dev_docs/architecture/overview.md)
-- To see how to extend PlainSpeak, check out the [Contribution Guidelines](../../dev_docs/contributing/guide.md) 
+- To see how to extend PlainSpeak, check out the [Contribution Guidelines](../../dev_docs/contributing/guide.md)

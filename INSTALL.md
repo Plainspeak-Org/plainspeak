@@ -4,7 +4,7 @@ This guide will help you install and set up PlainSpeak on your system.
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip (Python package installer)
 - Git (optional, for cloning the repository)
 
@@ -34,7 +34,7 @@ If you want the latest development version or want to contribute to PlainSpeak, 
    ```bash
    # Install Poetry if you don't have it
    pip install poetry
-   
+
    # Install dependencies and PlainSpeak
    poetry install
    ```
@@ -74,9 +74,9 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
 
 ### macOS
 
-1. Install Python 3.9+ using Homebrew:
+1. Install Python 3.11+ using Homebrew:
    ```bash
-   brew install python@3.9
+   brew install python@3.11
    ```
 
 2. Install PlainSpeak:
@@ -86,10 +86,10 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
 
 ### Linux (Ubuntu/Debian)
 
-1. Install Python 3.9+ and dependencies:
+1. Install Python 3.11+ and dependencies:
    ```bash
    sudo apt update
-   sudo apt install python3.9 python3.9-dev python3-pip
+   sudo apt install python3.11 python3.11-dev python3-pip
    ```
 
 2. Install PlainSpeak:
@@ -99,7 +99,7 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
 
 ### Windows
 
-1. Install Python 3.9+ from the [official website](https://www.python.org/downloads/).
+1. Install Python 3.11+ from the [official website](https://www.python.org/downloads/).
 
 2. Install PlainSpeak:
    ```bash
@@ -161,7 +161,7 @@ To use GPU acceleration:
 If you encounter other issues:
 
 1. Check that all dependencies are installed
-2. Ensure you're using Python 3.9 or higher
+2. Ensure you're using Python 3.11 or higher
 3. Check the logs in ~/.config/plainspeak/logs (if available)
 4. Report issues on the GitHub repository
 

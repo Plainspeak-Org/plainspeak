@@ -112,7 +112,9 @@ class YAMLPlugin(Plugin):
         # Validate against schema
         try:
             self.manifest = PluginManifest.parse_obj(yaml_data)
-            self.config = PluginConfig(manifest=self.manifest, instance=self, enabled=True, load_error=None)
+            self.config = PluginConfig(
+                manifest=self.manifest, instance=self, enabled=True, load_error=None
+            )
         except Exception as e:
             raise ValueError(f"Invalid plugin manifest: {e}")
 

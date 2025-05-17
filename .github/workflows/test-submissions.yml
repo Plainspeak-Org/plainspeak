@@ -21,32 +21,32 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.9']
-    
+        python-version: ['3.11']
+
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r scripts/requirements-packaging.txt
-      
+
       - name: Build test packages
         run: |
           python scripts/submit_packages.py \
             --version ${{ github.event.inputs.version || '0.1.0' }} \
             --dry-run \
             --skip-test
-      
+
       - name: Run package tests
         run: pytest tests/binaries/test_binary.py -v
-      
+
       - name: Upload test artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -100,7 +100,7 @@ jobs:
     needs: [pypi-test, windows-test, macos-test, linux-test]
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Create report
         uses: actions/github-script@v6
@@ -112,13 +112,13 @@ jobs:
               macos: '${{ needs.macos-test.result }}',
               linux: '${{ needs.linux-test.result }}'
             };
-            
+
             const summary = Object.entries(results)
               .map(([pkg, result]) => `${pkg}: ${result}`)
               .join('\n');
-            
+
             const body = `## Package Test Results\n\n${summary}`;
-            
+
             if (context.eventName === 'pull_request') {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,

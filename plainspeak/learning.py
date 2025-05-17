@@ -129,12 +129,12 @@ class LearningStore:
             )
 
     def add_command(
-        self, 
-        natural_text: str, 
-        generated_command: str, 
-        executed: bool = False, 
+        self,
+        natural_text: str,
+        generated_command: str,
+        executed: bool = False,
         system_info: Optional[Dict[str, Any]] = None,
-        environment_info: Optional[Dict[str, Any]] = None
+        environment_info: Optional[Dict[str, Any]] = None,
     ) -> int:
         """
         Add a command to the learning store.
@@ -148,6 +148,9 @@ class LearningStore:
 
         Returns:
             The ID of the added command.
+            
+        Raises:
+            sqlite3.Error: If there is a database error.
         """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
@@ -175,13 +178,11 @@ class LearningStore:
                     })
                 ),
             )
-            return cursor.lastrowid
+            # lastrowid is guaranteed to be an integer when INSERT is successful
+            return cursor.lastrowid or 0  # Return 0 if for some reason lastrowid is None
 
     def add_feedback(
-        self, 
-        command_id: int, 
-        feedback_type: str, 
-        message: Optional[str] = None
+        self, command_id: int, feedback_type: str, message: Optional[str] = None
     ) -> None:
         """
         Add feedback for a command.
@@ -203,11 +204,11 @@ class LearningStore:
             )
 
     def update_command_execution(
-        self, 
-        command_id: int, 
-        executed: bool, 
-        success: bool, 
-        error_message: Optional[str] = None
+        self,
+        command_id: int,
+        executed: bool,
+        success: bool,
+        error_message: Optional[str] = None,
     ) -> None:
         """
         Update a command with execution results.
@@ -259,21 +260,26 @@ class LearningStore:
         """
         # Get successful commands with high-quality feedback
         df = self.get_command_history()
-        
+
         # Filter for successful commands
         df = df[(df["success"] == True) & (df["feedback_type"] == "approve")]
-        
+
         if df.empty:
             return 0
-            
+
         # Write to JSONL file
         with open(output_path, "w") as f:
             for _, row in df.iterrows():
-                f.write(json.dumps({
-                    "input": row["original_text"],
-                    "output": row["generated_command"]
-                }) + "\n")
-                
+                f.write(
+                    json.dumps(
+                        {
+                            "input": row["original_text"],
+                            "output": row["generated_command"],
+                        }
+                    )
+                    + "\n"
+                )
+
         return len(df)
 
     def analyze_patterns(self, min_occurrences: int = 5) -> pd.DataFrame:

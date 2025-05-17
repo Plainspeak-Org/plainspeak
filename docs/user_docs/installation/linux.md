@@ -7,7 +7,7 @@ This guide will walk you through installing PlainSpeak on your Linux system.
 Before installing PlainSpeak, ensure you have the following:
 
 - A Linux distribution (Ubuntu, Debian, Fedora, etc.)
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip (Python package installer)
 - Git (optional, for cloning the repository)
 
@@ -18,12 +18,12 @@ Before installing PlainSpeak, ensure you have the following:
 The simplest way to install PlainSpeak is using pip:
 
 ```bash
-# Make sure you have Python 3.9+ installed
+# Make sure you have Python 3.11+ installed
 python3 --version
 
 # If needed, install Python (example for Ubuntu/Debian)
 sudo apt update
-sudo apt install python3.9 python3.9-dev python3-pip
+sudo apt install python3.11 python3.11-dev python3-pip
 
 # Install PlainSpeak
 pip3 install plainspeak
@@ -33,7 +33,7 @@ For other distributions:
 
 - **Fedora/RHEL/CentOS**:
   ```bash
-  sudo dnf install python39 python39-devel python39-pip
+  sudo dnf install python311 python311-devel python311-pip
   pip3 install plainspeak
   ```
 
@@ -169,4 +169,4 @@ For CUDA acceleration problems:
 
 - Explore the [Getting Started Guide](../getting_started/first_session.md) to learn how to use PlainSpeak
 - Try out some [example commands](../guides/examples.md)
-- Learn about [available plugins](../plugins/overview.md) 
+- Learn about [available plugins](../plugins/overview.md)

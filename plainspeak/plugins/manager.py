@@ -63,7 +63,9 @@ class PluginManager:
                     continue
 
                 # Create plugin config
-                plugin_config = PluginConfig(manifest=manifest, instance=None, enabled=True, load_error=None)
+                plugin_config = PluginConfig(
+                    manifest=manifest, instance=None, enabled=True, load_error=None
+                )
                 self.configs[manifest.name] = plugin_config
 
                 # Check dependencies
@@ -98,7 +100,9 @@ class PluginManager:
             Iterator of entry points in the plainspeak.plugins group.
         """
         try:
-            entry_points = importlib.metadata.entry_points().get(self.ENTRY_POINT_GROUP, [])
+            entry_points = importlib.metadata.entry_points().get(
+                self.ENTRY_POINT_GROUP, []
+            )
             return iter(entry_points)
         except Exception as e:
             logger.error(f"Error discovering plugins: {e}")
