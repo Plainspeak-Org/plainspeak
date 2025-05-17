@@ -44,7 +44,7 @@ class LLMConfig(BaseModel):
         ["\n"], description="Stop sequences for generation."
     )
 
-    @field_validator("model_path", mode="before")
+    @field_validator("model_path", mode="before")  # type: ignore
     @classmethod
     def resolve_model_path(cls, v: Optional[str], values: Dict[str, Any]) -> str:  # type: ignore[misc]
         """

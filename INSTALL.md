@@ -2,6 +2,11 @@
 
 This guide will help you install and set up PlainSpeak on your system.
 
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://cschanhniem.github.io/plainspeak/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+
+For complete and up-to-date documentation, visit [https://cschanhniem.github.io/plainspeak/](https://cschanhniem.github.io/plainspeak/)
+
 ## Prerequisites
 
 - Python 3.11 or higher
@@ -168,5 +173,7 @@ If you encounter other issues:
 ## Next Steps
 
 - Read the [README.md](README.md) for an overview of PlainSpeak
+- Visit the [official documentation](https://cschanhniem.github.io/plainspeak/) for comprehensive guides
 - Explore the [plugins directory](plainspeak/plugins) to learn about available plugins
 - Try out different natural language commands in the shell
+- Check out the [DataSpeak feature](https://cschanhniem.github.io/plainspeak/user/guides/dataspeak.html) (coming soon)

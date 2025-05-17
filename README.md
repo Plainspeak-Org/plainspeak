@@ -2,6 +2,12 @@
 
 > *"The most profound technologies are those that disappear. They weave themselves into the fabric of everyday life until they are indistinguishable from it."* — Mark Weiser, 1991
 
+[![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://cschanhniem.github.io/plainspeak/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+**[📚 Documentation](https://cschanhniem.github.io/plainspeak/) | [🚀 Quick Start](#the-experience) | [🔌 Plugins](#built-in-plugins) | [🔮 Future](#the-century-scale-vision)**
+
 ## **Vision & Philosophy**
 
 PlainSpeak represents the culmination of a 70-year journey in human-computer interaction—from punch cards to command lines to GUIs—now evolving into natural language as the ultimate interface. We envision a world where the power of computing is accessible to all of humanity, regardless of technical background, native language, or specialized training.
@@ -291,5 +297,10 @@ This extension demonstrates PlainSpeak's potential to expand beyond system opera
 PlainSpeak represents more than code—it embodies a vision of computing that serves humanity through understanding rather than requiring humans to understand computers.
 
 By contributing to this project, you're not just building software; you're helping to create the foundation for the next century of human-computer interaction—a future where technology truly serves all people through their most natural form of expression: their own words.
+
+- **[📚 Read the Documentation](https://cschanhniem.github.io/plainspeak/)** - Learn how to use and contribute to PlainSpeak
+- **[⭐ Star the Repository](https://github.com/cschanhniem/plainspeak)** - Show your support and help spread the word
+- **[🐛 Report Issues](https://github.com/cschanhniem/plainspeak/issues)** - Help improve PlainSpeak by reporting bugs or suggesting features
+- **[🔌 Create Plugins](https://cschanhniem.github.io/plainspeak/dev/plugins.html)** - Extend PlainSpeak with new capabilities
 
 **PlainSpeak: Because every human deserves the full power of computing without learning to speak like a machine.**

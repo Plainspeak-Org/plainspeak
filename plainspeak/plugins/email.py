@@ -253,8 +253,6 @@ class EmailClient:
 
         self.imap.select("INBOX")
 
-        msg_id: Union[bytes, str]
-
         # Get message ID
         if id is None:
             _, message_numbers = self.imap.search(None, "ALL")
@@ -270,69 +268,69 @@ class EmailClient:
             msg_id = id.encode() if isinstance(id, str) else id
 
         try:
-            # Fetch the message - this will return a tuple with status and data
-            result = self.imap.fetch(
-                str(msg_id) if isinstance(msg_id, bytes) else msg_id, "(RFC822)"
-            )
+            # Convert msg_id to string for fetch command
+            fetch_id = msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id)
+            result = self.imap.fetch(fetch_id, "(RFC822)")
 
-            # Check that we got a valid response with data
             if not result or not isinstance(result, tuple) or len(result) < 2:
                 return None
 
-            data = result[1]
-            if not data or not isinstance(data, list) or len(data) == 0:
-                return None
-
-            # Get the message body from the first part of the data
-            message_part = data[0]
+            message_data = result[1]
             if (
-                not message_part
-                or not isinstance(message_part, tuple)
-                or len(message_part) < 2
+                not message_data
+                or not isinstance(message_data, list)
+                or not message_data
             ):
                 return None
 
-            # Extract the email body from the message part
-            email_body = message_part[1]
-            if not isinstance(email_body, bytes):
+            # Get the first message part
+            first_part = message_data[0]
+            if (
+                not first_part
+                or not isinstance(first_part, tuple)
+                or len(first_part) < 2
+            ):
                 return None
 
-            # Parse the message using the email module
-            message = email.message_from_bytes(email_body, policy=policy.default)  # type: ignore
+            # Extract the message body
+            message_body = first_part[1]
+            if not isinstance(message_body, bytes):
+                return None
 
-            # Extract body
+            # Parse the email with the email module
+            message = email.message_from_bytes(message_body)
+
+            # Extract body content
             body = ""
             if message.is_multipart():
                 for part in message.walk():
-                    content_type = part.get_content_type()
-                    if content_type == "text/plain":
+                    if part.get_content_type() == "text/plain":
                         payload = part.get_payload(decode=True)
-                        if isinstance(payload, bytes):
+                        if payload is not None and isinstance(payload, bytes):
                             body = payload.decode("utf-8", errors="replace")
                         break
             else:
                 payload = message.get_payload(decode=True)
-                if isinstance(payload, bytes):
+                if payload is not None and isinstance(payload, bytes):
                     body = payload.decode("utf-8", errors="replace")
 
-            # Mark as read if requested and we have a valid ID
-            if mark_read and msg_id:
+            # Mark as read if needed
+            if mark_read:
                 if isinstance(msg_id, bytes):
-                    self.imap.store(msg_id, "+FLAGS", "\\Seen")
+                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")
                 else:
-                    self.imap.store(msg_id.encode(), "+FLAGS", "\\Seen")
+                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")
 
-            # Return a dictionary with the email details
+            # Build the result
             return {
-                "subject": str(message["subject"] or ""),
-                "from": str(message["from"] or ""),
-                "to": str(message["to"] or ""),
-                "date": str(message["date"] or ""),
+                "subject": str(message.get("subject", "")),
+                "from": str(message.get("from", "")),
+                "to": str(message.get("to", "")),
+                "date": str(message.get("date", "")),
                 "body": body,
             }
 
         except Exception as e:
-            # Log the error and return None on any exception
             import logging
 
             logging.error(f"Error reading email: {e}")

@@ -184,7 +184,7 @@ class CommandParser:
                 return False, "Error: Failed to generate command"
 
             # Return successful result
-            return True, command
+            return True, command if command is not None else ""
         except Exception as e:
             return False, f"Error: {str(e)}"
 

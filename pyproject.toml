@@ -6,6 +6,8 @@ authors = ["cschanhniem <contact@plainspeak.pro>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/cschanhniem/plainspeak"
+documentation = "https://cschanhniem.github.io/plainspeak/"
+homepage = "https://cschanhniem.github.io/plainspeak/"
 keywords = ["nlp", "cli", "automation", "llm"]
 
 [tool.poetry.dependencies]

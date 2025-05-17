@@ -52,7 +52,18 @@ class CalendarStore:
             calendar_bytes = f.read()
             # Convert bytes to string for from_ical
             calendar_str = calendar_bytes.decode("utf-8", errors="replace")
-            self.calendar = icalendar.Calendar.from_ical(calendar_str)
+            # Create new calendar instance
+            self.calendar = icalendar.Calendar()
+
+            # Parse the existing calendar data
+            imported_cal = icalendar.Calendar.from_ical(calendar_str)
+
+            # Copy properties and components
+            for attr, value in imported_cal.items():
+                self.calendar[attr] = value
+
+            for component in imported_cal.subcomponents:
+                self.calendar.add_component(component)
 
     def _save_calendar(self) -> None:
         """Save calendar to file."""
