@@ -100,7 +100,7 @@ class PluginManager:
             Iterator of entry points in the plainspeak.plugins group.
         """
         try:
-            entry_points = importlib.metadata.entry_points().get(
+            entry_points: List[EntryPoint] = importlib.metadata.entry_points().get(
                 self.ENTRY_POINT_GROUP, []
             )
             return iter(entry_points)
