@@ -1,53 +1,147 @@
-name: Force Minimal V4 Artifact Upload Test
+name: Execute Test Workflow
 
 on:
   workflow_dispatch:
     inputs:
-      diagnostic_version:
-        description: 'Diagnostic version'
+      version:
+        description: 'Version to test'
         required: true
-        default: '0.1.0-force-v4-test'
+        default: '0.1.0-test1'
 
 permissions:
-  contents: read
+  # Needed for checking out code, creating releases, etc.
+  contents: write
+  # Needed for creating and updating issues
+  issues: write
+  # Needed for creating and updating PRs
+  pull-requests: write
+  # Needed for package operations
+  packages: write
+  # Needed for workflow operations
   actions: write
+  # Needed for job status updates
+  checks: write  
+  # Needed for workflow and job statuses
+  statuses: write
 
 jobs:
-  isolated-upload-test:
-    name: Isolated V4 Artifact Upload
+  prepare-environment:
+    name: Prepare Test Environment
+    runs-on: ubuntu-latest
+    outputs:
+      timestamp: ${{ steps.get-timestamp.outputs.timestamp }}
+    
+    steps:
+      - name: Get timestamp
+        id: get-timestamp
+        run: echo "timestamp=$(date -u +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+
+  run-test-workflow:
+    name: Run Test Workflow
+    needs: prepare-environment
     runs-on: ubuntu-latest
     
     steps:
-      - name: Initial Runner Diagnostics
-        run: |
-          echo "JOB_NAME: isolated-upload-test"
-          echo "WORKFLOW_NAME: Force Minimal V4 Artifact Upload Test"
-          echo "Runner OS: $(uname -a)"
-          echo "Runner Version: ${{ runner.version }}"
-          echo "Disk Space:"
-          df -h
-          echo "Network Ping (google.com):"
-          ping -c 1 google.com || echo "Ping to google.com failed"
-          echo "DNS Lookup (github.com):"
-          nslookup github.com || echo "DNS lookup for github.com failed"
-          echo "Date: $(date)"
-
-      - name: Checkout Code (v4)
+      - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Create Dummy Artifact File
-        run: |
-          mkdir -p artifact_to_upload
-          echo "Test content for v4 upload." > artifact_to_upload/test_file.txt
-          ls -l artifact_to_upload
-
-      - name: Upload Artifact using actions/upload-artifact@v4
-        uses: actions/upload-artifact@v4
         with:
-          name: minimal-v4-artifact
-          path: artifact_to_upload/test_file.txt
-          if-no-files-found: error
-          retention-days: 1
+          # Fetch all history for all tags and branches
+          fetch-depth: 0 
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+      
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
+      
+      - name: Configure GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh auth setup-git
+          gh auth status
+      
+      - name: Run test workflow script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TEST_VERSION: ${{ inputs.version }}-${{ needs.prepare-environment.outputs.timestamp }}
+        run: |
+          echo "::group::Check Environment"
+          echo "Working directory: $(pwd)"
+          echo "Python version: $(python --version)"
+          echo "GitHub CLI version: $(gh --version)"
+          ls -la scripts/
+          echo "::endgroup::"
+
+          echo "::group::Make script executable"
+          chmod +x scripts/run_test_workflow.sh
+          echo "::endgroup::"
           
-      - name: Final Status
-        run: echo "Artifact upload step completed or skipped."
+          echo "::group::Execute test workflow script"
+          set -x  # Enable debug mode
+          ./scripts/run_test_workflow.sh
+          set +x  # Disable debug mode
+          echo "::endgroup::"
+      
+      - name: Create results directory
+        if: always() # Ensure this runs even if the script fails
+        run: mkdir -p results
+
+      - name: Process results
+        if: always() # Ensure this runs to capture any partial results or errors
+        run: |
+          echo "## Test Workflow Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Version: ${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "Timestamp: ${{ needs.prepare-environment.outputs.timestamp }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Add workflow run details (example, adapt as needed)
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Triggered Workflow Runs (Example - test-sample-package)" >> $GITHUB_STEP_SUMMARY
+          # Attempt to list runs, but don't fail the job if gh command fails or no runs found
+          (gh run list --workflow=test-sample-package.yml --json status,conclusion,number,url --limit 5 >> results/workflow-runs.json && cat results/workflow-runs.json >> $GITHUB_STEP_SUMMARY) || echo "Could not fetch workflow runs for test-sample-package.yml" >> $GITHUB_STEP_SUMMARY
+          
+          # Create initial test summary
+          echo "# Test Results Summary" > results/test-summary.md
+          echo "" >> results/test-summary.md
+          echo "## Test Execution" >> results/test-summary.md
+          echo "- Version: ${{ inputs.version }}" >> results/test-summary.md
+          echo "- Timestamp: ${{ needs.prepare-environment.outputs.timestamp }}" >> results/test-summary.md
+          
+          # Create initial test results JSON
+          echo "{}" > results/test-results.json
+          
+          # Parse test results if script exists and results directory has content
+          if [ -f "scripts/parse_test_results.py" ]; then
+            echo "Attempting to parse test results..." >> $GITHUB_STEP_SUMMARY
+            python scripts/parse_test_results.py \
+              --results-dir results \
+              --output results/test-results.json \
+              --summary results/test-summary.md || echo "Python script parse_test_results.py failed or encountered an error." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "scripts/parse_test_results.py not found. Skipping parsing." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "results/test-summary.md" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat results/test-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ needs.prepare-environment.outputs.timestamp }}
+          path: |
+            results/test-results.json
+            results/test-summary.md
+            results/workflow-runs.json
+          if-no-files-found: ignore # Don't fail if some result files are missing
