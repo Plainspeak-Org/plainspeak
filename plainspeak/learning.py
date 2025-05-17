@@ -148,7 +148,7 @@ class LearningStore:
 
         Returns:
             The ID of the added command.
-            
+
         Raises:
             sqlite3.Error: If there is a database error.
         """
@@ -169,17 +169,21 @@ class LearningStore:
                     natural_text,
                     generated_command,
                     None,  # success is None until execution
-                    0.0,   # execution time is 0 until executed
+                    0.0,  # execution time is 0 until executed
                     "pending",
                     datetime.now().isoformat(),
-                    json.dumps({
-                        "system_info": system_info or {},
-                        "environment_info": environment_info or {}
-                    })
+                    json.dumps(
+                        {
+                            "system_info": system_info or {},
+                            "environment_info": environment_info or {},
+                        }
+                    ),
                 ),
             )
             # lastrowid is guaranteed to be an integer when INSERT is successful
-            return cursor.lastrowid or 0  # Return 0 if for some reason lastrowid is None
+            return (
+                cursor.lastrowid or 0
+            )  # Return 0 if for some reason lastrowid is None
 
     def add_feedback(
         self, command_id: int, feedback_type: str, message: Optional[str] = None
