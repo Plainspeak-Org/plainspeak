@@ -236,7 +236,7 @@ class EmailClient:
 
     def read_email(
         self, id: Optional[str] = None, index: int = 1, mark_read: bool = True
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]]:  # type: ignore[no-any-return]
         """
         Read a specific email.
 
@@ -269,7 +269,7 @@ class EmailClient:
 
         try:
             # Convert msg_id to string for fetch command
-            fetch_id = msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id)
+            fetch_id = msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id)  # type: ignore[union-attr]
             result = self.imap.fetch(fetch_id, "(RFC822)")
 
             if not result or not isinstance(result, tuple) or len(result) < 2:
@@ -284,7 +284,7 @@ class EmailClient:
                 return None
 
             # Get the first message part
-            first_part = message_data[0]
+            first_part = message_data[0]  # type: ignore[index]
             if (
                 not first_part
                 or not isinstance(first_part, tuple)
@@ -298,7 +298,7 @@ class EmailClient:
                 return None
 
             # Parse the email with the email module
-            message = email.message_from_bytes(message_body)
+            message = email.message_from_bytes(message_body)  # type: ignore[arg-type]
 
             # Extract body content
             body = ""
@@ -317,9 +317,9 @@ class EmailClient:
             # Mark as read if needed
             if mark_read:
                 if isinstance(msg_id, bytes):
-                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")
+                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")  # type: ignore[arg-type]
                 else:
-                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")
+                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")  # type: ignore[arg-type]
 
             # Build the result
             return {

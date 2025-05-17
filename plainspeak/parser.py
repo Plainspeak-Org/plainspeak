@@ -202,13 +202,14 @@ class CommandParser:
             Natural language description of the output.
         """
         # Extract input text from either Command or Pipeline
-        input_text = ""
+        input_text: str = ""
         if isinstance(command_obj, Command):
-            input_text = command_obj.input_text
+            if command_obj.input_text is not None:
+                input_text = command_obj.input_text
         elif isinstance(command_obj, Pipeline) and command_obj.commands:
-            input_text = command_obj.commands[
-                0
-            ].input_text  # Use the first command's input
+            first_command = command_obj.commands[0]
+            if first_command.input_text is not None:
+                input_text = first_command.input_text
 
         # For simplicity, we'll just return the output for now
         return output

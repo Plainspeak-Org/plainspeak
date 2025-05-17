@@ -79,7 +79,7 @@ class PluginManifest(BaseModel):
                 )
         return v
 
-    @field_validator("commands")  # type: ignore[misc]
+    @field_validator("commands")  # type: ignore
     def validate_commands(
         cls, v: Dict[str, CommandConfig], values: Dict[str, Any]
     ) -> Dict[str, CommandConfig]:  # type: ignore[misc]
