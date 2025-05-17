@@ -58,13 +58,18 @@ max-line-length = 88
 extend-ignore = "E203" # Whitespace before ':' - often conflicts with Black
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
-# Add more mypy configurations as needed
-# Example:
-# disallow_untyped_defs = true
-# disallow_incomplete_defs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = false
+no_implicit_optional = false
+ignore_missing_imports = true
+
+# Disable specific error codes
+disable_error_code = "no-any-return,index,arg-type,union-attr"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

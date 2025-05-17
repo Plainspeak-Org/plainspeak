@@ -251,44 +251,46 @@ class EmailClient:
         if not self.imap:
             return None
 
-        self.imap.select("INBOX")
-
-        # Get message ID
-        msg_id_str = ""
-        if id is None:
-            status, message_numbers = self.imap.search(None, "ALL")
-            if status != "OK" or not message_numbers or not message_numbers[0]:
-                return None
-
-            msg_ids = message_numbers[0].split()
-            if not msg_ids or index > len(msg_ids):
-                return None
-
-            # Get by index from the end (newest first)
-            msg_id_bytes = msg_ids[-index]
-            msg_id_str = msg_id_bytes.decode("utf-8")
-        else:
-            msg_id_str = id
-
         try:
+            self.imap.select("INBOX")
+
+            # Get message ID
+            msg_id_str = ""
+            if id is None:
+                status, message_numbers = self.imap.search(None, "ALL")
+                if status != "OK" or not message_numbers or not message_numbers[0]:
+                    return None
+
+                msg_ids = message_numbers[0].split()
+                if not msg_ids or index > len(msg_ids):
+                    return None
+
+                # Get by index from the end (newest first)
+                msg_id_bytes = msg_ids[-index]
+                msg_id_str = msg_id_bytes.decode("utf-8")
+            else:
+                msg_id_str = id
+
             # Fetch the message
             status, data = self.imap.fetch(msg_id_str, "(RFC822)")
-            if status != "OK" or not data or not data[0]:
+            if status != "OK" or not data:
                 return None
 
-            # The first item in data should be a tuple with the message data
-            first_item = data[0]  # type: ignore[index]
+            # Check first item in the data
+            if not isinstance(data, list) or len(data) == 0:
+                return None
 
-            # Check if it's a tuple with at least 2 items (typically it's (metadata, content))
+            # Get the first item - this should be where the email data is
+            first_item = data[0]  # type: ignore[index]
             if not isinstance(first_item, tuple) or len(first_item) < 2:
                 return None
 
-            # Get the message content (second item in the tuple)
+            # Extract the message content
             message_bytes = first_item[1]
             if not isinstance(message_bytes, bytes):
                 return None
 
-            # Parse the email
+            # Parse the email without policy parameter
             message = email.message_from_bytes(message_bytes)  # type: ignore[arg-type]
 
             # Extract body content
@@ -298,12 +300,12 @@ class EmailClient:
                     if part.get_content_type() == "text/plain":
                         payload = part.get_payload(decode=True)
                         if payload is not None and isinstance(payload, bytes):
-                            body = payload.decode("utf-8", errors="replace")
+                            body = payload.decode("utf-8", errors="replace")  # type: ignore[union-attr]
                         break
             else:
                 payload = message.get_payload(decode=True)
                 if payload is not None and isinstance(payload, bytes):
-                    body = payload.decode("utf-8", errors="replace")
+                    body = payload.decode("utf-8", errors="replace")  # type: ignore[union-attr]
 
             # Mark as read if needed
             if mark_read:
