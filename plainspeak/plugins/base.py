@@ -5,11 +5,15 @@ This module defines the base plugin class and plugin registry.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Callable, cast
+from typing import Dict, List, Any, Optional, Callable, cast, Set, Tuple
 from pathlib import Path
 import yaml  # type: ignore[import-untyped]
+import logging
+from functools import lru_cache
 
 from .schemas import PluginManifest, CommandConfig, PluginConfig
+
+logger = logging.getLogger(__name__)
 
 
 class Plugin(ABC):
@@ -22,17 +26,21 @@ class Plugin(ABC):
     - A method to generate commands for those verbs
     """
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, priority: int = 0):
         """
         Initialize the plugin.
 
         Args:
             name: Plugin name.
             description: Plugin description.
+            priority: Plugin priority (higher values indicate higher priority).
         """
         self.name = name
         self.description = description
         self.verbs: List[str] = []
+        self.priority = priority
+        # Dictionary mapping aliases to their canonical verb
+        self.verb_aliases: Dict[str, str] = {}
 
     @abstractmethod
     def get_verbs(self) -> List[str]:
@@ -43,6 +51,24 @@ class Plugin(ABC):
             List of verb strings.
         """
         pass
+
+    def get_aliases(self) -> Dict[str, str]:
+        """
+        Get all verb aliases mapped to their canonical verbs.
+
+        Returns:
+            Dictionary mapping alias to canonical verb.
+        """
+        return self.verb_aliases
+
+    def get_all_verbs_and_aliases(self) -> List[str]:
+        """
+        Get all verbs and aliases this plugin can handle.
+
+        Returns:
+            List of verbs and aliases.
+        """
+        return self.get_verbs() + list(self.verb_aliases.keys())
 
     @abstractmethod
     def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
@@ -68,7 +94,44 @@ class Plugin(ABC):
         Returns:
             True if the plugin can handle the verb, False otherwise.
         """
-        return verb.lower() in [v.lower() for v in self.get_verbs()]
+        verb_lower = verb.lower()
+        
+        # Check if it's a canonical verb
+        if verb_lower in [v.lower() for v in self.get_verbs()]:
+            return True
+            
+        # Check if it's an alias
+        if verb_lower in [a.lower() for a in self.verb_aliases.keys()]:
+            return True
+            
+        return False
+
+    def get_canonical_verb(self, verb: str) -> str:
+        """
+        Get the canonical verb for the given verb or alias.
+
+        Args:
+            verb: The verb or alias to get the canonical verb for.
+
+        Returns:
+            The canonical verb.
+
+        Raises:
+            ValueError: If the verb is not recognized by this plugin.
+        """
+        verb_lower = verb.lower()
+        
+        # Check if it's a canonical verb
+        for canonical in self.get_verbs():
+            if canonical.lower() == verb_lower:
+                return canonical
+                
+        # Check if it's an alias
+        for alias, canonical in self.verb_aliases.items():
+            if alias.lower() == verb_lower:
+                return canonical
+                
+        raise ValueError(f"Verb '{verb}' is not recognized by plugin '{self.name}'")
 
 
 class YAMLPlugin(Plugin):
@@ -118,7 +181,22 @@ class YAMLPlugin(Plugin):
         except Exception as e:
             raise ValueError(f"Invalid plugin manifest: {e}")
 
-        super().__init__(name=self.manifest.name, description=self.manifest.description)
+        super().__init__(
+            name=self.manifest.name, 
+            description=self.manifest.description,
+            priority=self.manifest.priority
+        )
+        
+        # Process verb aliases
+        self.verb_aliases = {}
+        for canonical, aliases in self.manifest.verb_aliases.items():
+            for alias in aliases:
+                self.verb_aliases[alias] = canonical
+                
+        # Process command aliases
+        for verb, command_config in self.manifest.commands.items():
+            for alias in command_config.aliases:
+                self.verb_aliases[alias] = verb
 
     def _load_yaml(self) -> Dict[str, Any]:  # type: ignore[no-any-return]
         """
@@ -153,10 +231,17 @@ class YAMLPlugin(Plugin):
         Raises:
             ValueError: If the verb is not found or required arguments are missing.
         """
-        if verb not in self.manifest.commands:
+        # Convert alias to canonical verb if needed
+        canonical_verb = verb
+        try:
+            canonical_verb = self.get_canonical_verb(verb)
+        except ValueError:
+            pass
+            
+        if canonical_verb not in self.manifest.commands:
             raise ValueError(f"Verb '{verb}' not found in plugin '{self.name}'")
 
-        command_config = self.manifest.commands[verb]
+        command_config = self.manifest.commands[canonical_verb]
 
         # Validate required arguments
         missing_args = [arg for arg in command_config.required_args if arg not in args]
@@ -191,6 +276,7 @@ class PluginRegistry:
     def __init__(self):
         """Initialize the plugin registry."""
         self.plugins: Dict[str, Plugin] = {}
+        self.verb_to_plugin_cache: Dict[str, str] = {}
 
     def register(self, plugin: Plugin) -> None:
         """
@@ -200,6 +286,8 @@ class PluginRegistry:
             plugin: The plugin to register.
         """
         self.plugins[plugin.name] = plugin
+        # Clear the cache when registering a new plugin
+        self.verb_to_plugin_cache.clear()
 
     def get_plugin(self, name: str) -> Optional[Plugin]:
         """
@@ -213,6 +301,7 @@ class PluginRegistry:
         """
         return self.plugins.get(name)
 
+    @lru_cache(maxsize=128)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
         """
         Get the plugin that can handle the given verb.
@@ -223,9 +312,22 @@ class PluginRegistry:
         Returns:
             The plugin that can handle the verb, or None if not found.
         """
+        verb_lower = verb.lower()
+        
+        # First, try to find an exact match
+        matching_plugins: List[Tuple[int, Plugin]] = []
+        
         for plugin in self.plugins.values():
-            if plugin.can_handle(verb):
-                return plugin
+            if plugin.can_handle(verb_lower):
+                matching_plugins.append((plugin.priority, plugin))
+                
+        # Sort by priority (highest first)
+        if matching_plugins:
+            matching_plugins.sort(reverse=True)
+            return matching_plugins[0][1]
+            
+        # If no exact match, we could implement fuzzy matching here
+        
         return None
 
     def get_all_verbs(self) -> Dict[str, str]:
@@ -239,6 +341,9 @@ class PluginRegistry:
         for plugin in self.plugins.values():
             for verb in plugin.get_verbs():
                 verbs[verb] = plugin.name
+            # Include aliases
+            for alias, canonical in plugin.get_aliases().items():
+                verbs[alias] = plugin.name
         return verbs
 
 

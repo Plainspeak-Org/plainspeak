@@ -14,6 +14,7 @@ from importlib.metadata import EntryPoint
 import sys
 import logging
 from functools import lru_cache
+import difflib
 
 from .base import Plugin, registry, YAMLPlugin
 from .schemas import PluginManifest, EntryPointConfig, PluginConfig
@@ -33,6 +34,8 @@ class PluginManager:
     """
 
     ENTRY_POINT_GROUP = "plainspeak.plugins"
+    # Minimum similarity ratio for fuzzy matching (0.0 - 1.0)
+    FUZZY_MATCH_THRESHOLD = 0.75
 
     def __init__(self):
         """Initialize the plugin manager."""
@@ -203,9 +206,14 @@ class PluginManager:
         """
         return self.registry.get_all_verbs()
 
+    @lru_cache(maxsize=128)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]
         """
         Get the plugin that can handle the given verb.
+
+        This method attempts to find a plugin for the given verb using the following steps:
+        1. Try exact matching (current implementation)
+        2. If no exact match, try fuzzy matching
 
         Args:
             verb: The verb to handle.
@@ -213,7 +221,64 @@ class PluginManager:
         Returns:
             The plugin that can handle the verb, or None if not found.
         """
-        return self.registry.get_plugin_for_verb(verb)
+        if not verb:
+            logger.warning("Empty verb provided to get_plugin_for_verb")
+            return None
+            
+        logger.debug(f"Searching for plugin to handle verb: {verb}")
+            
+        # Step 1: Try exact matching via the registry
+        plugin = self.registry.get_plugin_for_verb(verb)
+        if plugin:
+            logger.debug(f"Found exact match for verb '{verb}' in plugin '{plugin.name}'")
+            return plugin
+            
+        # Step 2: If no exact match, try fuzzy matching
+        return self._find_plugin_with_fuzzy_matching(verb)
+       
+    def _find_plugin_with_fuzzy_matching(self, verb: str) -> Optional[Plugin]:
+        """
+        Find a plugin using fuzzy matching.
+        
+        Args:
+            verb: The verb to handle.
+            
+        Returns:
+            The best matching plugin, or None if no good match found.
+        """
+        if not verb:
+            return None
+            
+        verb_lower = verb.lower()
+        all_verbs = self.get_all_verbs()
+        
+        # No verbs to match against
+        if not all_verbs:
+            return None
+            
+        # Find the closest matching verb
+        matches = difflib.get_close_matches(
+            verb_lower, 
+            [v.lower() for v in all_verbs.keys()], 
+            n=1, 
+            cutoff=self.FUZZY_MATCH_THRESHOLD
+        )
+        
+        if not matches:
+            logger.debug(f"No fuzzy matches found for verb '{verb}'")
+            return None
+            
+        match = matches[0]
+        # Find the original case of the verb
+        for original_verb in all_verbs.keys():
+            if original_verb.lower() == match:
+                plugin_name = all_verbs[original_verb]
+                plugin = self.registry.get_plugin(plugin_name)
+                if plugin:
+                    logger.info(f"Fuzzy matched verb '{verb}' to '{original_verb}' in plugin '{plugin.name}'")
+                    return plugin
+                    
+        return None
 
     def generate_command(self, verb: str, args: Dict[str, Any]) -> Tuple[bool, str]:
         """
@@ -234,6 +299,7 @@ class PluginManager:
             command = plugin.generate_command(verb, args)
             return True, command
         except Exception as e:
+            logger.error(f"Error generating command for verb '{verb}': {e}", exc_info=True)
             return False, f"Error generating command: {e}"
 
     def extract_verb_and_args(
