@@ -1,203 +1,171 @@
 """
 Plugin Manager for PlainSpeak.
 
-This module provides a manager for loading and using plugins.
+This module provides the PluginManager class that is responsible for
+loading and managing plugins.
 """
 
-from typing import Dict, List, Any, Optional, Tuple, Iterator
-import re
-from pathlib import Path
 import importlib
-import importlib.metadata
-import importlib.util
-from importlib.metadata import EntryPoint
+import os
 import sys
 import logging
-from functools import lru_cache
+from typing import Dict, List, Optional, Tuple, Any, Set, cast
+from pathlib import Path
+import yaml  # type: ignore[import-untyped]
+import re
 import difflib
+from functools import lru_cache
 
-from .base import Plugin, registry, YAMLPlugin
-from .schemas import PluginManifest, EntryPointConfig, PluginConfig
+from .base import Plugin, PluginRegistry
+from .schemas import PluginManifest
 
 logger = logging.getLogger(__name__)
+
+# Constants
+DEFAULT_PLUGIN_PATHS = ["~/.plainspeak/plugins"]
 
 
 class PluginManager:
     """
     Manager for PlainSpeak plugins.
 
-    This class provides methods for:
-    - Loading plugins from entry points
-    - Finding plugins for verbs
-    - Generating commands using plugins
-    - Managing plugin lifecycle and dependencies
+    This class is responsible for loading plugins from various sources
+    (built-in, entry_points, directories) and managing their lifecycle.
     """
 
-    ENTRY_POINT_GROUP = "plainspeak.plugins"
-    # Minimum similarity ratio for fuzzy matching (0.0 - 1.0)
+    # Configuration for fuzzy matching
     FUZZY_MATCH_THRESHOLD = 0.75
+    MAX_FUZZY_MATCHES = 3  # Maximum number of fuzzy matches to consider
 
     def __init__(self):
         """Initialize the plugin manager."""
-        self.registry = registry
-        self.configs: Dict[str, PluginConfig] = {}
+        self.registry = PluginRegistry()
+        self._plugin_dirs: List[Path] = [
+            Path(p).expanduser() for p in DEFAULT_PLUGIN_PATHS
+        ]
+        self._load_plugins()
 
-    def load_plugins(self) -> None:
+    def _load_plugins(self) -> None:
         """
-        Load all available plugins from entry points.
+        Load plugins from various sources.
 
-        This method:
-        1. Discovers plugins via entry points
-        2. Loads their manifests
-        3. Validates dependencies
-        4. Instantiates plugin classes
-        5. Registers working plugins
+        This method loads plugins from:
+        1. Built-in plugins
+        2. Entry points
+        3. Plugin directories
         """
-        for entry_point in self._discover_plugins():
-            try:
-                # Load the entry point configuration
-                config = self._load_entry_point(entry_point)
-                if not config:
-                    continue
+        self._load_builtin_plugins()
+        self._load_plugins_from_entry_points()
+        self._load_plugins_from_directories()
+        
+        logger.info(f"Loaded {len(self.registry.plugins)} plugins")
+        for plugin in self.registry.plugins.values():
+            logger.debug(f"Loaded plugin '{plugin.name}' with {len(plugin.get_verbs())} verbs")
 
-                # Load and validate the manifest
-                manifest = self._load_manifest(config.manifest_path)
-                if not manifest:
-                    continue
+    def _load_builtin_plugins(self) -> None:
+        """Load built-in plugins."""
+        try:
+            # Import built-in plugins
+            from .file import FilePlugin
+            from .system import SystemPlugin
+            from .network import NetworkPlugin
+            from .text import TextPlugin
 
-                # Create plugin config
-                plugin_config = PluginConfig(
-                    manifest=manifest, instance=None, enabled=True, load_error=None
-                )
-                self.configs[manifest.name] = plugin_config
+            # Register built-in plugins
+            self.registry.register(FilePlugin())
+            self.registry.register(SystemPlugin())
+            self.registry.register(NetworkPlugin())
+            self.registry.register(TextPlugin())
+            
+            logger.debug("Loaded built-in plugins")
+        except Exception as e:
+            logger.error(f"Error loading built-in plugins: {e}", exc_info=True)
 
-                # Check dependencies
-                if not self._check_dependencies(manifest):
-                    plugin_config.load_error = "Missing dependencies"
-                    continue
+    def _load_plugins_from_entry_points(self) -> None:
+        """Load plugins from entry points."""
+        try:
+            import importlib.metadata as metadata
+        except ImportError:
+            # Python < 3.8
+            import importlib_metadata as metadata  # type: ignore[no-redef]
 
-                # Load the plugin class
-                plugin_class = self._load_plugin_class(config.class_path)
-                if not plugin_class:
-                    continue
-
-                # Instantiate and register the plugin
+        try:
+            for entry_point in metadata.entry_points(group="plainspeak.plugins"):
                 try:
+                    plugin_class = entry_point.load()
                     plugin = plugin_class()
-                    plugin_config.instance = plugin
                     self.registry.register(plugin)
-                    logger.info(f"Successfully loaded plugin: {manifest.name}")
+                    logger.debug(f"Loaded plugin '{plugin.name}' from entry point '{entry_point.name}'")
                 except Exception as e:
-                    plugin_config.load_error = f"Failed to instantiate: {e}"
-                    logger.error(f"Failed to load plugin {manifest.name}: {e}")
+                    logger.error(
+                        f"Error loading plugin from entry point '{entry_point.name}': {e}",
+                        exc_info=True,
+                    )
+        except Exception as e:
+            logger.error(f"Error loading plugins from entry points: {e}", exc_info=True)
 
-            except Exception as e:
-                logger.error(f"Error loading plugin from {entry_point}: {e}")
+    def _load_plugins_from_directories(self) -> None:
+        """Load plugins from plugin directories."""
+        for plugin_dir in self._plugin_dirs:
+            if not plugin_dir.exists():
+                continue
 
-    @lru_cache(maxsize=None)
-    def _discover_plugins(self) -> Iterator[EntryPoint]:
+            for plugin_path in plugin_dir.glob("*"):
+                if not plugin_path.is_dir():
+                    continue
+
+                manifest_path = plugin_path / "manifest.yaml"
+                if not manifest_path.exists():
+                    continue
+
+                try:
+                    with open(manifest_path, "r") as f:
+                        manifest_data = yaml.safe_load(f)
+
+                    manifest = PluginManifest(**manifest_data)
+                    
+                    # Add plugin directory to path if needed
+                    if plugin_path not in sys.path:
+                        sys.path.append(str(plugin_path))
+                        
+                    # Import the plugin module
+                    module_path, class_name = manifest.entrypoint.rsplit(".", 1)
+                    module = importlib.import_module(module_path)
+                    plugin_class = getattr(module, class_name)
+                    
+                    # Create and register the plugin
+                    plugin = plugin_class()
+                    self.registry.register(plugin)
+                    
+                    logger.debug(f"Loaded plugin '{plugin.name}' from directory '{plugin_path}'")
+                except Exception as e:
+                    logger.error(
+                        f"Error loading plugin from '{manifest_path}': {e}", exc_info=True
+                    )
+
+    def get_all_plugins(self) -> Dict[str, Plugin]:
         """
-        Discover plugins via entry points.
+        Get all registered plugins.
 
         Returns:
-            Iterator of entry points in the plainspeak.plugins group.
+            Dictionary mapping plugin names to plugin instances.
         """
-        try:
-            entry_points: List[EntryPoint] = importlib.metadata.entry_points().get(
-                self.ENTRY_POINT_GROUP, []
-            )
-            return iter(entry_points)
-        except Exception as e:
-            logger.error(f"Error discovering plugins: {e}")
-            return iter([])
+        return self.registry.plugins
 
-    def _load_entry_point(self, entry_point: EntryPoint) -> Optional[EntryPointConfig]:
+    def get_plugin(self, name: str) -> Optional[Plugin]:
         """
-        Load configuration from an entry point.
+        Get a plugin by name.
 
         Args:
-            entry_point: The entry point to load.
+            name: The name of the plugin.
 
         Returns:
-            EntryPointConfig if successful, None if failed.
+            The plugin, or None if not found.
         """
-        try:
-            config_func = entry_point.load()
-            return EntryPointConfig.parse_obj(config_func())
-        except Exception as e:
-            logger.error(f"Failed to load entry point {entry_point.name}: {e}")
-            return None
+        return self.registry.get_plugin(name)
 
-    def _load_manifest(self, manifest_path: str) -> Optional[PluginManifest]:
-        """
-        Load and validate a plugin manifest.
-
-        Args:
-            manifest_path: Path to the manifest file.
-
-        Returns:
-            PluginManifest if valid, None if invalid.
-        """
-        try:
-            if manifest_path.endswith(".yaml") or manifest_path.endswith(".yml"):
-                return YAMLPlugin(Path(manifest_path)).manifest
-            else:
-                logger.error(f"Unsupported manifest format: {manifest_path}")
-                return None
-        except Exception as e:
-            logger.error(f"Failed to load manifest {manifest_path}: {e}")
-            return None
-
-    def _check_dependencies(self, manifest: PluginManifest) -> bool:
-        """
-        Check if all plugin dependencies are satisfied.
-
-        Args:
-            manifest: The plugin manifest to check.
-
-        Returns:
-            True if all dependencies are met, False otherwise.
-        """
-        for package, version in manifest.dependencies.items():
-            try:
-                pkg_version = importlib.metadata.version(package)
-                # TODO: Add proper version comparison
-                if not pkg_version:
-                    logger.error(f"Missing dependency {package}>={version}")
-                    return False
-            except importlib.metadata.PackageNotFoundError:
-                logger.error(f"Missing dependency {package}>={version}")
-                return False
-        return True
-
-    def _load_plugin_class(self, class_path: str) -> Optional[type]:  # type: ignore[no-any-return]
-        """
-        Load a plugin class by import path.
-
-        Args:
-            class_path: Full import path to the plugin class.
-
-        Returns:
-            The plugin class if found, None otherwise.
-        """
-        try:
-            module_path, class_name = class_path.rsplit(".", 1)
-            module = importlib.import_module(module_path)
-            return getattr(module, class_name)
-        except Exception as e:
-            logger.error(f"Failed to load plugin class {class_path}: {e}")
-            return None
-
-    def get_all_plugins(self) -> Dict[str, PluginConfig]:
-        """
-        Get all plugin configurations.
-
-        Returns:
-            Dictionary of plugin names to configurations.
-        """
-        return self.configs
-
-    def get_all_verbs(self) -> Dict[str, str]:  # type: ignore[no-any-return]
+    @lru_cache(maxsize=256)
+    def get_all_verbs(self) -> Dict[str, str]:
         """
         Get all verbs from all plugins.
 
@@ -206,7 +174,7 @@ class PluginManager:
         """
         return self.registry.get_all_verbs()
 
-    @lru_cache(maxsize=128)
+    @lru_cache(maxsize=256)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]
         """
         Get the plugin that can handle the given verb.
@@ -247,6 +215,7 @@ class PluginManager:
             The best matching plugin, or None if no good match found.
         """
         if not verb:
+            logger.warning("Empty verb provided to fuzzy matching")
             return None
             
         verb_lower = verb.lower()
@@ -254,31 +223,42 @@ class PluginManager:
         
         # No verbs to match against
         if not all_verbs:
+            logger.warning("No verbs available for fuzzy matching")
             return None
             
-        # Find the closest matching verb
-        matches = difflib.get_close_matches(
-            verb_lower, 
-            [v.lower() for v in all_verbs.keys()], 
-            n=1, 
-            cutoff=self.FUZZY_MATCH_THRESHOLD
-        )
-        
-        if not matches:
-            logger.debug(f"No fuzzy matches found for verb '{verb}'")
-            return None
+        try:
+            # Find the closest matching verb
+            # Get up to MAX_FUZZY_MATCHES potential matches
+            matches = difflib.get_close_matches(
+                verb_lower, 
+                [v.lower() for v in all_verbs.keys()], 
+                n=self.MAX_FUZZY_MATCHES, 
+                cutoff=self.FUZZY_MATCH_THRESHOLD
+            )
             
-        match = matches[0]
-        # Find the original case of the verb
-        for original_verb in all_verbs.keys():
-            if original_verb.lower() == match:
-                plugin_name = all_verbs[original_verb]
-                plugin = self.registry.get_plugin(plugin_name)
-                if plugin:
-                    logger.info(f"Fuzzy matched verb '{verb}' to '{original_verb}' in plugin '{plugin.name}'")
-                    return plugin
-                    
-        return None
+            if not matches:
+                logger.debug(f"No fuzzy matches found for verb '{verb}'")
+                return None
+                
+            # Try each match in order of similarity
+            for match in matches:
+                # Find the original case of the verb
+                for original_verb in all_verbs.keys():
+                    if original_verb.lower() == match:
+                        plugin_name = all_verbs[original_verb]
+                        plugin = self.registry.get_plugin(plugin_name)
+                        if plugin:
+                            logger.info(
+                                f"Fuzzy matched verb '{verb}' to '{original_verb}' " +
+                                f"in plugin '{plugin.name}' (similarity: {difflib.SequenceMatcher(None, verb_lower, match).ratio():.2f})"
+                            )
+                            return plugin
+            
+            # No matching plugin found for any match            
+            return None
+        except Exception as e:
+            logger.error(f"Error in fuzzy matching for verb '{verb}': {e}", exc_info=True)
+            return None
 
     def generate_command(self, verb: str, args: Dict[str, Any]) -> Tuple[bool, str]:
         """
@@ -291,15 +271,21 @@ class PluginManager:
         Returns:
             Tuple of (success, command or error message).
         """
+        if not verb:
+            logger.warning("Empty verb provided to generate_command")
+            return False, "No verb provided"
+            
         plugin = self.get_plugin_for_verb(verb)
         if not plugin:
+            logger.warning(f"No plugin found for verb: {verb}")
             return False, f"No plugin found for verb: {verb}"
 
         try:
             command = plugin.generate_command(verb, args)
+            logger.debug(f"Generated command for verb '{verb}' with plugin '{plugin.name}': {command}")
             return True, command
         except Exception as e:
-            logger.error(f"Error generating command for verb '{verb}': {e}", exc_info=True)
+            logger.error(f"Error generating command for verb '{verb}' with plugin '{plugin.name}': {e}", exc_info=True)
             return False, f"Error generating command: {e}"
 
     def extract_verb_and_args(
@@ -317,70 +303,115 @@ class PluginManager:
         Returns:
             Tuple of (verb, arguments dictionary).
         """
+        if not natural_text:
+            logger.warning("Empty or None text provided to extract_verb_and_args")
+            return None, {}
+            
         # Get all verbs
         all_verbs = self.get_all_verbs()
+        if not all_verbs:
+            logger.warning("No verbs available for extraction")
+            return None, {}
 
         # Convert to lowercase for case-insensitive matching
         text_lower = natural_text.lower()
 
         # Try to find a verb at the beginning of the text
+        matched_verb = None
+        matched_verb_length = 0
+        
         for verb in all_verbs.keys():
-            # Check if the text starts with the verb
-            if text_lower.startswith(verb.lower()):
-                # Extract the rest of the text as arguments
-                args_text = natural_text[len(verb) :].strip()
+            verb_lower = verb.lower()
+            
+            # Check if the text starts with the verb followed by a space or end of text
+            if text_lower.startswith(verb_lower) and (
+                len(text_lower) == len(verb_lower) or 
+                text_lower[len(verb_lower)].isspace()
+            ):
+                # Use the longest matching verb
+                if len(verb) > matched_verb_length:
+                    matched_verb = verb
+                    matched_verb_length = len(verb)
 
-                # Parse arguments (very simple implementation)
-                args = self._parse_args(args_text)
+        if matched_verb:
+            # Extract the rest of the text as arguments
+            args_text = natural_text[matched_verb_length:].strip()
 
-                return verb, args
+            # Parse arguments
+            args = self._parse_args(args_text)
+            
+            logger.debug(f"Extracted verb '{matched_verb}' with args {args} from text: '{natural_text}'")
+            return matched_verb, args
 
-        # No verb found
+        # If no verb found at beginning, try fuzzy matching or more advanced NLP
+        logger.debug(f"No verb found at beginning of text: '{natural_text}'")
         return None, {}
 
     def _parse_args(self, args_text: str) -> Dict[str, Any]:
         """
         Parse arguments from text.
 
-        This is a very simple implementation that looks for key-value pairs.
+        This is a simple implementation that assumes arguments are in the form:
+        - key=value
+        - or simply positional parameters
+
         A more sophisticated implementation would use NLP techniques.
 
         Args:
-            args_text: The text containing arguments.
+            args_text: The arguments text.
 
         Returns:
-            Dictionary of argument names to values.
+            Dictionary of parsed arguments.
         """
+        if not args_text:
+            return {}
+
         args = {}
-
-        # Try to extract key-value pairs
-        # This is a very simple implementation
-        key_value_pattern = r"--(\w+)=([^\s]+)"
-        for match in re.finditer(key_value_pattern, args_text):
-            key = match.group(1)
-            value = match.group(2)
-
-            # Convert value to appropriate type
-            if value.lower() == "true":
-                value = True
-            elif value.lower() == "false":
-                value = False
-            elif value.isdigit():
-                value = int(value)
-
+        # Simple named parameter extraction (key=value)
+        named_pattern = re.compile(r'(\w+)=([^\s]+)')
+        
+        # Extract named parameters
+        for match in named_pattern.finditer(args_text):
+            key, value = match.groups()
             args[key] = value
-
-        # If no key-value pairs found, use the whole text as a generic argument
-        if not args and args_text:
-            # Try to determine what the argument might be
-            # For simplicity, assume it's a path or pattern
-            if "/" in args_text or "*" in args_text:
-                args["path"] = args_text
-            else:
-                args["text"] = args_text
-
+            
+        # If no named parameters were found, use the whole text as a positional parameter
+        if not args:
+            args["text"] = args_text
+            
+        # TODO: Add more sophisticated argument parsing based on context and expected parameters
+            
         return args
 
+    def add_plugin_directory(self, directory: str) -> None:
+        """
+        Add a directory to search for plugins.
+
+        Args:
+            directory: The directory path.
+        """
+        path = Path(directory).expanduser().resolve()
+        if path not in self._plugin_dirs:
+            self._plugin_dirs.append(path)
+            logger.debug(f"Added plugin directory: {path}")
+            # Reload plugins from directories
+            self._load_plugins_from_directories()
+            
+    def reload_plugins(self) -> None:
+        """
+        Reload all plugins.
+        
+        This method clears the registry and reloads all plugins.
+        Useful when plugin directories or entry points have changed.
+        """
+        logger.info("Reloading all plugins")
+        # Clear the registry
+        self.registry = PluginRegistry()
+        # Clear caches
+        self.get_all_verbs.cache_clear()
+        self.get_plugin_for_verb.cache_clear()
+        # Reload plugins
+        self._load_plugins()
 
 # Global plugin manager
 plugin_manager = PluginManager()
