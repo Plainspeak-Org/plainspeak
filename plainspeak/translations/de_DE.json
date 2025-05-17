@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "PlainSpeak",
+    "welcome": "Willkommen bei PlainSpeak!",
+    "version": "Version {version}",
+    "tagline": "Die natürlichsprachliche Schnittstelle für Ihren Computer."
+  },
+  "commands": {
+    "success": "Befehl erfolgreich ausgeführt.",
+    "failure": "Befehl fehlgeschlagen: {error}",
+    "not_found": "Kein Plugin für das Verb gefunden: {verb}",
+    "execution_error": "Fehler bei der Ausführung des Befehls: {error}",
+    "confirm": "Diesen Befehl ausführen? [j/N]: "
+  },
+  "verbs": {
+    "list": "liste",
+    "find": "finde",
+    "search": "suche",
+    "copy": "kopiere",
+    "move": "verschiebe",
+    "delete": "lösche",
+    "create": "erstelle"
+  },
+  "help": {
+    "title": "PlainSpeak Hilfe",
+    "usage": "Verwendung: plainspeak [Befehl]",
+    "description": "PlainSpeak verwandelt natürliche Sprache in Computerbefehle.",
+    "examples": "Beispiele:",
+    "example_list": "liste Dateien im aktuellen Verzeichnis",
+    "example_find": "finde alle Textdateien",
+    "example_search": "suche nach 'Fehler' in Protokolldateien",
+    "commands": {
+      "run": "Führe einen Befehl in natürlicher Sprache aus",
+      "help": "Zeige diese Hilfemeldung",
+      "version": "Zeige Versionsinformationen",
+      "exit": "Beende die Anwendung"
+    }
+  },
+  "feedback": {
+    "prompt": "War dieser Befehl hilfreich? [j/n]: ",
+    "thanks": "Danke für Ihr Feedback!",
+    "correction": "Geben Sie den korrekten Befehl ein: "
+  },
+  "errors": {
+    "invalid_input": "Ungültige Eingabe: {message}",
+    "plugin_load_error": "Fehler beim Laden des Plugins: {name}",
+    "permission_denied": "Zugriff verweigert: {path}",
+    "file_not_found": "Datei nicht gefunden: {path}",
+    "network_error": "Netzwerkfehler: {message}"
+  }
+} 

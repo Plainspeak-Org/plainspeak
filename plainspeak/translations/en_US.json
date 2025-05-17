@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "PlainSpeak",
+    "welcome": "Welcome to PlainSpeak!",
+    "version": "Version {version}",
+    "tagline": "The natural language interface for your computer."
+  },
+  "commands": {
+    "success": "Command executed successfully.",
+    "failure": "Command failed: {error}",
+    "not_found": "No plugin found for verb: {verb}",
+    "execution_error": "Error executing command: {error}",
+    "confirm": "Execute this command? [y/N]: "
+  },
+  "verbs": {
+    "list": "list",
+    "find": "find",
+    "search": "search",
+    "copy": "copy",
+    "move": "move",
+    "delete": "delete",
+    "create": "create"
+  },
+  "help": {
+    "title": "PlainSpeak Help",
+    "usage": "Usage: plainspeak [command]",
+    "description": "PlainSpeak turns natural language into computer commands.",
+    "examples": "Examples:",
+    "example_list": "list files in the current directory",
+    "example_find": "find all text files",
+    "example_search": "search for 'error' in log files",
+    "commands": {
+      "run": "Execute a natural language command",
+      "help": "Show this help message",
+      "version": "Show version information",
+      "exit": "Exit the application"
+    }
+  },
+  "feedback": {
+    "prompt": "Was this command helpful? [y/n]: ",
+    "thanks": "Thank you for your feedback!",
+    "correction": "Enter the correct command: "
+  },
+  "errors": {
+    "invalid_input": "Invalid input: {message}",
+    "plugin_load_error": "Error loading plugin: {name}",
+    "permission_denied": "Permission denied: {path}",
+    "file_not_found": "File not found: {path}",
+    "network_error": "Network error: {message}"
+  }
+} 

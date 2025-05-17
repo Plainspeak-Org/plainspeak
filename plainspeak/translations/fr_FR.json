@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "PlainSpeak",
+    "welcome": "Bienvenue à PlainSpeak !",
+    "version": "Version {version}",
+    "tagline": "L'interface en langage naturel pour votre ordinateur."
+  },
+  "commands": {
+    "success": "Commande exécutée avec succès.",
+    "failure": "Échec de la commande : {error}",
+    "not_found": "Aucun plugin trouvé pour le verbe : {verb}",
+    "execution_error": "Erreur lors de l'exécution de la commande : {error}",
+    "confirm": "Exécuter cette commande ? [o/N] : "
+  },
+  "verbs": {
+    "list": "liste",
+    "find": "trouve",
+    "search": "recherche",
+    "copy": "copie",
+    "move": "déplace",
+    "delete": "supprime",
+    "create": "crée"
+  },
+  "help": {
+    "title": "Aide de PlainSpeak",
+    "usage": "Utilisation : plainspeak [commande]",
+    "description": "PlainSpeak transforme le langage naturel en commandes informatiques.",
+    "examples": "Exemples :",
+    "example_list": "liste les fichiers dans le répertoire courant",
+    "example_find": "trouve tous les fichiers texte",
+    "example_search": "recherche 'erreur' dans les fichiers journaux",
+    "commands": {
+      "run": "Exécuter une commande en langage naturel",
+      "help": "Afficher ce message d'aide",
+      "version": "Afficher les informations de version",
+      "exit": "Quitter l'application"
+    }
+  },
+  "feedback": {
+    "prompt": "Cette commande était-elle utile ? [o/n] : ",
+    "thanks": "Merci pour votre retour !",
+    "correction": "Entrez la commande correcte : "
+  },
+  "errors": {
+    "invalid_input": "Entrée invalide : {message}",
+    "plugin_load_error": "Erreur lors du chargement du plugin : {name}",
+    "permission_denied": "Permission refusée : {path}",
+    "file_not_found": "Fichier non trouvé : {path}",
+    "network_error": "Erreur réseau : {message}"
+  }
+} 
