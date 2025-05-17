@@ -1,15 +1,17 @@
 """
 Tests for the LLMInterface module.
 """
+
 import unittest
 from unittest.mock import patch, MagicMock, Mock
 import sys
 import os
-import io # For capturing stderr
+import io  # For capturing stderr
 from pathlib import Path
 
 from plainspeak.llm_interface import LLMInterface
-from plainspeak.config import app_config as global_app_config, LLMConfig 
+from plainspeak.config import app_config as global_app_config, LLMConfig
+
 
 class TestLLMInterface(unittest.TestCase):
     """Test suite for the LLMInterface class."""
@@ -18,7 +20,7 @@ class TestLLMInterface(unittest.TestCase):
         """Set up test fixtures for each test."""
         # Initialize test fixtures
         self.patchers = []
-        
+
         # Create config mock
         self.mock_llm_config = LLMConfig(
             model_path="config_default_model.gguf",
@@ -29,17 +31,17 @@ class TestLLMInterface(unittest.TestCase):
             top_k=40,
             top_p=0.95,
             repetition_penalty=1.15,
-            stop=["\n", "###"]
+            stop=["\n", "###"],
         )
-        
+
         # Set up app config mock
-        app_patcher = patch('plainspeak.llm_interface.app_config')
+        app_patcher = patch("plainspeak.llm_interface.app_config")
         self.mock_app_config_instance = app_patcher.start()
         self.mock_app_config_instance.llm = self.mock_llm_config
         self.patchers.append(app_patcher)
 
         # Set up model mock
-        model_patcher = patch('ctransformers.AutoModelForCausalLM.from_pretrained')
+        model_patcher = patch("ctransformers.AutoModelForCausalLM.from_pretrained")
         self.mock_from_pretrained = model_patcher.start()
         self.mock_model_instance = MagicMock()
         self.mock_from_pretrained.return_value = self.mock_model_instance
@@ -59,11 +61,11 @@ class TestLLMInterface(unittest.TestCase):
 
         # Create and start Path-related patchers
         path_patches = [
-            ('plainspeak.llm_interface.Path', lambda: self.mock_path),
-            ('pathlib.Path.exists', self.mock_path.exists),
-            ('pathlib.Path.is_absolute', self.mock_path.is_absolute),
-            ('pathlib.Path.resolve', self.mock_path.resolve),
-            ('pathlib.Path.cwd', lambda: self.mock_cwd)
+            ("plainspeak.llm_interface.Path", lambda: self.mock_path),
+            ("pathlib.Path.exists", self.mock_path.exists),
+            ("pathlib.Path.is_absolute", self.mock_path.is_absolute),
+            ("pathlib.Path.resolve", self.mock_path.resolve),
+            ("pathlib.Path.cwd", lambda: self.mock_cwd),
         ]
 
         # Start path patchers
@@ -72,7 +74,6 @@ class TestLLMInterface(unittest.TestCase):
             patcher.start()
             self.patchers.append(patcher)
 
-
         # Store mock methods for test access
         self.mock_exists = self.mock_path.exists
         self.mock_is_absolute = self.mock_path.is_absolute
@@ -80,13 +81,15 @@ class TestLLMInterface(unittest.TestCase):
 
     def tearDown(self):
         """Clean up test fixtures by stopping all patchers in reverse order."""
-        for patcher in reversed(getattr(self, 'patchers', [])):
+        for patcher in reversed(getattr(self, "patchers", [])):
             try:
                 patcher.stop()
             except Exception as e:
-                target = getattr(patcher, '_target', 'unknown')
-                print(f"Warning: Failed to stop patcher {target}: {str(e)}", 
-                      file=sys.stderr)
+                target = getattr(patcher, "_target", "unknown")
+                print(
+                    f"Warning: Failed to stop patcher {target}: {str(e)}",
+                    file=sys.stderr,
+                )
 
     def test_initialization_uses_app_config_defaults(self):
         """Test LLMInterface uses app_config when no args are passed."""
@@ -95,7 +98,7 @@ class TestLLMInterface(unittest.TestCase):
         self.mock_from_pretrained.assert_called_once_with(
             self.mock_llm_config.model_path,
             model_type=self.mock_llm_config.model_type,
-            gpu_layers=self.mock_llm_config.gpu_layers
+            gpu_layers=self.mock_llm_config.gpu_layers,
         )
         self.assertEqual(llm_interface.model_path, self.mock_llm_config.model_path)
         self.assertEqual(llm_interface.model_type, self.mock_llm_config.model_type)
@@ -108,7 +111,7 @@ class TestLLMInterface(unittest.TestCase):
             "threads": 4,
             "batch_size": 8,
             "context_length": 2048,
-            "seed": 42
+            "seed": 42,
         }
         llm_interface = LLMInterface(**additional_kwargs)
 
@@ -116,7 +119,7 @@ class TestLLMInterface(unittest.TestCase):
             self.mock_llm_config.model_path,
             model_type=self.mock_llm_config.model_type,
             gpu_layers=self.mock_llm_config.gpu_layers,
-            **additional_kwargs
+            **additional_kwargs,
         )
         self.assertEqual(llm_interface.ctransformers_config_kwargs, additional_kwargs)
 
@@ -133,16 +136,14 @@ class TestLLMInterface(unittest.TestCase):
 
         # Create interface with custom settings
         llm_interface = LLMInterface(
-            model_path=custom_path,
-            model_type=custom_type,
-            gpu_layers=custom_gpu_layers
+            model_path=custom_path, model_type=custom_type, gpu_layers=custom_gpu_layers
         )
 
         # Verify correct path and settings were used
         self.mock_from_pretrained.assert_called_once_with(
             str(Path(custom_path)),  # Path should be converted to string
             model_type=custom_type,
-            gpu_layers=custom_gpu_layers
+            gpu_layers=custom_gpu_layers,
         )
         self.assertEqual(llm_interface.model_path, custom_path)
         self.assertEqual(llm_interface.model_type, custom_type)
@@ -165,29 +166,37 @@ class TestLLMInterface(unittest.TestCase):
         self.mock_from_pretrained.assert_called_once_with(
             str(expected_path),
             model_type=self.mock_llm_config.model_type,
-            gpu_layers=self.mock_llm_config.gpu_layers
+            gpu_layers=self.mock_llm_config.gpu_layers,
         )
 
     def test_initialization_failure_file_not_found(self):
         """Test initialization failure if model file does not exist."""
         self.mock_exists.return_value = False
 
-        with patch('sys.stderr', new_callable=io.StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
             llm_interface = LLMInterface(model_path="nonexistent.gguf")
             self.assertIsNone(llm_interface.model)
-            self.assertIn("Error: Model file not found at 'nonexistent.gguf'", mock_stderr.getvalue())
-            self.assertIn("Please ensure the model_path in your config", mock_stderr.getvalue())
+            self.assertIn(
+                "Error: Model file not found at 'nonexistent.gguf'",
+                mock_stderr.getvalue(),
+            )
+            self.assertIn(
+                "Please ensure the model_path in your config", mock_stderr.getvalue()
+            )
 
     def test_initialization_failure_ctransformers_error(self):
         """Test initialization failure if ctransformers.from_pretrained errors."""
         error_message = "CUDA not available"
         self.mock_from_pretrained.side_effect = Exception(error_message)
 
-        with patch('sys.stderr', new_callable=io.StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
             llm_interface = LLMInterface()
             self.assertIsNone(llm_interface.model)
             stderr_output = mock_stderr.getvalue()
-            self.assertIn(f"Error loading model from {self.mock_llm_config.model_path}: {error_message}", stderr_output)
+            self.assertIn(
+                f"Error loading model from {self.mock_llm_config.model_path}: {error_message}",
+                stderr_output,
+            )
             self.assertIn("Please ensure the model path is correct", stderr_output)
             self.assertIn("For GPU usage, ensure CUDA/ROCm drivers", stderr_output)
 
@@ -207,7 +216,7 @@ class TestLLMInterface(unittest.TestCase):
             top_k=self.mock_llm_config.top_k,
             top_p=self.mock_llm_config.top_p,
             repetition_penalty=self.mock_llm_config.repetition_penalty,
-            stop=self.mock_llm_config.stop
+            stop=self.mock_llm_config.stop,
         )
 
     def test_generate_overrides_app_config_params(self):
@@ -223,12 +232,14 @@ class TestLLMInterface(unittest.TestCase):
             "top_p": 0.5,
             "repetition_penalty": 1.5,
             "stop": ["custom_stop"],
-            "additional_param": "value"
+            "additional_param": "value",
         }
         result = llm_interface.generate("Test prompt", **custom_params)
 
         self.assertEqual(result, test_output)
-        self.mock_model_instance.generate.assert_called_once_with("Test prompt", **custom_params)
+        self.mock_model_instance.generate.assert_called_once_with(
+            "Test prompt", **custom_params
+        )
 
     def test_generate_with_empty_stop_list(self):
         """Test generate with empty stop sequence list."""
@@ -237,7 +248,7 @@ class TestLLMInterface(unittest.TestCase):
         self.mock_model_instance.generate.return_value = test_output
 
         result = llm_interface.generate("Test prompt", stop=[])
-        
+
         call_args = self.mock_model_instance.generate.call_args[1]
         self.assertEqual(call_args["stop"], [])
         self.assertEqual(result, test_output)
@@ -248,10 +259,13 @@ class TestLLMInterface(unittest.TestCase):
         error_message = "CUDA out of memory"
         self.mock_model_instance.generate.side_effect = Exception(error_message)
 
-        with patch('sys.stderr', new_callable=io.StringIO) as mock_stderr:
+        with patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
             result = llm_interface.generate("Test prompt")
             self.assertIsNone(result)
-            self.assertIn(f"Error during text generation: {error_message}", mock_stderr.getvalue())
+            self.assertIn(
+                f"Error during text generation: {error_message}", mock_stderr.getvalue()
+            )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

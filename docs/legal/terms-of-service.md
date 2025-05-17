@@ -202,4 +202,4 @@ By using PlainSpeak, you accept:
 - Community guidelines
 
 *This document is open source and available at:
-https://github.com/plainspeak-org/plainspeak/blob/main/docs/legal/terms-of-service.md*
+https://github.com/cschanhniem/plainspeak/blob/main/docs/legal/terms-of-service.md*

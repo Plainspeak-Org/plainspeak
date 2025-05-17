@@ -14,7 +14,7 @@ Before installing PlainSpeak, ensure you have the following:
 
 ### Method 1: Install Using the Windows Installer (Recommended)
 
-1. Download the latest PlainSpeak installer from the [official website](https://plainspeak.org/download) or [GitHub releases](https://github.com/plainspeak-org/plainspeak/releases).
+1. Download the latest PlainSpeak installer from the [official website](https://plainspeak.org/download) or [GitHub releases](https://github.com/cschanhniem/plainspeak/releases).
 
 2. Run the installer (PlainSpeak-Setup-x.x.x.exe) and follow the installation wizard:
    - Accept the license agreement
@@ -46,7 +46,7 @@ For developers or if you want the latest features:
 
 ```cmd
 # Clone the repository
-git clone https://github.com/plainspeak-org/plainspeak.git
+git clone https://github.com/cschanhniem/plainspeak.git
 cd plainspeak
 
 # Install using Poetry

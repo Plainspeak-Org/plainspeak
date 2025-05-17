@@ -194,4 +194,4 @@ By using PlainSpeak, you acknowledge:
 - Plugin permissions
 
 *This privacy policy is open source and available at:
-https://github.com/plainspeak-org/plainspeak/blob/main/docs/legal/privacy-policy.md*
+https://github.com/cschanhniem/plainspeak/blob/main/docs/legal/privacy-policy.md*

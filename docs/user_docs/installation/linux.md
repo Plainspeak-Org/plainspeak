@@ -49,7 +49,7 @@ If you want the latest development version or want to contribute to PlainSpeak:
 
 ```bash
 # Clone the repository
-git clone https://github.com/plainspeak-org/plainspeak.git
+git clone https://github.com/cschanhniem/plainspeak.git
 cd plainspeak
 
 # Install using Poetry

@@ -1,6 +1,7 @@
 """
 Tests for the prompts module.
 """
+
 import unittest
 from plainspeak.prompts import get_shell_command_prompt
 

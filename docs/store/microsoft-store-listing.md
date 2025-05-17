@@ -145,7 +145,7 @@ support@plainspeak.org
 - Plugin Guide: https://docs.plainspeak.org/plugins
 
 ### Support Channels
-- GitHub Issues: https://github.com/plainspeak-org/plainspeak/issues
+- GitHub Issues: https://github.com/cschanhniem/plainspeak/issues
 - Documentation: https://docs.plainspeak.org
 - Email Support: support@plainspeak.org
 - Community Forum: https://community.plainspeak.org

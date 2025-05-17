@@ -107,14 +107,14 @@ Full documentation available at [docs.plainspeak.org](https://docs.plainspeak.or
 
 ## Community & Support
 
-- GitHub: [plainspeak-org/plainspeak](https://github.com/plainspeak-org/plainspeak)
+- GitHub: [cschanhniem/plainspeak](https://github.com/cschanhniem/plainspeak)
 - Documentation: [docs.plainspeak.org](https://docs.plainspeak.org)
-- Issues: [GitHub Issues](https://github.com/plainspeak-org/plainspeak/issues)
-- Discussion: [GitHub Discussions](https://github.com/plainspeak-org/plainspeak/discussions)
+- Issues: [GitHub Issues](https://github.com/cschanhniem/plainspeak/issues)
+- Discussion: [GitHub Discussions](https://github.com/cschanhniem/plainspeak/discussions)
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/plainspeak-org/plainspeak/blob/main/LICENSE)
+MIT License - see [LICENSE](https://github.com/cschanhniem/plainspeak/blob/main/LICENSE)
 ```
 
 ## Classifiers
@@ -229,6 +229,6 @@ maintainers = [
 [project.urls]
 Homepage = "https://plainspeak.org"
 Documentation = "https://docs.plainspeak.org"
-Repository = "https://github.com/plainspeak-org/plainspeak"
-Changelog = "https://github.com/plainspeak-org/plainspeak/blob/main/CHANGELOG.md"
-Issues = "https://github.com/plainspeak-org/plainspeak/issues"
+Repository = "https://github.com/cschanhniem/plainspeak"
+Changelog = "https://github.com/cschanhniem/plainspeak/blob/main/CHANGELOG.md"
+Issues = "https://github.com/cschanhniem/plainspeak/issues"

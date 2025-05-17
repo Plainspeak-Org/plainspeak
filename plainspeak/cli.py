@@ -4,6 +4,7 @@ Command Line Interface for PlainSpeak.
 This module provides both a command-line interface for one-off command generation
 and an interactive REPL mode for continuous command translation.
 """
+
 import sys
 from typing import Optional
 import typer
@@ -29,10 +30,12 @@ app = typer.Typer(
 # Create console for rich output
 console = Console()
 
+
 class PlainSpeakShell(Cmd):
     """
     Interactive shell for translating natural language to commands.
     """
+
     intro = """Welcome to PlainSpeak Shell!
 Type your commands in plain English, and they will be translated to shell commands.
 Type 'help' for a list of commands, or 'exit' to quit.\n"""
@@ -53,20 +56,16 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
 
     translate_parser = Cmd2ArgumentParser()
     translate_parser.add_argument(
-        'text',
-        nargs='+',
-        help='The command description in natural language'
+        "text", nargs="+", help="The command description in natural language"
     )
     translate_parser.add_argument(
-        '-e', '--execute',
-        action='store_true',
-        help='Execute the translated command'
+        "-e", "--execute", action="store_true", help="Execute the translated command"
     )
 
     @with_argparser(translate_parser)
     def do_translate(self, args):
         """Translate natural language to a shell command."""
-        text = ' '.join(args.text).strip()
+        text = " ".join(args.text).strip()
         if not text:
             console.print("Error: Empty input", style="red")
             return
@@ -83,7 +82,7 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             generated_command=result,
             executed=False,  # Will be updated if executed
             system_info=system_info,
-            environment_info=environment_info
+            environment_info=environment_info,
         )
 
         if success:
@@ -97,13 +96,17 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             if args.execute and result.strip():  # Only execute non-empty commands
                 execution_success = self.do_execute(result, original_text=text)
                 # Update execution status in learning store
-                learning_store.update_command_execution(command_id, True, execution_success)
+                learning_store.update_command_execution(
+                    command_id, True, execution_success
+                )
         else:
             panel = Panel(result, title="Error", border_style="red")
             console.print(panel)
 
             # Add negative feedback
-            learning_store.add_feedback(command_id, "reject", "Command generation failed")
+            learning_store.add_feedback(
+                command_id, "reject", "Command generation failed"
+            )
 
     def do_execute(self, command, original_text=None):
         """Execute a generated command."""
@@ -114,10 +117,13 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
 
         # Use subprocess for better control and security
         import subprocess
+
         try:
             # Using shell=True for now to allow complex commands, but this has security implications
             # if the command is not properly sanitized.
-            process = subprocess.run(command, shell=True, check=False, capture_output=True, text=True)
+            process = subprocess.run(
+                command, shell=True, check=False, capture_output=True, text=True
+            )
 
             # Display output
             if process.stdout:
@@ -137,7 +143,9 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             if success:
                 console.print("Command executed successfully", style="green")
             else:
-                console.print(f"Command failed with exit code {process.returncode}", style="red")
+                console.print(
+                    f"Command failed with exit code {process.returncode}", style="red"
+                )
                 if process.stderr:
                     console.print(process.stderr, style="red")
 
@@ -149,7 +157,9 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
                 session_context.add_to_history(original_text, command, False)
             return False
         except FileNotFoundError:
-            console.print(f"Error: Command not found: {command.split()[0]}", style="red")
+            console.print(
+                f"Error: Command not found: {command.split()[0]}", style="red"
+            )
             if original_text:
                 session_context.add_to_history(original_text, command, False)
             return False
@@ -162,10 +172,10 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
     def default(self, statement):
         """Handle unknown commands as natural language input."""
         # Get the original input text from the statement object
-        text = getattr(statement, 'raw', str(statement)).strip()
+        text = getattr(statement, "raw", str(statement)).strip()
         if text:
             # Pass the entire input to translate
-            return self.onecmd(f'translate {text}')
+            return self.onecmd(f"translate {text}")
         return False
 
     def do_history(self, args):
@@ -180,16 +190,18 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         console.print("Command History:", style="bold")
         for i, entry in enumerate(history, 1):
             # Format timestamp
-            timestamp = entry.get('timestamp', '').split('T')[0]  # Just get the date part
+            timestamp = entry.get("timestamp", "").split("T")[
+                0
+            ]  # Just get the date part
 
             # Format success/failure
-            success = entry.get('success', False)
+            success = entry.get("success", False)
             status = "[green]✓[/green]" if success else "[red]✗[/red]"
 
             # Format the entry
             console.print(
                 f"{i}. {status} [{timestamp}] [bold]{entry.get('natural_text', '')}[/bold]",
-                highlight=False
+                highlight=False,
             )
             console.print(f"   → {entry.get('command', '')}", style="dim")
 
@@ -199,17 +211,17 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
 
         # System info
         console.print("System Information:", style="bold")
-        for key, value in context.get('system', {}).items():
+        for key, value in context.get("system", {}).items():
             console.print(f"  {key}: {value}")
 
         # Environment info
         console.print("\nEnvironment:", style="bold")
-        for key, value in context.get('environment', {}).items():
+        for key, value in context.get("environment", {}).items():
             console.print(f"  {key}: {value}")
 
         # Session variables
         console.print("\nSession Variables:", style="bold")
-        session_vars = context.get('session_vars', {})
+        session_vars = context.get("session_vars", {})
         if session_vars:
             for key, value in session_vars.items():
                 console.print(f"  {key}: {value}")
@@ -217,7 +229,9 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             console.print("  No session variables set.", style="dim")
 
         # History size
-        console.print(f"\nCommand History: {context.get('history_size', 0)} entries", style="bold")
+        console.print(
+            f"\nCommand History: {context.get('history_size', 0)} entries", style="bold"
+        )
 
     def do_learning(self, args):
         """Show learning store data."""
@@ -226,18 +240,24 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             history_df = learning_store.get_command_history(limit=10)
 
             if history_df.empty:
-                console.print("No command history found in learning store.", style="yellow")
+                console.print(
+                    "No command history found in learning store.", style="yellow"
+                )
                 return
 
-            console.print("Learning Store Command History (last 10 entries):", style="bold")
+            console.print(
+                "Learning Store Command History (last 10 entries):", style="bold"
+            )
 
             # Format and display the history
             for _, row in history_df.iterrows():
                 # Format timestamp
-                timestamp = row.get('timestamp', '').split('T')[0]  # Just get the date part
+                timestamp = row.get("timestamp", "").split("T")[
+                    0
+                ]  # Just get the date part
 
                 # Format success/failure
-                success = row.get('success')
+                success = row.get("success")
                 if success is None:
                     status = "[yellow]?[/yellow]"  # Not executed
                 elif success:
@@ -248,28 +268,38 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
                 # Format the entry
                 console.print(
                     f"{row.get('id', '?')}. {status} [{timestamp}] [bold]{row.get('natural_text', '')}[/bold]",
-                    highlight=False
+                    highlight=False,
                 )
 
                 # Show the command
-                if row.get('edited', False):
-                    console.print(f"   → [original] {row.get('generated_command', '')}", style="dim")
-                    console.print(f"   → [edited] {row.get('edited_command', '')}", style="green dim")
+                if row.get("edited", False):
+                    console.print(
+                        f"   → [original] {row.get('generated_command', '')}",
+                        style="dim",
+                    )
+                    console.print(
+                        f"   → [edited] {row.get('edited_command', '')}",
+                        style="green dim",
+                    )
                 else:
-                    console.print(f"   → {row.get('generated_command', '')}", style="dim")
+                    console.print(
+                        f"   → {row.get('generated_command', '')}", style="dim"
+                    )
 
             # Show stats
             console.print("\nLearning Statistics:", style="bold")
 
             # Count successful commands
-            success_count = len(history_df[history_df['success'] == True])
-            total_executed = len(history_df[history_df['executed'] == True])
+            success_count = len(history_df[history_df["success"] == True])
+            total_executed = len(history_df[history_df["executed"] == True])
             if total_executed > 0:
                 success_rate = (success_count / total_executed) * 100
-                console.print(f"  Success Rate: {success_rate:.1f}% ({success_count}/{total_executed})")
+                console.print(
+                    f"  Success Rate: {success_rate:.1f}% ({success_count}/{total_executed})"
+                )
 
             # Count edited commands
-            edited_count = len(history_df[history_df['edited'] == True])
+            edited_count = len(history_df[history_df["edited"] == True])
             console.print(f"  Edited Commands: {edited_count}/{len(history_df)}")
 
         except Exception as e:
@@ -277,9 +307,10 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
 
     export_parser = Cmd2ArgumentParser()
     export_parser.add_argument(
-        '-o', '--output',
-        help='Output file path (default: ./plainspeak_training_data.jsonl)',
-        default='./plainspeak_training_data.jsonl'
+        "-o",
+        "--output",
+        help="Output file path (default: ./plainspeak_training_data.jsonl)",
+        default="./plainspeak_training_data.jsonl",
     )
 
     @with_argparser(export_parser)
@@ -288,13 +319,18 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         try:
             output_path = Path(args.output)
 
-            console.print(f"Exporting training data to {output_path}...", style="yellow")
+            console.print(
+                f"Exporting training data to {output_path}...", style="yellow"
+            )
 
             # Export the data
             count = learning_store.export_training_data(output_path)
 
             if count > 0:
-                console.print(f"Successfully exported {count} training examples to {output_path}", style="green")
+                console.print(
+                    f"Successfully exported {count} training examples to {output_path}",
+                    style="green",
+                )
             else:
                 console.print("No training examples found to export.", style="yellow")
 
@@ -319,7 +355,7 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
             if verbs:
                 console.print("  Supported verbs:", style="dim")
                 # Group verbs in rows of 5 for better display
-                verb_groups = [verbs[i:i+5] for i in range(0, len(verbs), 5)]
+                verb_groups = [verbs[i : i + 5] for i in range(0, len(verbs), 5)]
                 for group in verb_groups:
                     console.print("  " + ", ".join(group), style="green")
 
@@ -329,13 +365,12 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         session_context.save_context()
         return True
 
+
 @app.command()
 def translate(
     text: str = typer.Argument(..., help="Command description in natural language"),
     execute: bool = typer.Option(
-        False,
-        "--execute", "-e",
-        help="Execute the translated command"
+        False, "--execute", "-e", help="Execute the translated command"
     ),
 ):
     """Translate natural language into a shell command."""
@@ -358,7 +393,7 @@ def translate(
         generated_command=result,
         executed=False,  # Will be updated if executed
         system_info=system_info,
-        environment_info=environment_info
+        environment_info=environment_info,
     )
 
     if success:
@@ -371,13 +406,10 @@ def translate(
         if execute:
             console.print("\nExecuting command:", style="yellow")
             import subprocess
+
             try:
                 process = subprocess.run(
-                    result,
-                    shell=True,
-                    check=False,
-                    capture_output=True,
-                    text=True
+                    result, shell=True, check=False, capture_output=True, text=True
                 )
 
                 # Display output
@@ -393,12 +425,17 @@ def translate(
                 session_context.add_to_history(text, result, execution_success)
 
                 # Update learning store with execution result
-                learning_store.update_command_execution(command_id, True, execution_success)
+                learning_store.update_command_execution(
+                    command_id, True, execution_success
+                )
 
                 if execution_success:
                     console.print("Command executed successfully", style="green")
                 else:
-                    console.print(f"Command failed with exit code {process.returncode}", style="red")
+                    console.print(
+                        f"Command failed with exit code {process.returncode}",
+                        style="red",
+                    )
                     if process.stderr:
                         console.print(process.stderr, style="red")
                     raise typer.Exit(1)
@@ -408,7 +445,9 @@ def translate(
                 learning_store.update_command_execution(command_id, True, False)
                 raise typer.Exit(1)
             except FileNotFoundError:
-                console.print(f"Error: Command not found: {result.split()[0]}", style="red")
+                console.print(
+                    f"Error: Command not found: {result.split()[0]}", style="red"
+                )
                 session_context.add_to_history(text, result, False)
                 learning_store.update_command_execution(command_id, True, False)
                 raise typer.Exit(1)
@@ -424,6 +463,7 @@ def translate(
         learning_store.add_feedback(command_id, "reject", "Command generation failed")
 
         raise typer.Exit(1)
+
 
 @app.command()
 def plugins():
@@ -444,7 +484,7 @@ def plugins():
         if verbs:
             console.print("  Supported verbs:", style="dim")
             # Group verbs in rows of 5 for better display
-            verb_groups = [verbs[i:i+5] for i in range(0, len(verbs), 5)]
+            verb_groups = [verbs[i : i + 5] for i in range(0, len(verbs), 5)]
             for group in verb_groups:
                 console.print("  " + ", ".join(group), style="green")
 
@@ -468,6 +508,7 @@ def shell():
             pass
         sys.exit(1)
 
+
 def main():
     """Entry point for the CLI."""
     try:
@@ -483,6 +524,7 @@ def main():
     finally:
         # Save context on normal exit
         session_context.save_context()
+
 
 if __name__ == "__main__":
     main()

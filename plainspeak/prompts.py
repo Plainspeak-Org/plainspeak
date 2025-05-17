@@ -23,7 +23,10 @@ Consider these guidelines:
 
 Command:"""
 
-def get_shell_command_prompt(input_text: str, context: str = "Unix-like environment") -> str:
+
+def get_shell_command_prompt(
+    input_text: str, context: str = "Unix-like environment"
+) -> str:
     """
     Formats the shell command template with the given input text and context.
 
@@ -34,7 +37,4 @@ def get_shell_command_prompt(input_text: str, context: str = "Unix-like environm
     Returns:
         str: The formatted prompt ready for the LLM.
     """
-    return SHELL_COMMAND_TEMPLATE.format(
-        input_text=input_text,
-        context=context
-    )
+    return SHELL_COMMAND_TEMPLATE.format(input_text=input_text, context=context)

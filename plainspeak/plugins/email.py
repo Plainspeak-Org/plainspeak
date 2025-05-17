@@ -3,6 +3,7 @@ Email Plugin for PlainSpeak.
 
 This module provides email operations through natural language.
 """
+
 import os
 import json
 from typing import Dict, List, Any, Optional, Tuple
@@ -23,48 +24,49 @@ import re
 from .base import Plugin, registry, YAMLPlugin
 from .platform import platform_manager
 
+
 class EmailConfig:
     """Configuration for email accounts."""
-    
+
     def __init__(self, config_path: Optional[Path] = None):
         """
         Initialize email configuration.
-        
+
         Args:
             config_path: Path to config file. If None, uses ~/.plainspeak/email.json
         """
         if config_path is None:
-            config_path = Path.home() / '.plainspeak' / 'email.json'
-            
+            config_path = Path.home() / ".plainspeak" / "email.json"
+
         self.config_path = config_path
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         self.config = self._load_config()
-        
+
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file."""
         if not self.config_path.exists():
             return {}
-            
+
         with open(self.config_path) as f:
             return json.load(f)
-            
+
     def _save_config(self) -> None:
         """Save configuration to file."""
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(self.config, f, indent=2)
-            
+
     def set_account(
         self,
         email: str,
         smtp_server: str,
         imap_server: str,
         username: Optional[str] = None,
-        password: Optional[str] = None
+        password: Optional[str] = None,
     ) -> None:
         """
         Configure an email account.
-        
+
         Args:
             email: Email address
             smtp_server: SMTP server hostname
@@ -74,97 +76,93 @@ class EmailConfig:
         """
         if password is None:
             password = getpass.getpass(f"Password for {email}: ")
-            
+
         # Store password securely
         keyring.set_password("plainspeak_email", email, password)
-        
+
         self.config[email] = {
             "smtp_server": smtp_server,
             "imap_server": imap_server,
-            "username": username or email
+            "username": username or email,
         }
         self._save_config()
-        
+
     def get_account(self, email: str) -> Tuple[str, str, str, str]:
         """
         Get account configuration.
-        
+
         Args:
             email: Email address
-            
+
         Returns:
             Tuple of (username, password, smtp_server, imap_server)
-            
+
         Raises:
             KeyError: If account not found
         """
         if email not in self.config:
             raise KeyError(f"No configuration found for {email}")
-            
+
         acc = self.config[email]
         password = keyring.get_password("plainspeak_email", email)
         if not password:
             raise KeyError(f"No stored password for {email}")
-            
-        return (
-            acc["username"],
-            password,
-            acc["smtp_server"],
-            acc["imap_server"]
-        )
+
+        return (acc["username"], password, acc["smtp_server"], acc["imap_server"])
+
 
 class EmailClient:
     """Email client for sending and reading emails."""
-    
+
     def __init__(self, config: EmailConfig):
         """
         Initialize email client.
-        
+
         Args:
             config: Email configuration
         """
         self.config = config
         self.smtp: Optional[smtplib.SMTP] = None
         self.imap: Optional[imaplib.IMAP4] = None
-        
+
     def connect(self, email: str) -> None:
         """
         Connect to email servers.
-        
+
         Args:
             email: Email address to use
         """
         username, password, smtp_server, imap_server = self.config.get_account(email)
-        
+
         # Connect to SMTP
         self.smtp = smtplib.SMTP(smtp_server)
         self.smtp.starttls()
         self.smtp.login(username, password)
-        
+
         # Connect to IMAP
         self.imap = imaplib.IMAP4_SSL(imap_server)
         self.imap.login(username, password)
-        
+
     def disconnect(self) -> None:
         """Disconnect from email servers."""
         if self.smtp:
             self.smtp.quit()
             self.smtp = None
-            
+
         if self.imap:
             self.imap.logout()
             self.imap = None
-            
+
     def send_email(
         self,
         to: str,
         subject: str = "",
         body: str = "",
-        attachments: Optional[List[str]] = None
+        attachments: Optional[List[str]] = None,
     ) -> None:
         """
         Send an email.
-        
+
         Args:
             to: Recipient email address
             subject: Email subject
@@ -174,10 +172,10 @@ class EmailClient:
         msg = MIMEMultipart()
         msg["Subject"] = subject
         msg["To"] = to
-        
+
         # Add body
         msg.attach(MIMEText(body))
-        
+
         # Add attachments
         if attachments:
             for path in attachments:
@@ -186,78 +184,75 @@ class EmailClient:
                     part.add_header(
                         "Content-Disposition",
                         "attachment",
-                        filename=os.path.basename(path)
+                        filename=os.path.basename(path),
                     )
                     msg.attach(part)
-                    
+
         if self.smtp:
             self.smtp.send_message(msg)
-            
+
     def list_emails(
-        self,
-        folder: str = "INBOX",
-        limit: int = 10,
-        unread_only: bool = False
+        self, folder: str = "INBOX", limit: int = 10, unread_only: bool = False
     ) -> List[Dict[str, Any]]:
         """
         List emails in a folder.
-        
+
         Args:
             folder: Folder name
             limit: Maximum number of emails to return
             unread_only: Only show unread emails
-            
+
         Returns:
             List of email metadata dictionaries
         """
         if not self.imap:
             return []
-            
+
         self.imap.select(folder)
         search_criteria = ["ALL"]
         if unread_only:
             search_criteria = ["UNSEEN"]
-            
+
         _, message_numbers = self.imap.search(None, *search_criteria)
         emails = []
-        
+
         for num in message_numbers[0].split()[-limit:]:
             _, msg_data = self.imap.fetch(num, "(RFC822)")
             email_body = msg_data[0][1]
             message = email.message_from_bytes(email_body, policy=policy.default)
-            
-            emails.append({
-                "id": num.decode(),
-                "subject": message["subject"],
-                "from": message["from"],
-                "date": message["date"],
-                "unread": "\\Seen" not in self.imap.fetch(num, "(FLAGS)")[1][0].decode()
-            })
-            
+
+            emails.append(
+                {
+                    "id": num.decode(),
+                    "subject": message["subject"],
+                    "from": message["from"],
+                    "date": message["date"],
+                    "unread": "\\Seen"
+                    not in self.imap.fetch(num, "(FLAGS)")[1][0].decode(),
+                }
+            )
+
         return emails
-        
+
     def read_email(
-        self,
-        id: Optional[str] = None,
-        index: int = 1,
-        mark_read: bool = True
+        self, id: Optional[str] = None, index: int = 1, mark_read: bool = True
     ) -> Optional[Dict[str, Any]]:
         """
         Read a specific email.
-        
+
         Args:
             id: Email ID
             index: Email index (1 = latest)
             mark_read: Whether to mark as read
-            
+
         Returns:
             Email data dictionary or None if not found
         """
         if not self.imap:
             return None
-            
+
         self.imap.select("INBOX")
-        
+
         if id:
             _, msg_data = self.imap.fetch(id.encode(), "(RFC822)")
         else:
@@ -267,10 +262,10 @@ class EmailClient:
                 _, msg_data = self.imap.fetch(num, "(RFC822)")
             except IndexError:
                 return None
-                
+
         email_body = msg_data[0][1]
         message = email.message_from_bytes(email_body, policy=policy.default)
-        
+
         # Extract body
         body = ""
         if message.is_multipart():
@@ -280,111 +275,112 @@ class EmailClient:
                     break
         else:
             body = message.get_payload(decode=True).decode()
-            
+
         return {
             "subject": message["subject"],
             "from": message["from"],
             "to": message["to"],
             "date": message["date"],
-            "body": body
+            "body": body,
         }
-        
+
     def search_emails(
-        self,
-        query: str,
-        folder: str = "INBOX",
-        limit: int = 10
+        self, query: str, folder: str = "INBOX", limit: int = 10
     ) -> List[Dict[str, Any]]:
         """
         Search emails.
-        
+
         Args:
             query: Search query
             folder: Folder to search
             limit: Maximum results
-            
+
         Returns:
             List of matching email metadata
         """
         if not self.imap:
             return []
-            
+
         self.imap.select(folder)
-        
+
         # Convert natural query to IMAP search criteria
         search_criteria = []
         if "@" in query:  # Looks like an email address
             search_criteria.extend(["OR", "FROM", query, "TO", query])
         else:
             search_criteria.extend(["OR", "SUBJECT", query, "BODY", query])
-            
+
         _, message_numbers = self.imap.search(None, *search_criteria)
         return self.list_emails(limit=limit)
+
 
 class EmailPlugin(YAMLPlugin):
     """
     Plugin for email operations.
-    
+
     Features:
     - Email account configuration
     - Sending emails with attachments
     - Reading and searching emails
     - IMAP folder management
     """
-    
+
     def __init__(self):
         """Initialize the email plugin."""
         yaml_path = Path(__file__).parent / "email.yaml"
         super().__init__(yaml_path)
-        
+
         self.config = EmailConfig()
         self.client = EmailClient(self.config)
-        
+
     def _preprocess_args(self, verb: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """
         Preprocess command arguments.
-        
+
         Args:
             verb: The verb being used.
             args: Original arguments.
-            
+
         Returns:
             Processed arguments.
         """
         processed = args.copy()
-        
+
         # Handle email addresses
         if "to" in processed:
             # Try to extract email from natural text
             text = processed["to"]
-            matches = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+            matches = re.findall(r"[\w\.-]+@[\w\.-]+\.\w+", text)
             if matches:
                 processed["to"] = matches[0]
-                
+
         # Handle attachments
         if "attachment" in processed:
             path = processed["attachment"]
             if path:
-                processed["attachment"] = platform_manager.convert_path_for_command(path)
-                
+                processed["attachment"] = platform_manager.convert_path_for_command(
+                    path
+                )
+
         return processed
-        
+
     def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
         """
         Generate an email command.
-        
+
         Args:
             verb: The verb to handle.
             args: Arguments for the verb.
-            
+
         Returns:
             The generated command string.
         """
         # Preprocess arguments
         args = self._preprocess_args(verb, args)
-        
+
         # Generate command using parent's implementation
         return super().generate_command(verb, args)
+
 
 # Create and register the plugin instance
 try:
@@ -393,5 +389,6 @@ try:
 except Exception as e:
     # Log error but don't prevent other plugins from loading
     import logging
+
     logger = logging.getLogger(__name__)
     logger.warning("Failed to load Email plugin: %s", str(e))

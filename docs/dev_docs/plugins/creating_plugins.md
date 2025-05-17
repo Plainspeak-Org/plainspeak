@@ -520,6 +520,6 @@ Remember these key points:
 3. **Document Well**: Provide clear documentation and examples
 4. **Share Wisely**: Package and share your plugin with the community
 
-For more information and examples, check out the [PlainSpeak Plugin Repository](https://github.com/plainspeak-org/plainspeak-plugins) and the [Plugin API Reference](../api/plugin_api.md).
+For more information and examples, check out the [PlainSpeak Plugin Repository](https://github.com/cschanhniem/plainspeak-plugins) and the [Plugin API Reference](../api/plugin_api.md).
 
 Happy plugin development! 

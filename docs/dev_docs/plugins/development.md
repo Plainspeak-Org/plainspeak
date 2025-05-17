@@ -374,5 +374,5 @@ class CommandResult:
 ## Next Steps
 
 - Check out the [plugin template](../../../templates/plugin-template/) for a starting point
-- Review [existing plugins](https://github.com/plainspeak-org/plainspeak/tree/main/plainspeak/plugins) for examples
-- Join the [PlainSpeak community](https://github.com/plainspeak-org/plainspeak/discussions) to share your plugins 
+- Review [existing plugins](https://github.com/cschanhniem/plainspeak/tree/main/plainspeak/plugins) for examples
+- Join the [PlainSpeak community](https://github.com/cschanhniem/plainspeak/discussions) to share your plugins 

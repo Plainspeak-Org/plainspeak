@@ -3,7 +3,7 @@
 ## PyPI Package Distribution
 
 ### Account Setup
-1. Organization Account: plainspeak-org
+1. Organization Account: cschanhniem
 2. Multi-factor Authentication: Required
 3. Project Name Reservation: plainspeak
 4. Trusted Publishers: Enabled
@@ -43,8 +43,8 @@ classifiers = [
 [project.urls]
 Homepage = "https://plainspeak.org"
 Documentation = "https://docs.plainspeak.org"
-Repository = "https://github.com/plainspeak-org/plainspeak"
-Changelog = "https://github.com/plainspeak-org/plainspeak/blob/main/CHANGELOG.md"
+Repository = "https://github.com/cschanhniem/plainspeak"
+Changelog = "https://github.com/cschanhniem/plainspeak/blob/main/CHANGELOG.md"
 ```
 
 ## Microsoft Store

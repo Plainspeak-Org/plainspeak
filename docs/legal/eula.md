@@ -172,4 +172,4 @@ You acknowledge:
 4. Agreeing to comply
 
 *This EULA is open source and available at:
-https://github.com/plainspeak-org/plainspeak/blob/main/docs/legal/eula.md*
+https://github.com/cschanhniem/plainspeak/blob/main/docs/legal/eula.md*

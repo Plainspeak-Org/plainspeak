@@ -32,7 +32,7 @@ pip install plainspeak
 
 ### Option 3: Direct Download
 
-Download pre-built binaries from our [releases page](https://github.com/plainspeak-org/plainspeak/releases).
+Download pre-built binaries from our [releases page](https://github.com/cschanhniem/plainspeak/releases).
 
 ## System Requirements
 
@@ -59,6 +59,6 @@ If you encounter any issues during installation, please refer to:
 
 - The platform-specific installation guides above
 - [Frequently Asked Questions](../faq/installation.md)
-- [GitHub Issues](https://github.com/plainspeak-org/plainspeak/issues) for known problems
+- [GitHub Issues](https://github.com/cschanhniem/plainspeak/issues) for known problems
 
-For additional help, join our [community forum](https://github.com/plainspeak-org/plainspeak/discussions). 
+For additional help, join our [community forum](https://github.com/cschanhniem/plainspeak/discussions). 

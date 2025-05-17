@@ -45,7 +45,7 @@ For developers or if you want the latest features:
 
 ```bash
 # Clone the repository
-git clone https://github.com/plainspeak-org/plainspeak.git
+git clone https://github.com/cschanhniem/plainspeak.git
 cd plainspeak
 
 # Install using Poetry

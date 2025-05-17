@@ -26,7 +26,7 @@ If you want the latest development version or want to contribute to PlainSpeak, 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/plainspeak-org/plainspeak.git
+   git clone https://github.com/cschanhniem/plainspeak.git
    cd plainspeak
    ```
 

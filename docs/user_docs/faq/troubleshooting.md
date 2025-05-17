@@ -284,6 +284,6 @@ Use correct path separators for your platform:
 If your issue isn't covered here:
 
 1. Check the full documentation at [docs.plainspeak.org](https://docs.plainspeak.org)
-2. Join our [community forum](https://github.com/plainspeak-org/plainspeak/discussions)
-3. Report bugs on [GitHub Issues](https://github.com/plainspeak-org/plainspeak/issues)
+2. Join our [community forum](https://github.com/cschanhniem/plainspeak/discussions)
+3. Report bugs on [GitHub Issues](https://github.com/cschanhniem/plainspeak/issues)
 4. Run PlainSpeak with `--debug` flag and share logs when seeking help 

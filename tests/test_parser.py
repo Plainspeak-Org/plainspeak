@@ -1,10 +1,12 @@
 """
 Tests for the command parser module.
 """
+
 import unittest
 from unittest.mock import Mock, patch
 from plainspeak.parser import CommandParser
 from plainspeak.llm_interface import LLMInterface
+
 
 class TestCommandParser(unittest.TestCase):
     """Test suite for the CommandParser class."""
@@ -58,7 +60,7 @@ class TestCommandParser(unittest.TestCase):
             "echo $(whoami)": "$(",
             "echo `whoami`": "`",
             "command1; command2": ";",
-            "mkfs.ext4 /dev/sda1": "mkfs"
+            "mkfs.ext4 /dev/sda1": "mkfs",
         }
 
         for cmd, pattern in unsafe_commands.items():
@@ -68,8 +70,8 @@ class TestCommandParser(unittest.TestCase):
             self.assertIn(pattern, result)
             self.assertIn("ERROR:", result)
 
-    @patch('platform.system')
-    @patch('os.environ.get')
+    @patch("platform.system")
+    @patch("os.environ.get")
     def test_system_context_generation(self, mock_environ_get, mock_platform_system):
         """Test system context generation with different environments."""
         test_cases = [
@@ -83,7 +85,7 @@ class TestCommandParser(unittest.TestCase):
         for platform_name, shell_path, exp_os, exp_shell in test_cases:
             mock_platform_system.return_value = platform_name
             mock_environ_get.return_value = shell_path
-            
+
             context = self.parser._get_system_context()
             self.assertIn(exp_os.lower(), context.lower())
             self.assertIn(exp_shell, context)
@@ -94,16 +96,13 @@ class TestCommandParser(unittest.TestCase):
             "temperature": 0.1,
             "max_new_tokens": 50,
             "top_p": 0.95,
-            "custom_param": "test"
+            "custom_param": "test",
         }
-        
-        parser = CommandParser(
-            llm=self.mock_llm,
-            generation_params=custom_params
-        )
-        
+
+        parser = CommandParser(llm=self.mock_llm, generation_params=custom_params)
+
         parser.parse_to_command("list files")
-        
+
         # Check that the LLM's generate method was called with our custom params
         self.mock_llm.generate.assert_called_once()
         call_args = self.mock_llm.generate.call_args[1]

@@ -2,10 +2,10 @@
 name = "plainspeak"
 version = "0.1.0"
 description = "Turns everyday English into real terminal commands and API calls."
-authors = ["plainspeak-org <contact@plainspeak.pro>"]
+authors = ["cschanhniem <contact@plainspeak.pro>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/plainspeak-org/plainspeak"
+repository = "https://github.com/cschanhniem/plainspeak"
 keywords = ["nlp", "cli", "automation", "llm"]
 
 [tool.poetry.dependencies]

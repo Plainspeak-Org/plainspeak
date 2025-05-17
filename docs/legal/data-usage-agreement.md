@@ -215,4 +215,4 @@ Using PlainSpeak indicates:
 - Control of your data
 
 *This Agreement is open source and available at:
-https://github.com/plainspeak-org/plainspeak/blob/main/docs/legal/data-usage-agreement.md*
+https://github.com/cschanhniem/plainspeak/blob/main/docs/legal/data-usage-agreement.md*

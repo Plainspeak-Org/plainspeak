@@ -4,6 +4,7 @@ Command Parser for PlainSpeak.
 This module handles the parsing of natural language into shell commands
 using the LLM interface and prompt templates.
 """
+
 import time
 from typing import Optional, Dict, Any, Tuple, Union
 from datetime import datetime
@@ -24,7 +25,7 @@ class CommandParser:
     def __init__(
         self,
         llm: Optional[LLMInterface] = None,
-        generation_params: Optional[Dict[str, Any]] = None
+        generation_params: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the command parser.
@@ -41,7 +42,7 @@ class CommandParser:
             "top_p": 0.9,
             "top_k": 50,
             "repetition_penalty": 1.1,
-            "stop": ["\n"]  # Stop at newline since we want single commands
+            "stop": ["\n"],  # Stop at newline since we want single commands
         }
 
     def _get_system_context(self) -> str:
@@ -78,8 +79,7 @@ class CommandParser:
                 try:
                     # Parse the template command into AST
                     ast = ast_builder.from_command_string(
-                        template_cmd,
-                        original_text=template_text
+                        template_cmd, original_text=template_text
                     )
                     ast.input_text = input_text
                     return ast
@@ -90,68 +90,73 @@ class CommandParser:
         context = self._get_system_context()
 
         start_time = time.time()
-        
+
         # Try parsing with plugin system
         try:
-            ast = ast_builder.from_natural_language(input_text, {
-                "context": context,
-                "similar_examples": similar
-            })
+            ast = ast_builder.from_natural_language(
+                input_text, {"context": context, "similar_examples": similar}
+            )
             return ast
         except ValueError:
             pass  # Fall through to LLM method
-            
+
         # Generate command using LLM
         prompt = get_shell_command_prompt(input_text, context)
         generated = self.llm.generate(prompt, **self.generation_params)
-        
+
         if generated is None or generated.strip().startswith("ERROR:"):
             elapsed = time.time() - start_time
-            learning_store.record_feedback(FeedbackEntry(
-                original_text=input_text,
-                generated_command="",
-                final_command=None,
-                success=False,
-                error_message="Failed to generate command",
-                execution_time=elapsed,
-                feedback_type="reject",
-                timestamp=datetime.now()
-            ))
+            learning_store.record_feedback(
+                FeedbackEntry(
+                    original_text=input_text,
+                    generated_command="",
+                    final_command=None,
+                    success=False,
+                    error_message="Failed to generate command",
+                    execution_time=elapsed,
+                    feedback_type="reject",
+                    timestamp=datetime.now(),
+                )
+            )
             raise ValueError("Failed to generate command")
 
         command = generated.strip()
         try:
             ast = ast_builder.from_command_string(command, original_text=input_text)
             elapsed = time.time() - start_time
-            learning_store.record_feedback(FeedbackEntry(
-                original_text=input_text,
-                generated_command=command,
-                final_command=command,
-                success=True,
-                error_message=None,
-                execution_time=elapsed,
-                feedback_type="accept",
-                timestamp=datetime.now()
-            ))
+            learning_store.record_feedback(
+                FeedbackEntry(
+                    original_text=input_text,
+                    generated_command=command,
+                    final_command=command,
+                    success=True,
+                    error_message=None,
+                    execution_time=elapsed,
+                    feedback_type="accept",
+                    timestamp=datetime.now(),
+                )
+            )
             return ast
         except ValueError as e:
             elapsed = time.time() - start_time
-            learning_store.record_feedback(FeedbackEntry(
-                original_text=input_text,
-                generated_command=command,
-                final_command=None,
-                success=False,
-                error_message=str(e),
-                execution_time=elapsed,
-                feedback_type="reject",
-                timestamp=datetime.now()
-            ))
+            learning_store.record_feedback(
+                FeedbackEntry(
+                    original_text=input_text,
+                    generated_command=command,
+                    final_command=None,
+                    success=False,
+                    error_message=str(e),
+                    execution_time=elapsed,
+                    feedback_type="reject",
+                    timestamp=datetime.now(),
+                )
+            )
             raise
-            
+
     def parse_to_command(self, input_text: str) -> Tuple[bool, str]:
         """
         Parse natural language input into a shell command.
-        
+
         This is the legacy interface, using the new AST-based parsing internally.
         """
         try:
@@ -159,16 +164,16 @@ class CommandParser:
             if isinstance(ast, Pipeline):
                 # Join pipeline commands with pipes
                 return True, " | ".join(
-                    plugin_manager.generate_command(cmd.name, {
-                        arg.name: arg.value for arg in cmd.args if arg.name
-                    })[1] for cmd in ast.commands
+                    plugin_manager.generate_command(
+                        cmd.name, {arg.name: arg.value for arg in cmd.args if arg.name}
+                    )[1]
+                    for cmd in ast.commands
                 )
             elif isinstance(ast, Command):
                 if ast.type == CommandType.PLUGIN:
                     # Use plugin to generate final command
                     return plugin_manager.generate_command(
-                        ast.name,
-                        {arg.name: arg.value for arg in ast.args if arg.name}
+                        ast.name, {arg.name: arg.value for arg in ast.args if arg.name}
                     )
                 else:
                     # Reconstruct shell command
