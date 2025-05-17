@@ -43,7 +43,7 @@ class EmailConfig:
 
         self.config = self._load_config()
 
-    def _load_config(self) -> Dict[str, Any]:  # type: ignore[no-any-return]
+    def _load_config(self) -> Dict[str, Any]:  # type: ignore[no-any-return]  # type: ignore[no-any-return]
         """Load configuration from file."""
         if not self.config_path.exists():
             return {}
@@ -236,7 +236,7 @@ class EmailClient:
 
     def read_email(
         self, id: Optional[str] = None, index: int = 1, mark_read: bool = True
-    ) -> Optional[Dict[str, Any]]:  # type: ignore[no-any-return]
+    ) -> Optional[Dict[str, str]]:  # type: ignore[no-any-return]
         """
         Read a specific email.
 
@@ -254,51 +254,42 @@ class EmailClient:
         self.imap.select("INBOX")
 
         # Get message ID
+        msg_id_str = ""
         if id is None:
-            _, message_numbers = self.imap.search(None, "ALL")
-            if not message_numbers or not message_numbers[0]:
+            status, message_numbers = self.imap.search(None, "ALL")
+            if status != "OK" or not message_numbers or not message_numbers[0]:
                 return None
 
-            msgs = message_numbers[0].split()
-            if not msgs or index > len(msgs):
+            msg_ids = message_numbers[0].split()
+            if not msg_ids or index > len(msg_ids):
                 return None
 
-            msg_id = msgs[-index]  # Get by index from the end (newest first)
+            # Get by index from the end (newest first)
+            msg_id_bytes = msg_ids[-index]
+            msg_id_str = msg_id_bytes.decode("utf-8")
         else:
-            msg_id = id.encode() if isinstance(id, str) else id
+            msg_id_str = id
 
         try:
-            # Convert msg_id to string for fetch command
-            fetch_id = msg_id.decode() if isinstance(msg_id, bytes) else str(msg_id)  # type: ignore[union-attr]
-            result = self.imap.fetch(fetch_id, "(RFC822)")
-
-            if not result or not isinstance(result, tuple) or len(result) < 2:
+            # Fetch the message
+            status, data = self.imap.fetch(msg_id_str, "(RFC822)")
+            if status != "OK" or not data or not data[0]:
                 return None
 
-            message_data = result[1]
-            if (
-                not message_data
-                or not isinstance(message_data, list)
-                or not message_data
-            ):
+            # The first item in data should be a tuple with the message data
+            first_item = data[0]  # type: ignore[index]
+
+            # Check if it's a tuple with at least 2 items (typically it's (metadata, content))
+            if not isinstance(first_item, tuple) or len(first_item) < 2:
                 return None
 
-            # Get the first message part
-            first_part = message_data[0]  # type: ignore[index]
-            if (
-                not first_part
-                or not isinstance(first_part, tuple)
-                or len(first_part) < 2
-            ):
+            # Get the message content (second item in the tuple)
+            message_bytes = first_item[1]
+            if not isinstance(message_bytes, bytes):
                 return None
 
-            # Extract the message body
-            message_body = first_part[1]
-            if not isinstance(message_body, bytes):
-                return None
-
-            # Parse the email with the email module
-            message = email.message_from_bytes(message_body)  # type: ignore[arg-type]
+            # Parse the email
+            message = email.message_from_bytes(message_bytes)  # type: ignore[arg-type]
 
             # Extract body content
             body = ""
@@ -316,10 +307,7 @@ class EmailClient:
 
             # Mark as read if needed
             if mark_read:
-                if isinstance(msg_id, bytes):
-                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")  # type: ignore[arg-type]
-                else:
-                    self.imap.store(fetch_id, "+FLAGS", "\\Seen")  # type: ignore[arg-type]
+                self.imap.store(msg_id_str, "+FLAGS", "\\Seen")
 
             # Build the result
             return {

@@ -203,7 +203,7 @@ class PluginManager:
         """
         return self.registry.get_all_verbs()
 
-    def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]
+    def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]  # type: ignore[no-any-return]
         """
         Get the plugin that can handle the given verb.
 
