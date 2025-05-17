@@ -7,6 +7,14 @@ for natural language understanding and generation.
 
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional, Union
+import os
+import json
+import requests
+import uuid
+import logging
+import ssl
+import certifi
+from functools import lru_cache
 
 
 class LLMInterface(ABC):
@@ -328,7 +336,11 @@ class RemoteLLM(LLMInterface):
         api_endpoint: str,
         api_key: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: int = 2048
+        max_tokens: int = 2048,
+        timeout: int = 30,
+        verify_ssl: bool = True,
+        retry_count: int = 3,
+        ssl_cert_path: Optional[str] = None
     ):
         """
         Initialize the remote LLM.
@@ -338,12 +350,96 @@ class RemoteLLM(LLMInterface):
             api_key: Optional API key.
             temperature: Sampling temperature.
             max_tokens: Maximum tokens to generate.
+            timeout: Request timeout in seconds.
+            verify_ssl: Whether to verify SSL certificates.
+            retry_count: Number of retries for failed requests.
+            ssl_cert_path: Path to custom SSL certificate.
         """
         self.api_endpoint = api_endpoint
         self.api_key = api_key
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.timeout = timeout
+        self.retry_count = retry_count
+        
+        # Configure SSL verification
+        self.verify_ssl = certifi.where() if verify_ssl else False
+        if ssl_cert_path and os.path.exists(ssl_cert_path):
+            self.verify_ssl = ssl_cert_path
+            
+        # Setup logging
+        self.logger = logging.getLogger("RemoteLLM")
+        
+        # Track API calls for rate limiting
+        self.request_count = 0
+        self.request_ids = {}
+        
+    def _make_api_request(self, endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Make a secure API request with proper error handling and retry logic.
+        
+        Args:
+            endpoint: API endpoint path to append to base URL.
+            payload: Request payload.
+            
+        Returns:
+            Response data as dictionary.
+            
+        Raises:
+            RuntimeError: If API request fails after all retries.
+        """
+        # Generate a unique request ID for tracking
+        request_id = str(uuid.uuid4())
+        self.request_ids[request_id] = True
+        
+        # Prepare headers with authentication
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "PlainSpeak/0.1.0",
+            "X-Request-ID": request_id
+        }
+        
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+            
+        # Add request ID to payload for tracing
+        payload["request_id"] = request_id
+        
+        # Full URL
+        url = f"{self.api_endpoint.rstrip('/')}/{endpoint.lstrip('/')}"
+        
+        # Try the request with retries
+        last_error = None
+        for attempt in range(self.retry_count):
+            try:
+                response = requests.post(
+                    url,
+                    json=payload,
+                    headers=headers,
+                    timeout=self.timeout,
+                    verify=self.verify_ssl
+                )
+                
+                # Check if the request was successful
+                response.raise_for_status()
+                
+                # Parse and return response
+                return response.json()
+                
+            except requests.RequestException as e:
+                last_error = str(e)
+                self.logger.warning(f"API request failed (attempt {attempt+1}/{self.retry_count}): {last_error}")
+                
+                # Don't retry certain errors
+                if isinstance(e, requests.HTTPError) and e.response.status_code in (401, 403):
+                    break
+                    
+        # If we get here, all retries failed
+        error_msg = f"API request failed after {self.retry_count} attempts: {last_error}"
+        self.logger.error(error_msg)
+        raise RuntimeError(error_msg)
     
+    @lru_cache(maxsize=128)
     def parse_natural_language(self, text: str) -> Dict[str, Any]:
         """
         Parse natural language using the remote API.
@@ -358,10 +454,26 @@ class RemoteLLM(LLMInterface):
             return {"verb": None, "args": {}}
             
         try:
-            # In a real implementation, we would call the API here
-            # For now, use a simple placeholder implementation
+            # Prepare request payload
+            payload = {
+                "text": text,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens
+            }
+            
+            # Make API request
+            response = self._make_api_request("parse", payload)
+            
+            # Check if the response contains the expected fields
+            if "verb" in response and "args" in response:
+                return response
+                
+            # If response format is incorrect, log warning and fall back
+            self.logger.warning(f"Unexpected API response format: {response}")
             return self._simple_parse(text)
+            
         except Exception as e:
+            self.logger.error(f"Error parsing natural language: {e}")
             # Fall back to simple parsing on error
             return self._simple_parse(text)
     
@@ -380,10 +492,28 @@ class RemoteLLM(LLMInterface):
             return {"verb": None, "args": {}}
             
         try:
-            # In a real implementation, we would call the API with locale info
-            # For now, use a simple placeholder implementation
+            # Prepare request payload
+            payload = {
+                "text": text,
+                "locale": locale,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens
+            }
+            
+            # Make API request
+            response = self._make_api_request("parse_with_locale", payload)
+            
+            # Check if the response contains the expected fields
+            if "verb" in response and "args" in response:
+                return response
+                
+            # If response format is incorrect, log warning and fall back
+            self.logger.warning(f"Unexpected API response format: {response}")
             return self._simple_parse(text)
+            
         except Exception as e:
+            self.logger.error(f"Error parsing natural language with locale: {e}")
+            # Fall back to simple parsing on error
             return self._simple_parse(text)
     
     def _simple_parse(self, text: str) -> Dict[str, Any]:
@@ -423,4 +553,97 @@ class RemoteLLM(LLMInterface):
         if not args and len(words) > 1:
             args["text"] = " ".join(words[1:])
             
-        return {"verb": verb, "args": args} 
+        return {"verb": verb, "args": args}
+        
+    def get_improved_command(
+        self, 
+        query: str, 
+        feedback_data: Dict[str, Any],
+        previous_commands: List[str]
+    ) -> str:
+        """
+        Generate an improved command based on feedback.
+        
+        Args:
+            query: The original natural language query.
+            feedback_data: Data about previous feedback.
+            previous_commands: List of previously executed commands.
+            
+        Returns:
+            Improved command string.
+        """
+        try:
+            # Prepare request payload
+            payload = {
+                "query": query,
+                "feedback_data": feedback_data,
+                "previous_commands": previous_commands,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens
+            }
+            
+            # Make API request
+            response = self._make_api_request("improve_command", payload)
+            
+            # Check if the response contains the expected field
+            if "command" in response and isinstance(response["command"], str):
+                return response["command"]
+                
+            # If response format is incorrect, log warning and fall back
+            self.logger.warning(f"Unexpected API response format: {response}")
+            
+        except Exception as e:
+            self.logger.error(f"Error getting improved command: {e}")
+            
+        # Fall back to default implementation
+        if "corrected_command" in feedback_data:
+            return feedback_data["corrected_command"]
+            
+        if previous_commands:
+            return previous_commands[-1]
+            
+        return ""
+        
+    def suggest_verbs(self, text: str) -> List[str]:
+        """
+        Suggest verbs based on partial input.
+        
+        Args:
+            text: Partial natural language input.
+            
+        Returns:
+            List of suggested verbs.
+        """
+        try:
+            # Prepare request payload
+            payload = {
+                "text": text,
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens
+            }
+            
+            # Make API request
+            response = self._make_api_request("suggest_verbs", payload)
+            
+            # Check if the response contains the expected field
+            if "verbs" in response and isinstance(response["verbs"], list):
+                return response["verbs"]
+                
+            # If response format is incorrect, log warning and fall back
+            self.logger.warning(f"Unexpected API response format: {response}")
+            
+        except Exception as e:
+            self.logger.error(f"Error suggesting verbs: {e}")
+            
+        # Fall back to default implementation
+        common_verbs = [
+            "list", "find", "search", "show", "create", "edit",
+            "delete", "copy", "move", "rename", "download"
+        ]
+        
+        # Filter verbs that match the beginning of the text
+        if text:
+            text_lower = text.lower()
+            return [verb for verb in common_verbs if verb.startswith(text_lower)]
+            
+        return common_verbs 

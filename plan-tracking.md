@@ -284,6 +284,10 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
             * [x] Set up automated build pipeline
             * [x] Implemented platform-specific configurations
             * [x] Added code signing process
+            * [x] Enhanced hidden imports detection for core modules
+            * [x] Updated spec file for cross-platform support
+            * [x] Added proper data files bundling including translations
+            * [x] Configured macOS app bundling with info.plist settings
             * [ ] Complete final testing on all platforms
         *   [~] Create comprehensive user and developer documentation (Sphinx/MkDocs):
             * [x] Set up Sphinx documentation structure
@@ -323,12 +327,12 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
                     * [x] Added tests for plugin manager
                     * [x] Implemented tests for command execution
                     * [x] Created tests for natural language parsing
-                    * [~] Add tests for remaining modules
+                    * [x] Add tests for remaining modules
         *   [~] Refine offline capabilities and optional remote LLM calls:
             * [x] Implemented local LLM inference
             * [x] Added model download and management
             * [x] Created fallback mechanism for complex queries
-            * [ ] Implement secure remote API integration
+            * [x] Implement secure remote API integration
             * [ ] Add user preferences for LLM selection
         *   [~] Implement internationalization support (i18n for UI, considerations for LLM):
             * [x] Added i18n framework
