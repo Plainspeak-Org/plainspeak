@@ -37,6 +37,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          # Ensuring we use Python 3.11+ as required by the project
 
       - name: Install Poetry
         uses: snok/install-poetry@v1

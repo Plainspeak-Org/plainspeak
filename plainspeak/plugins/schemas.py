@@ -25,6 +25,10 @@ class CommandConfig(BaseModel):
     optional_args: Dict[str, Union[str, int, float, bool, None]] = Field(
         default_factory=dict, description="Optional arguments with their default values"
     )
+    aliases: List[str] = Field(
+        default_factory=list, 
+        description="Alternative verbs that can be used to invoke this command"
+    )
 
     @field_validator("template")
     def validate_template(cls, v: str) -> str:
@@ -68,6 +72,16 @@ class PluginManifest(BaseModel):
         description="Python import path to the plugin class",
         pattern=r"^[a-zA-Z][a-zA-Z0-9_.]*[a-zA-Z0-9]$",
     )
+    priority: int = Field(
+        default=0,
+        description="Plugin priority (higher values indicate higher priority)",
+        ge=0,
+        le=100
+    )
+    verb_aliases: Dict[str, List[str]] = Field(
+        default_factory=dict, 
+        description="Mapping of verb aliases to canonical verbs"
+    )
 
     @field_validator("verbs")
     def validate_verbs(cls, v: List[str]) -> List[str]:
@@ -90,6 +104,25 @@ class PluginManifest(BaseModel):
                 raise ValueError(
                     f"Missing command configurations for verbs: {', '.join(missing)}"
                 )
+        return v
+
+    @field_validator("verb_aliases")
+    def validate_verb_aliases(
+        cls, v: Dict[str, List[str]], values: Dict[str, Any]
+    ) -> Dict[str, List[str]]:
+        """Validate that all canonical verbs in verb_aliases exist in verbs."""
+        if "verbs" in values:
+            verbs = values["verbs"]
+            for canonical_verb, aliases in v.items():
+                if canonical_verb not in verbs:
+                    raise ValueError(
+                        f"Canonical verb '{canonical_verb}' in verb_aliases is not defined in verbs"
+                    )
+                for alias in aliases:
+                    if not alias.islower() or " " in alias:
+                        raise ValueError(
+                            f"Verb alias '{alias}' must be lowercase and contain no spaces"
+                        )
         return v
 
 
