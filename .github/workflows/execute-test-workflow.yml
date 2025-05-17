@@ -9,11 +9,20 @@ on:
         default: '0.1.0-test1'
 
 permissions:
-  contents: read
+  # Needed for checking out code, creating releases, etc.
+  contents: write
+  # Needed for creating and updating issues
   issues: write
+  # Needed for creating and updating PRs
   pull-requests: write
-  packages: read
+  # Needed for package operations
+  packages: write
+  # Needed for workflow operations
   actions: write
+  # Needed for job status updates
+  checks: write  
+  # Needed for workflow and job statuses
+  statuses: write
 
 jobs:
   prepare-environment:
@@ -60,12 +69,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TEST_VERSION: ${{ inputs.version }}-${{ needs.prepare-environment.outputs.timestamp }}
         run: |
-          # Make script executable
+          echo "::group::Check Environment"
+          echo "Working directory: $(pwd)"
+          echo "Python version: $(python --version)"
+          echo "GitHub CLI version: $(gh --version)"
+          ls -la scripts/
+          echo "::endgroup::"
+
+          echo "::group::Make script executable"
           chmod +x scripts/run_test_workflow.sh
+          echo "::endgroup::"
           
-          # Run the test workflow
+          echo "::group::Execute test workflow"
+          set -x  # Enable debug mode
           ./scripts/run_test_workflow.sh
+          set +x  # Disable debug mode
+          echo "::endgroup::"
       
+      - name: Create results directory
+        run: mkdir -p results
+
       - name: Process results
         run: |
           echo "## Test Workflow Results" >> $GITHUB_STEP_SUMMARY
@@ -75,17 +98,33 @@ jobs:
           # Add workflow run details
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Workflow Runs" >> $GITHUB_STEP_SUMMARY
-          gh run list --limit 5 --workflow=test-sample-package.yml >> $GITHUB_STEP_SUMMARY
+          gh run list --workflow=test-sample-package.yml --json status,conclusion,number,url --limit 5 >> results/workflow-runs.json
           
-          # Parse test results
-          python scripts/parse_test_results.py \
-            --results-dir results \
-            --output test-results.json \
-            --summary test-summary.md
+          if [ -f "results/workflow-runs.json" ]; then
+            cat results/workflow-runs.json >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Create initial test summary
+          echo "# Test Results Summary" > results/test-summary.md
+          echo "" >> results/test-summary.md
+          echo "## Test Execution" >> results/test-summary.md
+          echo "- Version: ${{ inputs.version }}" >> results/test-summary.md
+          echo "- Timestamp: ${{ needs.prepare-environment.outputs.timestamp }}" >> results/test-summary.md
           
-          if [ -f "test-summary.md" ]; then
+          # Create initial test results
+          echo "{}" > results/test-results.json
+          
+          # Parse test results if script exists
+          if [ -f "scripts/parse_test_results.py" ]; then
+            python scripts/parse_test_results.py \
+              --results-dir results \
+              --output results/test-results.json \
+              --summary results/test-summary.md || true
+          fi
+          
+          if [ -f "results/test-summary.md" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
-            cat test-summary.md >> $GITHUB_STEP_SUMMARY
+            cat results/test-summary.md >> $GITHUB_STEP_SUMMARY
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,5 +135,6 @@ jobs:
         with:
           name: test-results-${{ needs.prepare-environment.outputs.timestamp }}
           path: |
-            test-results.json
-            test-summary.md
+            results/test-results.json
+            results/test-summary.md
+            results/workflow-runs.json

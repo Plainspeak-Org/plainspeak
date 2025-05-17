@@ -181,3 +181,5 @@ cython_debug/
 .cursorindexingignore
 plan
 plan-tracking.md
+results/
+.DS_Store

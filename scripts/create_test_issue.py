@@ -4,17 +4,11 @@
 import os
 import sys
 import argparse
-import requests
-from datetime import datetime
+import tempfile
+import subprocess
 
-def create_test_issue(version: str, token: str, repo: str) -> None:
-    """Create a test submission issue on GitHub."""
-    
-    url = f"https://api.github.com/repos/{repo}/issues"
-    headers = {
-        "Accept": "application/vnd.github.v3+json",
-        "Authorization": f"token {token}",
-    }
+def create_test_issue(version: str, repo: str) -> None:
+    """Create a test submission issue on GitHub using gh CLI."""
     
     # Prepare issue body
     body = f"""This is an automated test submission for version {version}.
@@ -44,23 +38,30 @@ Please ensure all requirements are met:
 - Review submission processes
 """
 
-    # Create issue
-    data = {
-        "title": f"Test Submission: {version}",
-        "body": body,
-        "labels": ["test", "packages", "submission"],
-        "assignees": ["test-runner"]
-    }
-    
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 201:
-        issue = response.json()
-        print(f"Successfully created test issue #{issue['number']}")
-        print(f"URL: {issue['html_url']}")
-    else:
-        print(f"Failed to create issue: {response.status_code}")
-        print(response.text)
-        sys.exit(1)
+    # Write body to temp file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+        f.write(body)
+        body_file = f.name
+
+    try:
+        # Create issue using gh CLI
+        cmd = [
+            'gh', 'issue', 'create',
+            '--title', f'Test Submission: {version}',
+            '--body-file', body_file,
+            '--label', 'test,packages,submission',
+            '--repo', repo
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"Successfully created test issue at: {result.stdout.strip()}")
+        else:
+            print(f"Failed to create issue: {result.stderr}")
+            sys.exit(1)
+    finally:
+        # Clean up temp file
+        os.unlink(body_file)
 
 def main():
     parser = argparse.ArgumentParser(description="Create a test submission issue")
@@ -68,13 +69,7 @@ def main():
     parser.add_argument("--repo", default="plainspeak-org/plainspeak", help="GitHub repository")
     args = parser.parse_args()
     
-    # Get GitHub token from environment
-    token = os.environ.get("GITHUB_TOKEN")
-    if not token:
-        print("Error: GITHUB_TOKEN environment variable not set")
-        sys.exit(1)
-    
-    create_test_issue(args.version, token, args.repo)
+    create_test_issue(args.version, args.repo)
 
 if __name__ == "__main__":
     main()
