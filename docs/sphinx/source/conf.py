@@ -17,6 +17,10 @@ author = "PlainSpeak Team"
 version = "0.1.0"  # Updated to match pyproject.toml
 release = "0.1.0"
 
+# -- Python version ---------------------------------------------------------
+# This documentation is built with Python 3.11+
+python_version = "3.11"
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 

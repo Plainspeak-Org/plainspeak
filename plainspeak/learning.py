@@ -7,7 +7,7 @@ This module implements the feedback loop for improving command generation over t
 import sqlite3
 import json
 from typing import Dict, List, Any, Optional, Union, Tuple
-import pandas as pd
+import pandas as pd  # type: ignore[import-untyped]
 from datetime import datetime
 from pathlib import Path
 from dataclasses import dataclass
@@ -127,6 +127,154 @@ class LearningStore:
                     json.dumps(metadata) if metadata else None,
                 ),
             )
+
+    def add_command(
+        self, 
+        natural_text: str, 
+        generated_command: str, 
+        executed: bool = False, 
+        system_info: Optional[Dict[str, Any]] = None,
+        environment_info: Optional[Dict[str, Any]] = None
+    ) -> int:
+        """
+        Add a command to the learning store.
+
+        Args:
+            natural_text: The original natural language text.
+            generated_command: The generated command.
+            executed: Whether the command was executed.
+            system_info: System information.
+            environment_info: Environment information.
+
+        Returns:
+            The ID of the added command.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO feedback (
+                    original_text,
+                    generated_command,
+                    success,
+                    execution_time,
+                    feedback_type,
+                    timestamp,
+                    metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    natural_text,
+                    generated_command,
+                    None,  # success is None until execution
+                    0.0,   # execution time is 0 until executed
+                    "pending",
+                    datetime.now().isoformat(),
+                    json.dumps({
+                        "system_info": system_info or {},
+                        "environment_info": environment_info or {}
+                    })
+                ),
+            )
+            return cursor.lastrowid
+
+    def add_feedback(
+        self, 
+        command_id: int, 
+        feedback_type: str, 
+        message: Optional[str] = None
+    ) -> None:
+        """
+        Add feedback for a command.
+
+        Args:
+            command_id: The ID of the command.
+            feedback_type: The type of feedback ('approve', 'reject', etc.).
+            message: Optional message associated with the feedback.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                UPDATE feedback
+                SET feedback_type = ?,
+                    error_message = ?
+                WHERE id = ?
+                """,
+                (feedback_type, message, command_id),
+            )
+
+    def update_command_execution(
+        self, 
+        command_id: int, 
+        executed: bool, 
+        success: bool, 
+        error_message: Optional[str] = None
+    ) -> None:
+        """
+        Update a command with execution results.
+
+        Args:
+            command_id: The ID of the command.
+            executed: Whether the command was executed.
+            success: Whether the command execution was successful.
+            error_message: Optional error message if execution failed.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                UPDATE feedback
+                SET executed = ?,
+                    success = ?,
+                    error_message = ?
+                WHERE id = ?
+                """,
+                (executed, success, error_message, command_id),
+            )
+
+    def get_command_history(self, limit: Optional[int] = None) -> pd.DataFrame:
+        """
+        Get the command history from the feedback table.
+
+        Args:
+            limit: Optional limit on the number of records to return.
+
+        Returns:
+            DataFrame with command history.
+        """
+        query = "SELECT * FROM feedback ORDER BY timestamp DESC"
+        if limit is not None:
+            query += f" LIMIT {limit}"
+
+        with sqlite3.connect(self.db_path) as conn:
+            return pd.read_sql_query(query, conn)
+
+    def export_training_data(self, output_path: Path) -> int:
+        """
+        Export training data to a JSONL file.
+
+        Args:
+            output_path: Path to the output file.
+
+        Returns:
+            Number of records exported.
+        """
+        # Get successful commands with high-quality feedback
+        df = self.get_command_history()
+        
+        # Filter for successful commands
+        df = df[(df["success"] == True) & (df["feedback_type"] == "approve")]
+        
+        if df.empty:
+            return 0
+            
+        # Write to JSONL file
+        with open(output_path, "w") as f:
+            for _, row in df.iterrows():
+                f.write(json.dumps({
+                    "input": row["original_text"],
+                    "output": row["generated_command"]
+                }) + "\n")
+                
+        return len(df)
 
     def analyze_patterns(self, min_occurrences: int = 5) -> pd.DataFrame:
         """

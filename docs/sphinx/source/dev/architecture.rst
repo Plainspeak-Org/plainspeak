@@ -92,7 +92,7 @@ PlainSpeak's architecture embodies several key design principles:
 Technology Stack
 --------------
 
-- **Primary Language:** Python 3.9+
+- **Primary Language:** Python 3.11+
 - **LLM Inference:** ``ctransformers`` with GGUF models
 - **REPL Shell:** ``cmd2``
 - **Template System:** ``Jinja2``

@@ -8,7 +8,7 @@ such as LLM model paths, generation parameters, and other settings.
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field, FilePath, field_validator
 import os
-import toml
+import toml  # type: ignore[import-untyped]
 from pathlib import Path
 
 # Default configuration path
@@ -86,7 +86,7 @@ class LLMConfig(BaseModel):
 class AppConfig(BaseModel):
     """Main application configuration."""
 
-    llm: LLMConfig = Field(default_factory=LLMConfig)
+    llm: LLMConfig = Field(default_factory=lambda: LLMConfig())
     # Add other app-level configs here, e.g., log_level, etc.
 
 

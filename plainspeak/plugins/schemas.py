@@ -41,7 +41,7 @@ class PluginManifest(BaseModel):
     """Schema for plugin manifest files."""
 
     name: str = Field(
-        ...,
+        default=...,
         description="Unique name of the plugin",
         pattern=r"^[a-zA-Z][a-zA-Z0-9_-]*$",
     )

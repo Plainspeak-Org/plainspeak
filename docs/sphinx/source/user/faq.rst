@@ -32,7 +32,7 @@ What are the system requirements?
 
 PlainSpeak requires:
 
-- Python 3.9 or higher
+- Python 3.11 or higher
 - 4 GB RAM recommended (2 GB minimum)
 - 500 MB disk space for the application
 - 1-4 GB additional space for language models

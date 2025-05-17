@@ -45,7 +45,7 @@ Technical Architecture
 
 PlainSpeak is built on a modern Python stack:
 
-- **Language:** Python 3.9+
+- **Language:** Python 3.11+
 - **LLM Inference:** ctransformers with optimized GGUF models
 - **Terminal Interface:** cmd2 for rich REPL experience
 - **Template System:** Jinja2

@@ -7,7 +7,7 @@ This module defines the base plugin class and plugin registry.
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, Callable, cast
 from pathlib import Path
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from .schemas import PluginManifest, CommandConfig, PluginConfig
 
@@ -112,7 +112,7 @@ class YAMLPlugin(Plugin):
         # Validate against schema
         try:
             self.manifest = PluginManifest.parse_obj(yaml_data)
-            self.config = PluginConfig(manifest=self.manifest, instance=self)
+            self.config = PluginConfig(manifest=self.manifest, instance=self, enabled=True, load_error=None)
         except Exception as e:
             raise ValueError(f"Invalid plugin manifest: {e}")
 

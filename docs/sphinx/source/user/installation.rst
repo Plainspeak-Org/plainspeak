@@ -6,7 +6,7 @@ This guide will help you install and set up PlainSpeak on your system.
 Prerequisites
 ------------
 
-- Python 3.9 or higher
+- Python 3.11 or higher
 - pip (Python package installer)
 - Git (optional, for cloning the repository)
 
@@ -42,7 +42,7 @@ If you want the latest development version or want to contribute to PlainSpeak, 
 
       # Install Poetry if you don't have it
       pip install poetry
-      
+
       # Install dependencies and PlainSpeak
       poetry install
 

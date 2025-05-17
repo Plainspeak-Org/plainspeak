@@ -46,7 +46,7 @@ The documentation is built using [Sphinx](https://www.sphinx-doc.org/), a powerf
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.11 or higher (required for sphinx-autodoc-typehints)
 - Poetry (for dependency management)
 
 ### Building Locally
@@ -56,7 +56,7 @@ To build the documentation locally:
 ```bash
 # Install dependencies
 poetry install
-poetry add sphinx sphinx-rtd-theme sphinx-autodoc-typehints
+poetry add sphinx sphinx-rtd-theme "sphinx-autodoc-typehints>=3.2.0"
 
 # Build the documentation
 cd docs/sphinx
