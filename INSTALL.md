@@ -35,18 +35,24 @@ If you want the latest development version or want to contribute to PlainSpeak, 
    cd plainspeak
    ```
 
-2. Install using Poetry:
+2. Install using Poetry (recommended for development):
    ```bash
    # Install Poetry if you don't have it
    pip install poetry
 
    # Install dependencies and PlainSpeak
-   poetry install
+   poetry install  # Installs all dependencies including development dependencies
+
+   # To run tests
+   poetry run pytest
    ```
 
 3. Alternatively, install using pip:
    ```bash
-   pip install -e .
+   pip install -e .  # Installs the package in development mode
+
+   # To install test dependencies
+   pip install -r tests/requirements-tests.txt  # Only needed for running tests
    ```
 
 ## Installing the LLM Model
@@ -159,6 +165,20 @@ To use GPU acceleration:
    ```toml
    [llm]
    gpu_layers = 32  # Adjust based on your GPU memory
+   ```
+
+### Test Dependencies
+
+If you're running tests and encounter missing dependencies:
+
+1. If using Poetry:
+   ```bash
+   poetry install  # Installs all dependencies including dev dependencies
+   ```
+
+2. If using pip:
+   ```bash
+   pip install -r tests/requirements-tests.txt
    ```
 
 ### Other Issues
