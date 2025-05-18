@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plainspeak"
-version = "0.1.0"
+version = "1.0.0"
 description = "Turns everyday English into real terminal commands and API calls."
 authors = ["cschanhniem <contact@plainspeak.pro>"]
 license = "MIT"
@@ -64,10 +64,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 120
 target-version = ['py311']
-
-[tool.flake8]
-max-line-length = 120
-extend-ignore = "E203,W293" # E203: Whitespace before ':' - often conflicts with Black, W293: blank line contains whitespace
 
 [tool.mypy]
 python_version = "3.11"

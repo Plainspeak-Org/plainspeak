@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -54,7 +54,7 @@ jobs:
         signtool sign /f certificate.pfx /p $CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a "dist\PlainSpeak-Setup.exe"
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: windows-binary
         path: |
@@ -69,7 +69,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -138,7 +138,7 @@ jobs:
           "dist/PlainSpeak.app"
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: macos-binary
         path: |
@@ -153,38 +153,20 @@ jobs:
 
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
 
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: PlainSpeak ${{ github.ref }}
+        files: |
+          ./windows-binary/PlainSpeak-Setup.exe
+          ./macos-binary/PlainSpeak.dmg
         draft: true
         prerelease: false
-
-    - name: Upload Windows Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./windows-binary/PlainSpeak-Setup.exe
-        asset_name: PlainSpeak-Setup.exe
-        asset_content_type: application/octet-stream
-
-    - name: Upload macOS Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos-binary/PlainSpeak.dmg
-        asset_name: PlainSpeak.dmg
-        asset_content_type: application/octet-stream
+        name: PlainSpeak ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        generate_release_notes: true
 
     - name: Generate Checksums
       run: |
@@ -192,21 +174,9 @@ jobs:
         cd ../macos-binary && sha256sum PlainSpeak.dmg > macos.sha256
 
     - name: Upload Checksums
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./windows-binary/windows.sha256
-        asset_name: windows.sha256
-        asset_content_type: text/plain
-
-    - name: Upload Checksums (macOS)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./macos-binary/macos.sha256
-        asset_name: macos.sha256
-        asset_content_type: text/plain
+        files: |
+          ./windows-binary/windows.sha256
+          ./macos-binary/macos.sha256
+        tag_name: ${{ github.ref_name }}

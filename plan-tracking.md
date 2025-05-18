@@ -323,11 +323,11 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
                 * [x] Set up coverage tracking
                 * [x] Created coverage reports
                 * [x] Implemented coverage thresholds
-                * [~] Improve coverage in core modules:
+                * [x] Improve coverage in core modules:
                     * [x] Added tests for plugin manager
                     * [x] Implemented tests for command execution
                     * [x] Created tests for natural language parsing
-                    * [x] Added tests for remaining modules
+                    * [x] Added tests for remaining modules (LLMInterface, Commander)
         *   [~] Refine offline capabilities and optional remote LLM calls:
             * [x] Implemented local LLM inference
             * [x] Added model download and management
@@ -592,11 +592,11 @@ PlainSpeak's core architecture—transforming natural language into structured c
 ## 10. Deployment Plan
 
 *   **Distribution:**
-    *   [~] PyPI package for `pip install plainspeak`:
+    *   [x] PyPI package for `pip install plainspeak`:
         * [x] Created PyPI package configuration
         * [x] Set up automated publishing workflow
         * [x] Added package metadata and dependencies
-        * [ ] Publish initial release to PyPI
+        * [x] Publish initial release to PyPI
     *   [~] Single-file executable binaries:
         * [x] Created PyInstaller spec file
         * [x] Implemented platform-specific configurations
@@ -663,13 +663,13 @@ PlainSpeak's core architecture—transforming natural language into structured c
 
 ## 13. Next Steps
 
-*   [ ] Complete remaining translations for i18n system
+*   [x] Complete remaining translations for i18n system
 *   [x] Finalize Windows and macOS binary packaging
 *   [x] Implement secure remote API integration
 *   [~] Achieve 80%+ test coverage
 *   [x] Submit formal proposal to Python Software Foundation
-*   [ ] Complete integration tests for all plugin types
-*   [ ] Launch first official release
+*   [x] Complete integration tests for all plugin types
+*   [x] Launch first official release
 
 ---
 This plan will be updated regularly as development progresses.

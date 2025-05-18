@@ -185,3 +185,5 @@ results/
 .DS_Store
 changelog/tracking
 marketing/
+changelog
+commit_message.txt
