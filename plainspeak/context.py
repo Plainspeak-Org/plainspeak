@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from plainspeak.core.i18n import I18N
+from plainspeak.core.i18n import I18n
 from plainspeak.core.llm import LLMInterface
 
 
@@ -33,7 +33,7 @@ class SessionContext:
     """
 
     llm_interface: Optional[LLMInterface]
-    i18n: Optional[I18N]
+    i18n: Optional[I18n]
 
     def __init__(self, context_file: Optional[Path] = None):
         """

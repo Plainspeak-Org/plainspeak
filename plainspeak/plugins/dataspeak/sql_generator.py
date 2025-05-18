@@ -133,7 +133,7 @@ class SQLGenerator:
     DEFAULT_TEMPLATES = {
         "select_all": QueryTemplate(
             "SELECT * FROM :table LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_tables=["table"],
             description="Retrieve all records from a table",
         ),
@@ -144,35 +144,35 @@ class SQLGenerator:
         ),
         "filter_equals": QueryTemplate(
             "SELECT * FROM :table WHERE :column = :value LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Filter records where a column equals a specific value",
         ),
         "filter_contains": QueryTemplate(
             "SELECT * FROM :table WHERE :column LIKE '%' || :value || '%' LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Filter records where a column contains a specific value",
         ),
         "filter_greater_than": QueryTemplate(
             "SELECT * FROM :table WHERE :column > :value LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Filter records where a column is greater than a specific value",
         ),
         "filter_less_than": QueryTemplate(
             "SELECT * FROM :table WHERE :column < :value LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Filter records where a column is less than a specific value",
         ),
         "group_by_count": QueryTemplate(
             "SELECT :column, COUNT(*) as count FROM :table GROUP BY :column ORDER BY count DESC LIMIT :limit",
-            {"limit": 100},
+            {"limit": "100"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Group records by a column and count occurrences",
@@ -203,14 +203,14 @@ class SQLGenerator:
         ),
         "top_n": QueryTemplate(
             "SELECT * FROM :table ORDER BY :column DESC LIMIT :limit",
-            {"limit": 10},
+            {"limit": "10"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Get the top N records by a column",
         ),
         "bottom_n": QueryTemplate(
             "SELECT * FROM :table ORDER BY :column ASC LIMIT :limit",
-            {"limit": 10},
+            {"limit": "10"},
             requires_columns=["column"],
             requires_tables=["table"],
             description="Get the bottom N records by a column",
@@ -361,14 +361,14 @@ class SQLGenerator:
         for table in available_tables:
             if table.lower() in natural_query.lower():
                 template = self.templates["select_all"]
-                params = {"table": table, "limit": 100}
+                params = {"table": table, "limit": "100"}
                 sql = template.fill(params)
                 return sql, params
 
         # If all else fails, choose the first table
         if available_tables:
             template = self.templates["select_all"]
-            params = {"table": available_tables[0], "limit": 100}
+            params = {"table": available_tables[0], "limit": "100"}
             sql = template.fill(params)
             return sql, params
 
@@ -424,9 +424,11 @@ class SQLGenerator:
                     if not found:
                         continue  # Skip this pattern if table not found
 
-                # Convert numeric values if needed
-                if "limit" in params and params["limit"].isdigit():
-                    params["limit"] = int(params["limit"])
+                # Validate and normalize limit to string
+                if "limit" in params:
+                    limit_value = params["limit"]
+                    if isinstance(limit_value, (int, str)):
+                        params["limit"] = str(limit_value)
 
                 # Fill the template
                 template = self.templates.get(template_name)
@@ -504,7 +506,7 @@ class SQLGenerator:
             template = self.templates["aggregate_max"]
         elif any(word in query_lower for word in ["top", "best", "highest"]) and columns:
             params["column"] = columns[0]
-            params["limit"] = 10  # Default limit
+            params["limit"] = "10"  # Default limit
             # Try to extract a number from the query
             number_match = re.search(r"\b(\d+)\b", query_lower)
             if number_match:
