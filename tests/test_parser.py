@@ -4,8 +4,9 @@ Tests for the command parser module.
 
 import unittest
 from unittest.mock import Mock, patch
-from plainspeak.parser import CommandParser
+
 from plainspeak.llm_interface import LLMInterface
+from plainspeak.parser import CommandParser
 
 
 class TestCommandParser(unittest.TestCase):

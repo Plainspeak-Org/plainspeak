@@ -5,7 +5,7 @@ This section contains detailed guides for using PlainSpeak's features.
 
 .. toctree::
    :maxdepth: 1
-   
+
    guides/how_it_works
    guides/dataspeak
 

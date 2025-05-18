@@ -55,7 +55,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
    ```bash
    # For CUDA
    pip install ctransformers[cuda]
-   
+
    # For Metal (Apple Silicon)
    pip install ctransformers[metal]
    ```
@@ -70,7 +70,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
    ```
    # Less specific
    find my documents
-   
+
    # More specific
    find pdf files in my Documents folder that contain "report"
    ```
@@ -79,7 +79,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
    ```
    # Instead of
    find large image files in my Downloads folder, compress them and move them to my backup drive
-   
+
    # Try
    find large image files in my Downloads folder
    compress those files
@@ -89,7 +89,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
 3. Check if PlainSpeak shows the correct command before execution. If not, you can:
    - Edit the command before running it (type `e` at the prompt)
    - Cancel and try a different phrasing
-   
+
 4. Reset your session if context from previous commands is affecting interpretation:
    ```
    plainspeak shell --new-session
@@ -102,7 +102,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
 1. PlainSpeak runs with your user permissions, so ensure you have the right access to:
    - Read/write files you're trying to modify
    - Execute programs you're trying to run
-   
+
 2. For operations requiring elevated privileges, PlainSpeak will show the command but cannot run as sudo/admin directly. Options:
    - Edit the command to include sudo (type `e` at the prompt)
    - Run PlainSpeak from an already elevated shell
@@ -114,13 +114,13 @@ This error occurs when PlainSpeak can't locate the LLM model file.
 1. For faster responses:
    - Use a smaller model (edit config.toml)
    - Enable GPU acceleration if available
-   
+
 2. Configure GPU acceleration:
    ```toml
    [llm]
    gpu_layers = 32  # Adjust based on your GPU memory
    ```
-   
+
 3. Close other resource-intensive applications
 
 ## Model Issues
@@ -166,7 +166,7 @@ This error occurs when PlainSpeak can't locate the LLM model file.
    ```bash
    # For YAML plugins
    cat ~/.config/plainspeak/plugins/your-plugin.yaml
-   
+
    # For Python plugins
    cat ~/.config/plainspeak/plugins/your_plugin.py
    chmod +x ~/.config/plainspeak/plugins/your_plugin.py
@@ -235,9 +235,9 @@ file plugin: find large pdf files
 1. PlainSpeak should automatically adapt commands to your platform, but you may need to:
    - Edit the commands before execution
    - Specify that you're using Windows in your query: "Windows: find large files"
-   
+
 2. Update PlainSpeak to the latest version
-   
+
 3. Report the issue on our GitHub repository
 
 ### Q: Getting errors with file paths on macOS/Linux
@@ -274,7 +274,7 @@ Use correct path separators for your platform:
    ```bash
    # Homebrew (macOS)
    brew upgrade plainspeak
-   
+
    # Windows (from Microsoft Store)
    # Updates happen automatically
    ```
@@ -286,4 +286,4 @@ If your issue isn't covered here:
 1. Check the full documentation at [docs.plainspeak.org](https://docs.plainspeak.org)
 2. Join our [community forum](https://github.com/cschanhniem/plainspeak/discussions)
 3. Report bugs on [GitHub Issues](https://github.com/cschanhniem/plainspeak/issues)
-4. Run PlainSpeak with `--debug` flag and share logs when seeking help 
+4. Run PlainSpeak with `--debug` flag and share logs when seeking help

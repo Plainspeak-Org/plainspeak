@@ -12,12 +12,10 @@ Requirements:
 """
 
 import os
-import sys
 from pathlib import Path
-import subprocess
-from PIL import Image
+
 import cairosvg
-import svgutils.transform as sg
+from PIL import Image
 
 ASSET_DIR = Path("assets")
 ICON_SIZES = {
@@ -138,7 +136,6 @@ def generate_screenshots():
     """Generate screenshots for store listings."""
     # Placeholder - actual screenshots will need to be taken manually
     # This function can process and resize them appropriately
-    pass
 
 
 def main():

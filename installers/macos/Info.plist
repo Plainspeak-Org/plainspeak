@@ -73,13 +73,13 @@
     <!-- Permissions -->
     <key>NSAppleEventsUsageDescription</key>
     <string>PlainSpeak needs to control system events to execute your commands.</string>
-    
+
     <key>NSCalendarsUsageDescription</key>
     <string>PlainSpeak needs calendar access for calendar-related commands (when using the calendar plugin).</string>
-    
+
     <key>NSRemindersUsageDescription</key>
     <string>PlainSpeak needs reminders access for task-related commands (when using the calendar plugin).</string>
-    
+
     <key>NSHomeDirectoryUsageDescription</key>
     <string>PlainSpeak needs access to your home directory to execute file operations and store configuration.</string>
 

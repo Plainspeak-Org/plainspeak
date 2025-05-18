@@ -125,4 +125,4 @@ Running your edited command...
 
 - Explore [PlainSpeak plugins](../plugins/overview.md) to extend capabilities
 - Learn [how PlainSpeak works](how_it_works.md) under the hood
-- Check out the [troubleshooting guide](../faq/troubleshooting.md) for common issues 
+- Check out the [troubleshooting guide](../faq/troubleshooting.md) for common issues

@@ -4,12 +4,11 @@ Git Plugin for PlainSpeak.
 This module provides Git version control operations through natural language.
 """
 
-import os
 import subprocess
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any, Dict
 
-from .base import Plugin, registry, YAMLPlugin
+from .base import YAMLPlugin, registry
 from .platform import platform_manager
 
 
@@ -34,9 +33,7 @@ class GitPlugin(YAMLPlugin):
             version = subprocess.check_output(["git", "--version"], text=True).strip()
             self.git_version = version.split()[-1]
         except (subprocess.SubprocessError, OSError):
-            raise RuntimeError(
-                "Git is not installed or not accessible. " "Please install Git >= 2.0.0"
-            )
+            raise RuntimeError("Git is not installed or not accessible. " "Please install Git >= 2.0.0")
 
     def _preprocess_args(self, verb: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -68,8 +65,7 @@ class GitPlugin(YAMLPlugin):
                 import re
 
                 matches = re.findall(
-                    r"https://github\.com/[\w\-]+/[\w\-]+(?:\.git)?|"
-                    r"git@github\.com:[\w\-]+/[\w\-]+(?:\.git)?",
+                    r"https://github\.com/[\w\-]+/[\w\-]+(?:\.git)?|" r"git@github\.com:[\w\-]+/[\w\-]+(?:\.git)?",
                     url,
                 )
                 if matches:

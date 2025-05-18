@@ -55,13 +55,13 @@ log "${YELLOW}Watching run ID: $run_id${NC}"
 while true; do
     status=$(gh run view "$run_id" --json status,conclusion --jq '.status')
     conclusion=$(gh run view "$run_id" --json status,conclusion --jq '.conclusion')
-    
+
     log "${YELLOW}Status: $status, Conclusion: $conclusion${NC}"
-    
+
     if [ "$status" = "completed" ]; then
         if [ "$conclusion" = "success" ]; then
             log "${GREEN}Tests completed successfully!${NC}"
-            
+
             # Show test results
             log "${YELLOW}Test Results:${NC}"
             gh run view "$run_id" --log > workflow.log
@@ -69,7 +69,7 @@ while true; do
             exit 0
         else
             log "${RED}Tests failed with conclusion: $conclusion${NC}"
-            
+
             # Show full failure logs
             log "${YELLOW}Full Workflow Log:${NC}"
             gh run view "$run_id" --log > workflow.log
@@ -77,6 +77,6 @@ while true; do
             exit 1
         fi
     fi
-    
+
     sleep 5
 done

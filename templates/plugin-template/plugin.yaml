@@ -18,7 +18,7 @@ commands:
       - arg
     optional_args:
       option: ""
-      
+
   another-verb:
     template: "another_cmd {{ '--flag' if flag else '' }}"
     description: Description of another command

@@ -4,11 +4,11 @@ PlainSpeak Plugins Package.
 This package contains the plugin system and built-in plugins for PlainSpeak.
 """
 
-from pathlib import Path
 import importlib
 import pkgutil
 import sys
-from typing import Dict, List, Any, Optional, Type
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Plugin registry to store loaded plugins
 plugin_registry: Dict[str, Any] = {}
@@ -22,11 +22,7 @@ def discover_plugins() -> List[str]:
         List of plugin module names.
     """
     plugins_dir = Path(__file__).parent
-    return [
-        name
-        for _, name, is_pkg in pkgutil.iter_modules([str(plugins_dir)])
-        if not name.startswith("_")
-    ]
+    return [name for _, name, is_pkg in pkgutil.iter_modules([str(plugins_dir)]) if not name.startswith("_")]
 
 
 def load_plugin(plugin_name: str) -> Optional[Any]:

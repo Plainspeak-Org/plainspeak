@@ -30,26 +30,26 @@ class Plugin(ABC):
     @abstractmethod
     def get_verbs(self) -> List[str]:
         pass
-        
+
     def can_handle(self, verb: str) -> bool:
         if not verb:
             return False
-            
+
         # Check cache first
         verb_lower = verb.lower()
         if verb_lower in self._verb_cache:
             return self._verb_cache[verb_lower]
-            
+
         result = False
-        
+
         # Check if it's a canonical verb
         if verb_lower in [v.lower() for v in self.get_verbs()]:
             result = True
-            
+
         # Check if it's an alias
         elif verb_lower in [a.lower() for a in self.verb_aliases.keys()]:
             result = True
-            
+
         # Update cache
         self._verb_cache[verb_lower] = result
         return result
@@ -81,7 +81,7 @@ class PluginRegistry:
 
     def register(self, plugin: Plugin) -> None:
         # Implementation details...
-        
+
     @lru_cache(maxsize=256)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
         # Implementation details...
@@ -108,17 +108,17 @@ The `PluginManager` provides high-level functionality, including fuzzy matching:
 class PluginManager:
     FUZZY_MATCH_THRESHOLD = 0.75
     MAX_FUZZY_MATCHES = 3
-    
+
     @lru_cache(maxsize=256)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
         # Try exact match first via registry
         plugin = self.registry.get_plugin_for_verb(verb)
         if plugin:
             return plugin
-            
+
         # Try fuzzy matching if no exact match
         return self._find_plugin_with_fuzzy_matching(verb)
-       
+
     def _find_plugin_with_fuzzy_matching(self, verb: str) -> Optional[Plugin]:
         # Implementation details...
 ```
@@ -132,24 +132,24 @@ def _find_plugin_with_fuzzy_matching(self, verb: str) -> Optional[Plugin]:
     if not verb:
         logger.warning("Empty verb provided to fuzzy matching")
         return None
-        
+
     verb_lower = verb.lower()
     all_verbs = self.get_all_verbs()
-    
+
     # No verbs to match against
     if not all_verbs:
         logger.warning("No verbs available for fuzzy matching")
         return None
-        
+
     try:
         # Find the closest matching verb
         matches = difflib.get_close_matches(
-            verb_lower, 
-            [v.lower() for v in all_verbs.keys()], 
-            n=self.MAX_FUZZY_MATCHES, 
+            verb_lower,
+            [v.lower() for v in all_verbs.keys()],
+            n=self.MAX_FUZZY_MATCHES,
             cutoff=self.FUZZY_MATCH_THRESHOLD
         )
-        
+
         # Try each match in order of similarity
         for match in matches:
             # Find the original case of the verb
@@ -225,14 +225,14 @@ class MyCustomPlugin(Plugin):
             "alias2": "canonical_verb",
             "shortcut": "another_verb"
         }
-        
+
     def get_verbs(self) -> List[str]:
         return ["canonical_verb", "another_verb", "third_verb"]
-        
+
     def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
         # Handle verb aliases by getting canonical form
         canonical = self.get_canonical_verb(verb)
-        
+
         # Generate command based on canonical verb
         if canonical == "canonical_verb":
             return f"actual-command --option={args.get('option', 'default')}"
@@ -313,11 +313,11 @@ class AdvancedPluginRegistry(PluginRegistry):
             # Handle special verb format
             special_verb = verb.split(":", 1)[1]
             # ...
-            
+
         # Fall back to standard lookup
         return super().get_plugin_for_verb(verb)
 ```
 
 ## Conclusion
 
-The plugin verb matching system provides a flexible and efficient way to map natural language verbs to the appropriate plugins. By understanding its implementation, you can create plugins that leverage its capabilities and extend its functionality for specialized needs. 
+The plugin verb matching system provides a flexible and efficient way to map natural language verbs to the appropriate plugins. By understanding its implementation, you can create plugins that leverage its capabilities and extend its functionality for specialized needs.

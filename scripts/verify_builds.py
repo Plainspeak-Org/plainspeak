@@ -6,20 +6,21 @@ This script performs manual verification tests on PlainSpeak binary builds
 across different platforms to ensure they function correctly.
 """
 
+import argparse
+import json
 import os
-import sys
 import platform
 import subprocess
-import json
-import argparse
+import sys
 from datetime import datetime
 from pathlib import Path
+
+VERSION = "1.0.0"  # Default version to test
 
 # Define constants
 SCRIPT_DIR = Path(__file__).parent.absolute()
 ROOT_DIR = SCRIPT_DIR.parent
 RESULTS_DIR = ROOT_DIR / "results" / "verification"
-VERSION = "1.0.0"  # Default version to test
 
 # Test cases for each platform
 COMMON_TESTS = [
@@ -43,7 +44,7 @@ COMMON_TESTS = [
     },
     {
         "name": "Basic file command",
-        "command": "{binary} run \"list files in the current directory\"",
+        "command": '{binary} run "list files in the current directory"',
         "expected_output": ["Translated", "Execute?"],
         "expected_exit_code": 0,
         "interactive": True,
@@ -55,7 +56,7 @@ PLATFORM_SPECIFIC_TESTS = {
     "Windows": [
         {
             "name": "Windows-specific command",
-            "command": "{binary} run \"show disk information\"",
+            "command": '{binary} run "show disk information"',
             "expected_output": ["Translated", "wmic", "diskdrive"],
             "expected_exit_code": 0,
             "interactive": True,
@@ -65,7 +66,7 @@ PLATFORM_SPECIFIC_TESTS = {
     "Darwin": [
         {
             "name": "macOS-specific command",
-            "command": "{binary} run \"show system info\"",
+            "command": '{binary} run "show system info"',
             "expected_output": ["Translated", "system_profiler"],
             "expected_exit_code": 0,
             "interactive": True,
@@ -75,7 +76,7 @@ PLATFORM_SPECIFIC_TESTS = {
     "Linux": [
         {
             "name": "Linux-specific command",
-            "command": "{binary} run \"show disk usage\"",
+            "command": '{binary} run "show disk usage"',
             "expected_output": ["Translated", "df -h"],
             "expected_exit_code": 0,
             "interactive": True,
@@ -157,9 +158,7 @@ def run_test(binary_path, test_case):
 
         # Check expected output
         output = stdout + stderr
-        missing_terms = [
-            term for term in test_case["expected_output"] if term not in output
-        ]
+        missing_terms = [term for term in test_case["expected_output"] if term not in output]
 
         # Check exit code
         exit_code_match = exit_code == test_case["expected_exit_code"]
@@ -201,12 +200,12 @@ def run_verification_tests(binary_path, platform_name=None, save_results=True):
     """Run all verification tests for the given binary."""
     if not platform_name:
         platform_name = platform.system()
-    
+
     # Get tests for this platform
     tests = COMMON_TESTS.copy()
     if platform_name in PLATFORM_SPECIFIC_TESTS:
         tests.extend(PLATFORM_SPECIFIC_TESTS[platform_name])
-    
+
     results = {
         "timestamp": datetime.now().isoformat(),
         "binary_path": binary_path,
@@ -217,14 +216,14 @@ def run_verification_tests(binary_path, platform_name=None, save_results=True):
             "total": len(tests),
             "passed": 0,
             "failed": 0,
-        }
+        },
     }
-    
+
     print(f"\n{'='*80}")
     print(f"Running verification tests for PlainSpeak binary: {binary_path}")
     print(f"Platform: {platform_name}")
     print(f"{'='*80}\n")
-    
+
     # Run all tests
     for test in tests:
         test_result = run_test(binary_path, test)
@@ -233,7 +232,7 @@ def run_verification_tests(binary_path, platform_name=None, save_results=True):
             results["summary"]["passed"] += 1
         else:
             results["summary"]["failed"] += 1
-    
+
     # Print summary
     print(f"\n{'='*80}")
     print(f"Test Summary:")
@@ -241,18 +240,18 @@ def run_verification_tests(binary_path, platform_name=None, save_results=True):
     print(f"Passed: {results['summary']['passed']}")
     print(f"Failed: {results['summary']['failed']}")
     print(f"{'='*80}\n")
-    
+
     # Save results if requested
     if save_results:
         RESULTS_DIR.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         results_file = RESULTS_DIR / f"verification_{platform_name.lower()}_{timestamp}.json"
-        
+
         with open(results_file, "w") as f:
             json.dump(results, f, indent=2)
-        
+
         print(f"Results saved to {results_file}")
-    
+
     return results
 
 
@@ -264,35 +263,33 @@ def main():
         help="Platform to test (Windows, Darwin, Linux)",
         choices=["Windows", "Darwin", "Linux"],
     )
-    parser.add_argument(
-        "--version", default=VERSION, help="Version of the binary being tested"
-    )
+    parser.add_argument("--version", default=VERSION, help="Version of the binary being tested")
     parser.add_argument("--no-save", action="store_true", help="Don't save results")
     args = parser.parse_args()
-    
+
     # Set version if provided
     global VERSION
     if args.version:
         VERSION = args.version
-    
+
     try:
         # Find binary if not specified
         binary_path = args.binary or find_binary()
         if not binary_path:
             print("Error: PlainSpeak binary not found")
             return 1
-        
+
         # Run tests
         platform_name = args.platform or platform.system()
         results = run_verification_tests(binary_path, platform_name, not args.no_save)
-        
+
         # Return exit code based on test results
         return 0 if results["summary"]["failed"] == 0 else 1
-    
+
     except Exception as e:
         print(f"Error: {e}")
         return 1
 
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    sys.exit(main())

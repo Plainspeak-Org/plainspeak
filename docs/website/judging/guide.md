@@ -16,12 +16,12 @@ Each submission will be evaluated by:
   - Original solution to a problem
   - Novel use of natural language
   - Creative implementation approach
-  
+
 - **Value Proposition (10 points)**
   - Addresses a real user need
   - Improves existing workflows
   - Potential impact on users
-  
+
 - **Technical Creativity (5 points)**
   - Innovative use of PlainSpeak features
   - Clever implementation solutions
@@ -32,12 +32,12 @@ Each submission will be evaluated by:
   - Feature completeness
   - Reliability and stability
   - Performance considerations
-  
+
 - **User Base (5 points)**
   - Size of potential user base
   - Applicability across domains
   - Cross-platform support
-  
+
 - **Effectiveness (10 points)**
   - Solves the stated problem
   - Improves user productivity
@@ -48,12 +48,12 @@ Each submission will be evaluated by:
   - Clean, readable code
   - Follows Python best practices
   - Proper error handling
-  
+
 - **Testing (5 points)**
   - Test coverage (>80% required)
   - Test quality and scenarios
   - Integration tests
-  
+
 - **Documentation (10 points)**
   - Clear installation guide
   - Comprehensive API docs
@@ -64,12 +64,12 @@ Each submission will be evaluated by:
   - Intuitive verb choices
   - Clear command mappings
   - Handles variations well
-  
+
 - **PlainSpeak Standards (10 points)**
   - Follows plugin guidelines
   - Uses platform features correctly
   - Security considerations
-  
+
 - **User Experience (5 points)**
   - Helpful error messages
   - Good feedback/output

@@ -4,7 +4,8 @@ Text Plugin for PlainSpeak.
 This plugin provides text operations like grep, sed, awk, etc.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from .base import Plugin, registry
 
 
@@ -27,9 +28,7 @@ class TextPlugin(Plugin):
 
     def __init__(self):
         """Initialize the text plugin."""
-        super().__init__(
-            name="text", description="Text operations like grep, sed, awk, etc."
-        )
+        super().__init__(name="text", description="Text operations like grep, sed, awk, etc.")
 
     def get_verbs(self) -> List[str]:
         """

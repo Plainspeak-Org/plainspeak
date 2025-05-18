@@ -5,11 +5,12 @@ This module handles loading and accessing application configuration,
 such as LLM model paths, generation parameters, and other settings.
 """
 
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field, FilePath, field_validator
 import os
-import toml  # type: ignore[import-untyped]
 from pathlib import Path
+from typing import Any, Dict, Optional
+
+import toml  # type: ignore[import-untyped]
+from pydantic import BaseModel, Field, field_validator
 
 # Default configuration path
 DEFAULT_CONFIG_DIR = Path.home() / ".config" / "plainspeak"
@@ -23,26 +24,16 @@ DEFAULT_MODEL_FILE_PATH = "models/minicpm-2b-sft.Q2_K.gguf"
 class LLMConfig(BaseModel):
     """LLM specific configuration."""
 
-    model_path: Optional[str] = Field(
-        DEFAULT_MODEL_FILE_PATH, description="Path to the GGUF model file."
-    )
-    model_type: str = Field(
-        "llama", description="Type of the model (e.g., 'llama', 'gptneox')."
-    )
-    gpu_layers: int = Field(
-        0, description="Number of model layers to offload to GPU. 0 for CPU only."
-    )
+    model_path: Optional[str] = Field(DEFAULT_MODEL_FILE_PATH, description="Path to the GGUF model file.")
+    model_type: str = Field("llama", description="Type of the model (e.g., 'llama', 'gptneox').")
+    gpu_layers: int = Field(0, description="Number of model layers to offload to GPU. 0 for CPU only.")
     # Default generation parameters
-    max_new_tokens: int = Field(
-        100, description="Maximum new tokens for command generation."
-    )
+    max_new_tokens: int = Field(100, description="Maximum new tokens for command generation.")
     temperature: float = Field(0.2, description="Sampling temperature for generation.")
     top_k: int = Field(50, description="Top-k sampling.")
     top_p: float = Field(0.9, description="Top-p (nucleus) sampling.")
     repetition_penalty: float = Field(1.1, description="Repetition penalty.")
-    stop: Optional[list[str]] = Field(
-        ["\n"], description="Stop sequences for generation."
-    )
+    stop: Optional[list[str]] = Field(["\n"], description="Stop sequences for generation.")
 
     @field_validator("model_path", mode="before")  # type: ignore
     @classmethod
@@ -117,9 +108,7 @@ def load_config(config_path: Optional[Path] = None) -> AppConfig:
             return AppConfig(**config_data)
         except (toml.TomlDecodeError, ValueError) as e:
             # Consider logging a warning here
-            print(
-                f"Warning: Could not load or parse config file {path_to_load}: {e}. Using default configuration."
-            )
+            print(f"Warning: Could not load or parse config file {path_to_load}: {e}. Using default configuration.")
             return AppConfig()  # Return default config on error
     return AppConfig()  # Return default config if file not found
 
@@ -137,9 +126,7 @@ def ensure_default_config_exists():
         with open(DEFAULT_CONFIG_FILE, "w") as f:
             toml.dump(default_config.model_dump(), f)
         print(f"Created default configuration file at: {DEFAULT_CONFIG_FILE}")
-        print(
-            f"Please download the model '{DEFAULT_MODEL_FILE_PATH}' or update the model_path in the config."
-        )
+        print(f"Please download the model '{DEFAULT_MODEL_FILE_PATH}' or update the model_path in the config.")
 
 
 # Global config instance, loaded on module import

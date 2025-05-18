@@ -31,10 +31,10 @@ from .base import Plugin, registry
 class MyPlugin(Plugin):
     def __init__(self):
         super().__init__("my-plugin", "My custom plugin")
-        
+
     def get_verbs(self):
         return ["my-verb", "another-verb"]
-        
+
     def generate_command(self, verb, args):
         if verb == "my-verb":
             return f"echo 'My verb with args: {args}'"

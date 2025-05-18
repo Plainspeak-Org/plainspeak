@@ -16,7 +16,7 @@ def collect_plugin_modules():
         if os.path.basename(py_file) != '__init__.py':
             module_name = f"plainspeak.plugins.{os.path.basename(py_file)[:-3]}"
             plugin_modules.append(module_name)
-    
+
     # Also collect subpackages
     for dir_path in glob.glob(os.path.join(plugin_dir, '*')):
         if os.path.isdir(dir_path) and os.path.exists(os.path.join(dir_path, '__init__.py')):
@@ -27,13 +27,13 @@ def collect_plugin_modules():
                 if os.path.basename(sub_py_file) != '__init__.py':
                     module_name = f"plainspeak.plugins.{subpackage}.{os.path.basename(sub_py_file)[:-3]}"
                     plugin_modules.append(module_name)
-    
+
     return plugin_modules
 
 # Add all data files
 def collect_data_files():
     data_files = []
-    
+
     # Add translations
     trans_dir = os.path.join('plainspeak', 'translations')
     if os.path.exists(trans_dir):
@@ -43,7 +43,7 @@ def collect_data_files():
                     file_path = os.path.join(root, file)
                     rel_dir = os.path.relpath(root, '.')
                     data_files.append((file_path, rel_dir))
-    
+
     # Add prompts
     prompts_dir = os.path.join('plainspeak', 'prompts')
     if os.path.exists(prompts_dir):
@@ -53,13 +53,13 @@ def collect_data_files():
                     file_path = os.path.join(root, file)
                     rel_dir = os.path.relpath(root, '.')
                     data_files.append((file_path, rel_dir))
-    
+
     # Add plugin manifests
     plugins_dir = os.path.join('plainspeak', 'plugins')
     if os.path.exists(plugins_dir):
         for manifest in glob.glob(os.path.join(plugins_dir, '*.yaml')):
             data_files.append((manifest, os.path.dirname(manifest)))
-    
+
     # Add demo data if exists
     demo_dir = os.path.join('plainspeak', 'data', 'demo')
     if os.path.exists(demo_dir):
@@ -68,7 +68,7 @@ def collect_data_files():
                 file_path = os.path.join(root, file)
                 rel_dir = os.path.relpath(root, '.')
                 data_files.append((file_path, rel_dir))
-    
+
     return data_files
 
 # Platform-specific settings and binaries
@@ -82,13 +82,13 @@ def get_platform_settings():
         'version': '0.1.0',
         'additional_args': {}
     }
-    
+
     if sys.platform.startswith('win'):
         # Windows settings
         settings['icon_file'] = os.path.join('assets', 'icons', 'windows', 'plainspeak.ico')
         settings['console'] = True
         settings['name'] = 'plainspeak'
-        
+
         # Windows-specific binary dependencies
         try:
             # Include SQLite DLL
@@ -96,7 +96,7 @@ def get_platform_settings():
             sqlite3_dll = os.path.join(os.path.dirname(sqlite3.__file__), 'sqlite3.dll')
             if os.path.exists(sqlite3_dll):
                 settings['binaries'].append((sqlite3_dll, '.'))
-                
+
             # Include SSE4 compatible libraries for newer CPUs
             try:
                 import numpy
@@ -106,7 +106,7 @@ def get_platform_settings():
                         settings['binaries'].append((lib, '.'))
             except ImportError:
                 pass
-                
+
             # Include OpenSSL DLLs
             try:
                 import requests
@@ -116,16 +116,16 @@ def get_platform_settings():
                         settings['binaries'].append((dll, '.'))
             except ImportError:
                 pass
-                
+
         except ImportError:
             pass
-            
+
     elif sys.platform.startswith('darwin'):
         # macOS settings
         settings['icon_file'] = os.path.join('assets', 'icons', 'source', 'plainspeak.icns')
         settings['console'] = False
         settings['name'] = 'PlainSpeak'
-        
+
         # macOS-specific framework dependencies
         try:
             # Include dylibs if needed
@@ -136,7 +136,7 @@ def get_platform_settings():
                     settings['binaries'].append((dylib, '.'))
         except ImportError:
             pass
-            
+
         # macOS app bundle settings
         settings['additional_args'] = {
             'info_plist': {
@@ -169,13 +169,13 @@ def get_platform_settings():
                 ]
             }
         }
-            
+
     else:  # Linux
         # Linux settings
         settings['icon_file'] = os.path.join('assets', 'icons', 'source', 'plainspeak.png')
         settings['console'] = True
         settings['name'] = 'plainspeak'
-        
+
         # Linux-specific shared library dependencies
         try:
             # Include NumPy and other shared libraries if needed
@@ -184,7 +184,7 @@ def get_platform_settings():
             if os.path.exists(numpy_libs):
                 for lib in glob.glob(os.path.join(numpy_libs, '*.so*')):
                     settings['binaries'].append((lib, '.'))
-                    
+
             # Include SSL shared libraries
             try:
                 import ssl
@@ -193,10 +193,10 @@ def get_platform_settings():
                     settings['binaries'].append((lib, '.'))
             except ImportError:
                 pass
-                
+
         except ImportError:
             pass
-    
+
     return settings
 
 # Get platform-specific settings

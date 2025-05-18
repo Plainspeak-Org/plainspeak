@@ -4,7 +4,8 @@ Network Plugin for PlainSpeak.
 This plugin provides network operations like ping, curl, wget, etc.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from .base import Plugin, registry
 
 
@@ -26,9 +27,7 @@ class NetworkPlugin(Plugin):
 
     def __init__(self):
         """Initialize the network plugin."""
-        super().__init__(
-            name="network", description="Network operations like ping, curl, wget, etc."
-        )
+        super().__init__(name="network", description="Network operations like ping, curl, wget, etc.")
 
     def get_verbs(self) -> List[str]:
         """

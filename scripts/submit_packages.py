@@ -5,18 +5,13 @@ Package Submission Script for PlainSpeak
 This script automates the submission process for various distribution channels.
 """
 
-import os
-import sys
-import subprocess
 import argparse
 import logging
+import subprocess
 from pathlib import Path
-from typing import List, Dict
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -287,9 +282,7 @@ package() {{
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Submit PlainSpeak packages to distribution channels"
-    )
+    parser = argparse.ArgumentParser(description="Submit PlainSpeak packages to distribution channels")
     parser.add_argument("--version", required=True, help="Version to submit")
     parser.add_argument(
         "--channels",
@@ -298,9 +291,7 @@ def main():
         choices=["all", "pypi", "windows", "macos", "homebrew", "linux"],
         help="Distribution channels to submit to",
     )
-    parser.add_argument(
-        "--skip-test", action="store_true", help="Skip Test PyPI submission"
-    )
+    parser.add_argument("--skip-test", action="store_true", help="Skip Test PyPI submission")
 
     args = parser.parse_args()
 

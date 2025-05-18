@@ -15,7 +15,7 @@ You should see a welcome message and a prompt:
 ```
 PlainSpeak 1.0  •  Your natural gateway to computing power
 
-> 
+>
 ```
 
 The `>` symbol is where you'll type your natural language commands.
@@ -116,7 +116,7 @@ system: System operations like checking processes, disk usage, etc.
   disk, du, size, free, memory
   top, monitor, uname, system, date
   time, uptime, hostname
-  
+
 network: Network operations like ping, curl, wget, etc.
   ...
 
@@ -247,4 +247,4 @@ Now that you've completed your first session with PlainSpeak, you might want to:
 - Read about [how PlainSpeak works](../guides/how_it_works.md) under the hood
 - Check out the [troubleshooting guide](../faq/troubleshooting.md) if you encounter any issues
 
-Remember, the more you use PlainSpeak, the better it gets at understanding your specific needs and preferences. The system learns from your feedback and command edits to provide more accurate translations over time. 
+Remember, the more you use PlainSpeak, the better it gets at understanding your specific needs and preferences. The system learns from your feedback and command edits to provide more accurate translations over time.

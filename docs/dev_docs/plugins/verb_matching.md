@@ -59,11 +59,11 @@ class Plugin(ABC):
         self.verbs: List[str] = []
         self.priority = priority
         self.verb_aliases: Dict[str, str] = {}
-        
+
     def can_handle(self, verb: str) -> bool:
         # Check if plugin can handle verb or alias
         pass
-        
+
     def get_canonical_verb(self, verb: str) -> str:
         # Get canonical form of verb or alias
         pass
@@ -82,12 +82,12 @@ A registry of all loaded plugins that provides:
 class PluginRegistry:
     def __init__(self):
         self.plugins: Dict[str, Plugin] = {}
-        
+
     @lru_cache(maxsize=128)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
         # Find plugin for verb, respecting priorities
         pass
-        
+
     def get_all_verbs(self) -> Dict[str, str]:
         # Get all verbs from all plugins
         pass
@@ -105,14 +105,14 @@ A higher-level manager that:
 ```python
 class PluginManager:
     FUZZY_MATCH_THRESHOLD = 0.75
-    
+
     @lru_cache(maxsize=128)
     def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
         # Try exact match first
         plugin = self.registry.get_plugin_for_verb(verb)
         if plugin:
             return plugin
-            
+
         # Try fuzzy matching if no exact match
         return self._find_plugin_with_fuzzy_matching(verb)
 ```
@@ -174,4 +174,4 @@ When developing plugins:
 2. **Set appropriate priorities** - Use higher priorities for more specialized plugins
 3. **Include common aliases** - Think about different ways users might express the same intent
 4. **Test with typos** - Ensure your plugin can be found with common misspellings
-5. **Document your verbs** - Clearly document all verbs and aliases your plugin supports 
+5. **Document your verbs** - Clearly document all verbs and aliases your plugin supports

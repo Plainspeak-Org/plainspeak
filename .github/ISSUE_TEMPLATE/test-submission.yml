@@ -8,7 +8,7 @@ body:
     attributes:
       value: |
         This template helps run test submissions for PlainSpeak packages across all distribution channels.
-        
+
         Please ensure all pre-requisites are met before starting the test:
         - All required secrets are configured
         - Test environments are available
@@ -67,7 +67,7 @@ body:
     attributes:
       value: |
         ## Next Steps
-        
+
         1. This will create a test submission workflow
         2. Results will be posted as comments
         3. Review test results carefully

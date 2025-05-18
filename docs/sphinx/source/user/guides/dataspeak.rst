@@ -35,23 +35,23 @@ Example Usage
 
    # Initialize data source
    > plainspeak init-data ./SalesData/*.csv
-   
+
    # Ask questions in natural language
    > total revenue by region in 2024
-   
+
    I'll calculate the total revenue by region for 2024.
-   
+
    SQL Query:
    SELECT region, SUM(revenue) as total_revenue
    FROM sales
    WHERE year = 2024
    GROUP BY region
    ORDER BY total_revenue DESC;
-   
+
    Execute? [Y/n/edit/visualize]: v
-   
+
    Visualization type? [bar/pie/line]: bar
-   
+
    [Bar chart showing revenue by region would be displayed]
 
 Technical Implementation

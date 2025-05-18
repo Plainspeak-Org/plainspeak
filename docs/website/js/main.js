@@ -28,13 +28,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 const result = await response.json();
-                
+
                 // Show success message
                 const successMessage = document.createElement('div');
                 successMessage.className = 'alert success';
                 successMessage.textContent = 'Registration successful! Check your email for confirmation.';
                 registerForm.insertBefore(successMessage, registerForm.firstChild);
-                
+
                 // Reset form
                 registerForm.reset();
 
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 errorMessage.className = 'alert error';
                 errorMessage.textContent = 'Registration failed. Please try again.';
                 registerForm.insertBefore(errorMessage, registerForm.firstChild);
-                
+
                 console.error('Registration error:', error);
             } finally {
                 submitButton.disabled = false;
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mobile menu toggle
     const menuToggle = document.querySelector('.menu-toggle');
     const nav = document.querySelector('nav ul');
-    
+
     if (menuToggle && nav) {
         menuToggle.addEventListener('click', () => {
             nav.classList.toggle('active');

@@ -4,7 +4,8 @@ System Plugin for PlainSpeak.
 This plugin provides system operations like checking processes, disk usage, etc.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from .base import Plugin, registry
 
 

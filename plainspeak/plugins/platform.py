@@ -5,10 +5,9 @@ This module provides platform-specific path handling and system operations.
 """
 
 import os
-import sys
 import platform
 from pathlib import Path
-from typing import List, Optional, Union, Dict
+from typing import Optional, Union
 
 
 class PlatformManager:
@@ -128,17 +127,11 @@ class PlatformManager:
         safe_roots = [self.get_known_path("temp"), self.get_known_path("downloads")]
 
         if self.is_windows:
-            safe_roots.extend(
-                [self.get_known_path("program_files"), self.get_known_path("system")]
-            )
+            safe_roots.extend([self.get_known_path("program_files"), self.get_known_path("system")])
         elif self.is_macos:
-            safe_roots.extend(
-                [self.get_known_path("applications"), self.get_known_path("library")]
-            )
+            safe_roots.extend([self.get_known_path("applications"), self.get_known_path("library")])
         else:
-            safe_roots.extend(
-                [self.get_known_path("bin"), self.get_known_path("local")]
-            )
+            safe_roots.extend([self.get_known_path("bin"), self.get_known_path("local")])
 
         safe_roots = [r for r in safe_roots if r is not None]
 

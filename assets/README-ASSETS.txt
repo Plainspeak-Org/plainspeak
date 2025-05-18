@@ -68,6 +68,6 @@ Week 3-4: UI component design
 Week 5-6: Marketing materials
 Week 7-8: Documentation assets
 
-Note: This file serves as a bridge between the placeholder 
-assets we've created and the final assets to be developed 
+Note: This file serves as a bridge between the placeholder
+assets we've created and the final assets to be developed
 by the design team.

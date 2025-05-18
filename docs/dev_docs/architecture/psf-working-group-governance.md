@@ -215,4 +215,4 @@ The PlainSpeak Working Group exists to:
 
 ## 10. Amendments
 
-This governance document may be amended by a two-thirds majority vote of the Core Team, following a public discussion period of at least two weeks. The PSF Board must be notified of significant changes. 
+This governance document may be amended by a two-thirds majority vote of the Core Team, following a public discussion period of at least two weeks. The PSF Board must be notified of significant changes.

@@ -26,11 +26,11 @@ This will start an interactive session where you can type natural language comma
    > list all files in the current directory
 
    I'll list all files in the current directory.
-   
+
    Command: ls -la
-   
+
    Execute? [Y/n/edit]: y
-   
+
    total 56
    drwxr-xr-x  12 user  staff   384 May 17 14:22 .
    drwxr-xr-x   5 user  staff   160 May 17 13:45 ..
@@ -54,9 +54,9 @@ This will translate the command and prompt you to execute it:
 .. code-block:: text
 
    I'll find all Python files modified in the last week.
-   
+
    Command: find . -name "*.py" -mtime -7
-   
+
    Execute? [Y/n/edit]:
 
 Command Line Options
@@ -68,16 +68,16 @@ PlainSpeak provides several command line options:
 
    # Show help
    plainspeak --help
-   
+
    # Show version
    plainspeak --version
-   
+
    # Use a specific configuration file
    plainspeak --config /path/to/config.toml
-   
+
    # Enable debug logging
    plainspeak --debug
-   
+
    # List available plugins
    plainspeak plugins
 
@@ -109,12 +109,12 @@ PlainSpeak can be configured using a TOML file located at ``~/.config/plainspeak
    model_path = "~/.config/plainspeak/models/minicpm-2b-dpo.Q2_K.gguf"
    model_type = "llama"
    gpu_layers = 0  # Set to a higher number to use GPU acceleration
-   
+
    [plugins]
    disabled = []  # List of plugins to disable
    enabled_only = false  # When true, only explicitly enabled plugins are loaded
    directory = "~/.config/plainspeak/plugins"  # Custom plugin directory
-   
+
    [shell]
    history_file = "~/.config/plainspeak/history.json"
    max_history = 1000

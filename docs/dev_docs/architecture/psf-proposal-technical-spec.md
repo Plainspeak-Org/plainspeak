@@ -9,7 +9,7 @@ PlainSpeak is built on a modular architecture with the following key components:
 ### 1.1 Natural Language Parser
 
 - **Purpose**: Converts natural language input into structured abstract syntax tree (AST)
-- **Technologies**: 
+- **Technologies**:
   - Local LLM inference using optimized GGUF models (3-4 GB)
   - Fallback to simple regex parsing when LLM is unavailable
   - Optional remote API integration for complex queries
@@ -95,14 +95,14 @@ class LLMInterface(ABC):
     def parse_natural_language(self, text: str) -> Dict[str, Any]:
         """Parse natural language into a structured format."""
         pass
-    
+
     def parse_natural_language_with_locale(self, text: str, locale: str) -> Dict[str, Any]:
         """Parse natural language with locale-specific context."""
         pass
-    
+
     def get_improved_command(
-        self, 
-        query: str, 
+        self,
+        query: str,
         feedback_data: Dict[str, Any],
         previous_commands: List[str]
     ) -> str:
@@ -118,29 +118,29 @@ class Plugin(ABC):
     def name(self) -> str:
         """Return the name of the plugin."""
         pass
-        
+
     @property
     def description(self) -> str:
         """Return the description of the plugin."""
         pass
-        
+
     @property
     def priority(self) -> int:
         """Return the priority of the plugin."""
         pass
-        
+
     def get_verbs(self) -> List[str]:
         """Return the verbs supported by this plugin."""
         pass
-        
+
     def can_handle(self, verb: str) -> bool:
         """Check if this plugin can handle the given verb."""
         pass
-        
+
     def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
         """Generate a command string for the given verb and arguments."""
         pass
-        
+
     def execute(self, verb: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the specified verb with the given arguments."""
         pass
@@ -318,4 +318,4 @@ commands:
 
 - User-specific command preferences
 - Collaborative learning across users
-- Fine-tuning of local models 
+- Fine-tuning of local models

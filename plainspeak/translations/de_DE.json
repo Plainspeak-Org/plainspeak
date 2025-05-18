@@ -48,4 +48,4 @@
     "file_not_found": "Datei nicht gefunden: {path}",
     "network_error": "Netzwerkfehler: {message}"
   }
-} 
+}

@@ -228,4 +228,4 @@ confirm_kill = true                  # Ask for confirmation before killing proce
 | "Permission denied" | Run the command with sudo or as administrator |
 | "No such process" | Verify the process ID is correct and still running |
 | "Operation not permitted" | Check if you have the necessary permissions for the operation |
-| "Cannot find the device" | Ensure the specified device or partition exists | 
+| "Cannot find the device" | Ensure the specified device or partition exists |

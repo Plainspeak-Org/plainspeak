@@ -3,24 +3,16 @@ Contest API Backend for PlainSpeak Plugin Development Contest.
 """
 
 import os
-from datetime import datetime
-from typing import Dict, List, Optional
 import uuid
+from datetime import datetime
+from typing import Optional
+
+from fastapi import Depends, FastAPI, HTTPException
+from github import Github, GithubException
 from pydantic import BaseModel, EmailStr, HttpUrl
-from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
-from sqlalchemy import (
-    create_engine,
-    Column,
-    String,
-    DateTime,
-    Boolean,
-    Text,
-    Float,
-    func,
-)
+from sqlalchemy import Boolean, Column, DateTime, Float, String, Text, create_engine, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
-from github import Github, GithubException
 
 # Database setup
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./contest.db")
@@ -32,9 +24,7 @@ Base = declarative_base()
 # Placeholder email functions - IMPLEMENT THESE
 async def send_registration_confirmation(email: str, name: str, participant_id: str):
     """Placeholder for sending registration confirmation."""
-    print(
-        f"Registration confirmation for {name} ({email}, ID: {participant_id}) - implement actual sending"
-    )
+    print(f"Registration confirmation for {name} ({email}, ID: {participant_id}) - implement actual sending")
 
 
 async def send_submission_confirmation(email: str, name: str):
@@ -108,24 +98,19 @@ def verify_github_repo(url: str, github_token: str) -> bool:
 
 
 @app.post("/register")
-async def register_participant(
-    registration: Registration, db: Session = Depends(get_db)
-):
+async def register_participant(registration: Registration, db: Session = Depends(get_db)):
     """Register a new contest participant."""
     # Check if email or GitHub username already registered
     existing = (
         db.query(Participant)
         .filter(
-            (Participant.email == registration.email)
-            | (Participant.github_username == registration.github_username)
+            (Participant.email == registration.email) | (Participant.github_username == registration.github_username)
         )
         .first()
     )
 
     if existing:
-        raise HTTPException(
-            status_code=400, detail="Email or GitHub username already registered"
-        )
+        raise HTTPException(status_code=400, detail="Email or GitHub username already registered")
 
     # Create new participant
     participant = Participant(
@@ -142,11 +127,9 @@ async def register_participant(
     try:
         db.commit()
         # Send confirmation email
-        await send_registration_confirmation(
-            registration.email, registration.name, participant.id
-        )
+        await send_registration_confirmation(registration.email, registration.name, participant.id)
         return {"id": participant.id, "status": "registered"}
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Registration failed")
 
@@ -154,11 +137,7 @@ async def register_participant(
 @app.post("/submit")
 async def submit_project(submission: Submission, db: Session = Depends(get_db)):
     """Submit a contest entry."""
-    participant = (
-        db.query(Participant)
-        .filter(Participant.id == submission.participant_id)
-        .first()
-    )
+    participant = db.query(Participant).filter(Participant.id == submission.participant_id).first()
 
     if not participant:
         raise HTTPException(status_code=404, detail="Participant not found")
@@ -168,9 +147,7 @@ async def submit_project(submission: Submission, db: Session = Depends(get_db)):
 
     # Verify GitHub repository
     if not verify_github_repo(submission.repository_url, os.getenv("GITHUB_TOKEN")):
-        raise HTTPException(
-            status_code=400, detail="Invalid repository or missing required files"
-        )
+        raise HTTPException(status_code=400, detail="Invalid repository or missing required files")
 
     # Update participant record
     participant.submission_url = submission.repository_url
@@ -181,7 +158,7 @@ async def submit_project(submission: Submission, db: Session = Depends(get_db)):
         # Send confirmation
         await send_submission_confirmation(participant.email, participant.name)
         return {"status": "submitted"}
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Submission failed")
 
@@ -205,9 +182,7 @@ async def get_status(participant_id: str, db: Session = Depends(get_db)):
 
 
 @app.get("/submissions")
-async def list_submissions(
-    category: Optional[str] = None, db: Session = Depends(get_db)
-):
+async def list_submissions(category: Optional[str] = None, db: Session = Depends(get_db)):
     """List all contest submissions, optionally filtered by category."""
     query = db.query(Participant).filter(Participant.submission_url != None)
 
@@ -232,15 +207,9 @@ async def list_submissions(
 async def get_statistics(db: Session = Depends(get_db)):
     """Get contest statistics."""
     total_registered = db.query(Participant).count()
-    total_submitted = (
-        db.query(Participant).filter(Participant.submission_url != None).count()
-    )
+    total_submitted = db.query(Participant).filter(Participant.submission_url != None).count()
 
-    by_category = (
-        db.query(Participant.category, func.count(Participant.id))
-        .group_by(Participant.category)
-        .all()
-    )
+    by_category = db.query(Participant.category, func.count(Participant.id)).group_by(Participant.category).all()
 
     return {
         "total_registered": total_registered,

@@ -96,4 +96,4 @@ See the GitHub Actions workflows in `.github/workflows/` for examples.
 
 - `run-full-test.sh`: Bash script for running the GitHub workflow
 - `parse_test_results.py`: Script for parsing and summarizing test results
-- `execute_test_automation.py`: Main orchestration script for the test process 
+- `execute_test_automation.py`: Main orchestration script for the test process

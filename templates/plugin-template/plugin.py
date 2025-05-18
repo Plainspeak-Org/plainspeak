@@ -5,12 +5,10 @@ This is a template for creating new plugins. Replace this docstring
 with a description of your plugin's functionality.
 """
 
-import os
-from typing import Dict, List, Any, Optional
 from pathlib import Path
+from typing import Any, Dict
 
-from .base import Plugin, registry, YAMLPlugin
-from .platform import platform_manager
+from .base import YAMLPlugin, registry
 
 
 class ExamplePlugin(YAMLPlugin):
@@ -81,7 +79,6 @@ class ExamplePlugin(YAMLPlugin):
     def cleanup(self) -> None:
         """Clean up any resources when plugin is unloaded."""
         # Add cleanup code here if needed
-        pass
 
 
 # Create and register the plugin instance

@@ -3,7 +3,7 @@ repos:
   rev: v4.5.0
   hooks:
     - id: trailing-whitespace
-      args: [--markdown-linebreak-ext=md]
+      args: ["--markdown-linebreak-ext=md"]
     - id: end-of-file-fixer
     - id: check-yaml
     - id: check-added-large-files
@@ -12,14 +12,27 @@ repos:
   rev: '24.3.0'
   hooks:
     - id: black
+      args: ["--preview", "--line-length=120"]
       language_version: python3.11
+
+- repo: https://github.com/PyCQA/autoflake
+  rev: v2.3.1
+  hooks:
+    - id: autoflake
+      args: [
+        --remove-all-unused-imports,
+        --remove-unused-variables,
+        --in-place
+      ]
+
+- repo: https://github.com/pycqa/isort
+  rev: '5.13.2'
+  hooks:
+    - id: isort
+      args: ["--profile", "black", "--line-length", "120"]
 
 - repo: https://github.com/pycqa/flake8
   rev: '7.0.0'
   hooks:
     - id: flake8
-      args: [--fix]
-      additional_dependencies: [
-        'flake8-docstrings',
-        'flake8-import-order'
-      ]
+      args: ["--max-line-length=120", "--extend-ignore=E203,F541,E711,E712,W293"]

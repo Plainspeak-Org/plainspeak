@@ -24,9 +24,7 @@ Consider these guidelines:
 Command:"""
 
 
-def get_shell_command_prompt(
-    input_text: str, context: str = "Unix-like environment"
-) -> str:
+def get_shell_command_prompt(input_text: str, context: str = "Unix-like environment") -> str:
     """
     Formats the shell command template with the given input text and context.
 

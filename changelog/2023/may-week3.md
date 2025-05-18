@@ -18,4 +18,4 @@
 - Configure Sphinx for documentation website generation
 - Create README files for key directories
 - Implement API reference documentation with autodoc
-- Add contribution guidelines 
+- Add contribution guidelines

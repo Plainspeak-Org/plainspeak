@@ -4,19 +4,17 @@ Calendar Plugin for PlainSpeak.
 This module provides calendar operations through natural language.
 """
 
-import os
-import json
-from typing import Dict, List, Any, Optional, Union, cast
-from pathlib import Path
-from datetime import datetime, date, timedelta
 import uuid
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
 import icalendar  # type: ignore[import-untyped]
+import pytz  # type: ignore[import-untyped]
 from dateutil.parser import parse as parse_date  # type: ignore[import-untyped]
 from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
-import re
-import pytz  # type: ignore[import-untyped]
 
-from .base import Plugin, registry, YAMLPlugin
+from .base import YAMLPlugin, registry
 from .platform import platform_manager
 
 
@@ -308,9 +306,7 @@ class CalendarStore:
         except Exception as e:
             raise ValueError(f"Failed to import calendar: {str(e)}")
 
-    def _format_event_time(
-        self, start: Union[str, datetime], end: Optional[Union[str, datetime]] = None
-    ) -> str:
+    def _format_event_time(self, start: Union[str, datetime], end: Optional[Union[str, datetime]] = None) -> str:
         """Format event time for display."""
         if isinstance(start, str):
             start = parse_date(start)
@@ -325,9 +321,7 @@ class CalendarStore:
         if start.date() == end.date():
             return f"{start.strftime('%Y-%m-%d %H:%M')} - {end.strftime('%H:%M')}"
         else:
-            return (
-                f"{start.strftime('%Y-%m-%d %H:%M')} - {end.strftime('%Y-%m-%d %H:%M')}"
-            )
+            return f"{start.strftime('%Y-%m-%d %H:%M')} - {end.strftime('%Y-%m-%d %H:%M')}"
 
 
 class CalendarPlugin(YAMLPlugin):
@@ -406,9 +400,7 @@ class CalendarPlugin(YAMLPlugin):
         args = self._preprocess_args(verb, args)
 
         # Apply defaults for common cases
-        if verb == "list-events" and not any(
-            [args.get(x) for x in ["start", "end", "today", "week", "month"]]
-        ):
+        if verb == "list-events" and not any([args.get(x) for x in ["start", "end", "today", "week", "month"]]):
             args["today"] = True  # Default to today's events
 
         if verb == "show-calendar" and "view" not in args:

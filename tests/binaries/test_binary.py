@@ -3,13 +3,13 @@ Automated tests for verifying PlainSpeak binary functionality.
 """
 
 import os
-import sys
+import platform
+import shutil
 import subprocess
 import tempfile
 import time
-import shutil
-import platform
 from pathlib import Path
+
 import pytest
 
 
@@ -33,9 +33,7 @@ class BinaryTester:
         """Clean up temporary test files."""
         shutil.rmtree(self.test_dir)
 
-    def run_command(
-        self, command: str, input_text: str = None, timeout: int = 10
-    ) -> subprocess.CompletedProcess:
+    def run_command(self, command: str, input_text: str = None, timeout: int = 10) -> subprocess.CompletedProcess:
         """Run a command through the binary."""
         args = [str(self.binary_path), "run", command]
         return subprocess.run(
@@ -63,18 +61,14 @@ def test_binary_exists(binary):
 
 def test_version_command(binary):
     """Test the version command works."""
-    result = subprocess.run(
-        [str(binary.binary_path), "--version"], capture_output=True, text=True
-    )
+    result = subprocess.run([str(binary.binary_path), "--version"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "PlainSpeak" in result.stdout
 
 
 def test_help_command(binary):
     """Test the help command works."""
-    result = subprocess.run(
-        [str(binary.binary_path), "--help"], capture_output=True, text=True
-    )
+    result = subprocess.run([str(binary.binary_path), "--help"], capture_output=True, text=True)
     assert result.returncode == 0
     assert "Usage:" in result.stdout
 
@@ -100,9 +94,7 @@ def test_basic_file_operations(binary):
 
 def test_plugin_loading(binary):
     """Test that plugins are loaded correctly."""
-    result = subprocess.run(
-        [str(binary.binary_path), "plugins", "list"], capture_output=True, text=True
-    )
+    result = subprocess.run([str(binary.binary_path), "plugins", "list"], capture_output=True, text=True)
     assert result.returncode == 0
     # Check for core plugins
     assert "file" in result.stdout.lower()

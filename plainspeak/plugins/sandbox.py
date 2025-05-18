@@ -4,16 +4,16 @@ Safety Sandbox for PlainSpeak.
 This module provides enhanced safety mechanisms for command execution.
 """
 
+import logging
 import os
 import re
 import shlex
 import subprocess
-from typing import List, Dict, Optional, Union, Tuple
-import logging
-from pathlib import Path
-from .platform import platform_manager
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Dict, Optional, Tuple
+
+from .platform import platform_manager
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +86,6 @@ class SafetySandbox:
         cmd_parts = shlex.split(command)
         if not cmd_parts:
             return False, "Empty command"
-
-        base_cmd = cmd_parts[0]
 
         # Check against blacklist
         if command in self.BLACKLISTED_COMMANDS:
@@ -191,7 +189,7 @@ class SafetySandbox:
 
             return result
 
-        except subprocess.TimeoutExpired as e:
+        except subprocess.TimeoutExpired:
             logger.error("Command timed out after %d seconds: %s", timeout, command)
             raise
 
@@ -205,9 +203,7 @@ class SafetySandbox:
             raise
 
         except Exception as e:
-            logger.error(
-                "Unexpected error executing command: %s\nError: %s", command, str(e)
-            )
+            logger.error("Unexpected error executing command: %s\nError: %s", command, str(e))
             raise
 
 

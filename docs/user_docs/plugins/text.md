@@ -253,4 +253,4 @@ max_output_lines = 1000     # For safety with large files
 | "Binary file matches" | Use `grep -a` to process binary files as text |
 | "Invalid regular expression" | Fix syntax in your regular expression pattern |
 | "Unexpected EOF" | Check for missing closing quotes or brackets |
-| "Unterminated address regex" | Ensure delimiters are properly used in `sed` commands | 
+| "Unterminated address regex" | Ensure delimiters are properly used in `sed` commands |

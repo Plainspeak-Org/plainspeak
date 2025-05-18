@@ -2,11 +2,12 @@
 Tests for the context module.
 """
 
-import os
 import json
 import tempfile
 from pathlib import Path
+
 import pytest
+
 from plainspeak.context import SessionContext
 
 

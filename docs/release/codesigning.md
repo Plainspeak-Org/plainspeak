@@ -112,14 +112,14 @@ This document outlines the process for signing and notarizing PlainSpeak binarie
     echo $APPLE_CERTIFICATE | base64 -d > certificate.p12
     security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
     security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-    
+
     # Sign
     codesign --force --sign "Developer ID Application: PlainSpeak Organization" \
             --options runtime \
             --entitlements "installers/macos/entitlements.plist" \
             --timestamp \
             "dist/PlainSpeak.app"
-            
+
     # Notarize
     ditto -c -k --keepParent "dist/PlainSpeak.app" "dist/PlainSpeak.zip"
     xcrun notarytool submit "dist/PlainSpeak.zip" \

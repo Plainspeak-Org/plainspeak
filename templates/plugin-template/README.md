@@ -72,7 +72,7 @@ class YourPlugin(YAMLPlugin):
 ## Testing
 
 1. Create a `tests` directory
-2. Add test files with `pytest` 
+2. Add test files with `pytest`
 3. Ensure >80% coverage
 4. Test all commands and error cases
 

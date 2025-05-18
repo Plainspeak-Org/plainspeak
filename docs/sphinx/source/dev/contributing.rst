@@ -25,7 +25,7 @@ Setting Up Your Development Environment
 
       # Install Poetry if you don't have it
       pip install poetry
-      
+
       # Install dependencies
       poetry install
 

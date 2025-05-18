@@ -1,0 +1,261 @@
+name: dataspeak
+version: 0.1.0
+description: Natural language interface to data analysis with SQL generation and visualization
+author: PlainSpeak Team
+license: MIT
+repository: https://github.com/plainspeak-org/plainspeak
+
+# Dependencies
+dependencies:
+  - pandas>=1.3.0
+  - sqlite3
+
+# Optional dependencies
+optional_dependencies:
+  visualization:
+    - matplotlib>=3.4.0
+    - plotly>=5.3.0
+  export:
+    - openpyxl>=3.0.0
+    - pyarrow>=6.0.0
+    - tabulate>=0.8.0
+  security:
+    - sqlglot>=0.12.0
+  credential:
+    - keyring>=23.0.0
+
+# Entry points and commands
+commands:
+  - verb: query
+    aliases: [ask, find, search]
+    description: Query data using natural language
+    template: |
+      {% set sql, params = generate_sql_from_text(user_query, available_tables, available_columns) %}
+      {% set results = execute_query(connection_name, sql, params) %}
+      {% if format == 'table' %}
+          {{ results_to_table(results) }}
+      {% elif format == 'json' %}
+          {{ results_to_json(results) }}
+      {% else %}
+          {{ results }}
+      {% endif %}
+    parameters:
+      - name: user_query
+        description: Natural language query
+        required: true
+        type: string
+      - name: connection_name
+        description: Name of the database connection to use
+        required: true
+        type: string
+      - name: format
+        description: Output format (table, json, csv)
+        required: false
+        default: table
+        type: string
+
+  - verb: visualize
+    aliases: [chart, plot, graph]
+    description: Visualize data using natural language queries
+    template: |
+      {% set sql, params = generate_sql_from_text(user_query, available_tables, available_columns) %}
+      {% set results = execute_query(connection_name, sql, params) %}
+      {% set viz_path, viz_type = visualize_data(results, viz_type, title) %}
+      {{ viz_path }}
+    parameters:
+      - name: user_query
+        description: Natural language query
+        required: true
+        type: string
+      - name: connection_name
+        description: Name of the database connection to use
+        required: true
+        type: string
+      - name: viz_type
+        description: Visualization type (auto, bar, line, scatter, pie, etc.)
+        required: false
+        default: auto
+        type: string
+      - name: title
+        description: Title for the visualization
+        required: false
+        default: Data Visualization
+        type: string
+
+  - verb: export
+    aliases: [save, download]
+    description: Export data from a natural language query
+    template: |
+      {% set sql, params = generate_sql_from_text(user_query, available_tables, available_columns) %}
+      {% set results = execute_query(connection_name, sql, params) %}
+      {% set export_path = export_data(results, format, filename) %}
+      Data exported to {{ export_path }}
+    parameters:
+      - name: user_query
+        description: Natural language query
+        required: true
+        type: string
+      - name: connection_name
+        description: Name of the database connection to use
+        required: true
+        type: string
+      - name: format
+        description: Export format (csv, json, excel, parquet, html, markdown, latex)
+        required: true
+        type: string
+      - name: filename
+        description: Name for the exported file
+        required: false
+        type: string
+
+  - verb: connect
+    aliases: [db-connect, database-connect]
+    description: Create a database connection
+    template: |
+      {% set success = create_database_connection(connection_name, db_type, connection_params, save_credentials) %}
+      {% if success %}
+          Successfully connected to database "{{ connection_name }}"
+      {% else %}
+          Failed to connect to database "{{ connection_name }}"
+      {% endif %}
+    parameters:
+      - name: connection_name
+        description: Name for this connection
+        required: true
+        type: string
+      - name: db_type
+        description: Type of database (sqlite, sqlite_memory, csv)
+        required: true
+        type: string
+      - name: connection_params
+        description: Connection parameters in JSON format
+        required: true
+        type: string
+      - name: save_credentials
+        description: Whether to save credentials for future sessions
+        required: false
+        default: false
+        type: boolean
+
+  - verb: list-tables
+    aliases: [tables, show-tables]
+    description: List tables in the connected database
+    template: |
+      {% set tables = list_database_tables(connection_name) %}
+      Available tables in "{{ connection_name }}":
+      {% for table in tables %}
+          - {{ table }}
+      {% endfor %}
+    parameters:
+      - name: connection_name
+        description: Name of the database connection
+        required: true
+        type: string
+
+  - verb: describe-table
+    aliases: [table-info, schema]
+    description: Show the schema for a specific table
+    template: |
+      {% set schema = get_table_schema(connection_name, table_name) %}
+      Schema for table "{{ table_name }}" in connection "{{ connection_name }}":
+      {% for column in schema %}
+          - {{ column.name }} ({{ column.type }}){% if column.pk %} PRIMARY KEY{% endif %}{% if column.notnull %} NOT NULL{% endif %}
+      {% endfor %}
+    parameters:
+      - name: connection_name
+        description: Name of the database connection
+        required: true
+        type: string
+      - name: table_name
+        description: Name of the table
+        required: true
+        type: string
+
+  - verb: explain-sql
+    aliases: [describe-query, what-does]
+    description: Explain a natural language query in terms of SQL
+    template: |
+      {% set sql, params = generate_sql_from_text(user_query, available_tables, available_columns) %}
+      {% set explanation = explain_query(sql) %}
+      Your query "{{ user_query }}" translates to:
+
+      {{ sql }}
+
+      {{ explanation }}
+    parameters:
+      - name: user_query
+        description: Natural language query
+        required: true
+        type: string
+      - name: connection_name
+        description: Name of the database connection
+        required: true
+        type: string
+
+# Helper functions exposed to templates
+helpers:
+  - name: generate_sql_from_text
+    function: plainspeak.plugins.dataspeak.sql_generator.generate_sql_from_text
+    description: Generate SQL from natural language text
+
+  - name: execute_query
+    function: plainspeak.plugins.dataspeak.connection.execute_query
+    description: Execute a SQL query and return results as a DataFrame
+
+  - name: create_database_connection
+    function: plainspeak.plugins.dataspeak.connection.get_default_connection().create_connection
+    description: Create a new database connection
+
+  - name: list_database_tables
+    function: plainspeak.plugins.dataspeak.connection.get_default_connection().list_tables
+    description: List tables in a database connection
+
+  - name: get_table_schema
+    function: plainspeak.plugins.dataspeak.connection.get_default_connection().get_table_schema
+    description: Get schema for a specific table
+
+  - name: visualize_data
+    function: plainspeak.plugins.dataspeak.visualization.visualize_data
+    description: Create visualization from data
+
+  - name: export_data
+    function: plainspeak.plugins.dataspeak.export.export_data
+    description: Export data to various formats
+
+  - name: explain_query
+    function: plainspeak.plugins.dataspeak.sql_generator.get_sql_generator().explain_query
+    description: Generate a human-readable explanation of a SQL query
+
+  - name: results_to_table
+    function: plainspeak.plugins.dataspeak.util.results_to_table
+    description: Format results as a pretty table
+
+  - name: results_to_json
+    function: plainspeak.plugins.dataspeak.util.results_to_json
+    description: Format results as JSON
+
+# Documentation
+help:
+  short: Natural language interface to data analysis
+  long: |
+    DataSpeak provides a natural language interface to data analysis,
+    allowing you to query, visualize, and export data using everyday language
+    without needing to write SQL code.
+  examples:
+    - description: Query your sales database
+      command: "plainspeak query 'Show me total sales by region for last month' sales_db"
+
+    - description: Visualize product data
+      command: "plainspeak visualize 'Compare product categories by monthly sales' product_db bar 'Product Sales Comparison'"
+
+    - description: Export customer information
+      command: "plainspeak export 'List all customers who spent over $1000' customers_db excel 'top_customers.xlsx'"
+
+    - description: Connect to a SQLite database
+      command: "plainspeak connect my_data sqlite '{\"database_path\": \"/path/to/database.db\"}' true"
+
+    - description: List tables in a database
+      command: "plainspeak list-tables my_data"
+
+    - description: Explain a query
+      command: "plainspeak explain-sql 'Show me the top 10 customers by total purchase amount' sales_db"

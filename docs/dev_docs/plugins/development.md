@@ -89,13 +89,13 @@ class GithubPlugin(Plugin):
             author="Your Name",
             license="MIT"
         )
-        
+
     def get_verbs(self):
         return ["clone", "stars", "issues", "pull-requests"]
-        
+
     def process_intent(self, intent: Intent) -> CommandResult:
         verb = intent.verb
-        
+
         if verb == "clone":
             repo = intent.get_parameter("repository")
             if not repo:
@@ -103,21 +103,21 @@ class GithubPlugin(Plugin):
                     success=False,
                     message="Please specify a repository to clone"
                 )
-            
+
             # Add github.com if just username/repo format
             if not repo.startswith("http") and not repo.startswith("git@"):
                 if "/" in repo and not repo.startswith("github.com"):
                     repo = f"https://github.com/{repo}"
                 else:
                     repo = f"https://github.com/{repo}"
-            
+
             command = f"git clone {repo}"
             return CommandResult(
                 success=True,
                 command=command,
                 description=f"Clone the GitHub repository: {repo}"
             )
-            
+
         elif verb == "stars":
             repo = intent.get_parameter("repository")
             if not repo:
@@ -125,25 +125,25 @@ class GithubPlugin(Plugin):
                     success=False,
                     message="Please specify a repository"
                 )
-                
+
             # Extract username/repo if full URL
             if repo.startswith("http"):
                 repo = repo.split("github.com/")[1]
             elif repo.startswith("git@github.com:"):
                 repo = repo.split("git@github.com:")[1]
-                
+
             if repo.endswith(".git"):
                 repo = repo[:-4]
-                
+
             command = f"curl -s https://api.github.com/repos/{repo} | jq '.stargazers_count'"
             return CommandResult(
                 success=True,
                 command=command,
                 description=f"Get star count for {repo}"
             )
-            
+
         # Implement other verbs similarly
-        
+
         return CommandResult(
             success=False,
             message=f"Verb '{verb}' not implemented in GitHub plugin"
@@ -229,7 +229,7 @@ Templates convert structured intents into shell commands. Use Jinja2 features fo
 ```yaml
 # Advanced template example
 template: >
-  find {{ path | default(".") }} 
+  find {{ path | default(".") }}
   -type f
   {% if name_pattern %}
   -name "{{ name_pattern }}"
@@ -255,12 +255,12 @@ parameters:
     type: string
     required: false
     default: "."
-    
+
   name_pattern:
     description: File name pattern to match
     type: string
     required: false
-    
+
   size:
     description: File size category
     type: string
@@ -277,7 +277,7 @@ import platform
 
 def get_command(intent):
     os_name = platform.system()
-    
+
     if os_name == "Windows":
         # Windows-specific command
         return f"dir {intent.get_parameter('path')}"
@@ -327,13 +327,13 @@ def process_intent(self, intent):
 class Plugin:
     def __init__(self, name, description, version="1.0.0", author="", license=""):
         """Initialize a new plugin."""
-        
+
     def get_verbs(self):
         """Return a list of verbs this plugin handles."""
-        
+
     def process_intent(self, intent):
         """Process an intent and return a command result."""
-        
+
     def get_examples(self):
         """Return example natural language commands this plugin can handle."""
 ```
@@ -344,7 +344,7 @@ class Plugin:
 class Intent:
     def __init__(self, verb, parameters=None):
         """Initialize an intent with a verb and optional parameters."""
-        
+
     def get_parameter(self, name, default=None):
         """Get a parameter value by name."""
 ```
@@ -353,12 +353,12 @@ class Intent:
 
 ```python
 class CommandResult:
-    def __init__(self, 
-                 success, 
-                 command=None, 
-                 message=None, 
-                 description=None, 
-                 stdout=None, 
+    def __init__(self,
+                 success,
+                 command=None,
+                 message=None,
+                 description=None,
+                 stdout=None,
                  stderr=None):
         """Initialize a command result."""
 ```
@@ -375,4 +375,4 @@ class CommandResult:
 
 - Check out the [plugin template](../../../templates/plugin-template/) for a starting point
 - Review [existing plugins](https://github.com/cschanhniem/plainspeak/tree/main/plainspeak/plugins) for examples
-- Join the [PlainSpeak community](https://github.com/cschanhniem/plainspeak/discussions) to share your plugins 
+- Join the [PlainSpeak community](https://github.com/cschanhniem/plainspeak/discussions) to share your plugins

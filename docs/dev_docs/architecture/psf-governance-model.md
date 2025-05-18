@@ -208,4 +208,4 @@ Upon dissolution, all assets and intellectual property will remain with the PSF.
 
 ---
 
-This governance model draws inspiration from successful open source projects and PSF working groups while being tailored to the specific needs of the PlainSpeak project. The goal is to create a transparent, inclusive, and effective structure that can sustainably manage the evolution of PlainSpeak as a standard for natural language interfaces in Python. 
+This governance model draws inspiration from successful open source projects and PSF working groups while being tailored to the specific needs of the PlainSpeak project. The goal is to create a transparent, inclusive, and effective structure that can sustainably manage the evolution of PlainSpeak as a standard for natural language interfaces in Python.

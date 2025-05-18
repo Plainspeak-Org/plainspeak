@@ -2,13 +2,11 @@
 Tests for the plugins module.
 """
 
-import pytest
-from pathlib import Path
-from plainspeak.plugins.base import Plugin, YAMLPlugin, PluginRegistry
-from plainspeak.plugins.manager import PluginManager
+from plainspeak.plugins.base import Plugin, PluginRegistry
 from plainspeak.plugins.file import FilePlugin
-from plainspeak.plugins.system import SystemPlugin
+from plainspeak.plugins.manager import PluginManager
 from plainspeak.plugins.network import NetworkPlugin
+from plainspeak.plugins.system import SystemPlugin
 from plainspeak.plugins.text import TextPlugin
 
 
@@ -42,10 +40,7 @@ def test_plugin_base():
     assert plugin.can_handle("example")
     assert not plugin.can_handle("unknown")
 
-    assert (
-        plugin.generate_command("test", {"arg": "value"})
-        == "echo 'Testing with {'arg': 'value'}'"
-    )
+    assert plugin.generate_command("test", {"arg": "value"}) == "echo 'Testing with {'arg': 'value'}'"
     assert plugin.generate_command("example", {}) == "echo 'Example command'"
 
 
@@ -92,9 +87,7 @@ def test_file_plugin():
     assert "*.txt" in cmd
 
     # Test copy command
-    cmd = plugin.generate_command(
-        "copy", {"source": "file.txt", "destination": "/tmp/", "recursive": True}
-    )
+    cmd = plugin.generate_command("copy", {"source": "file.txt", "destination": "/tmp/", "recursive": True})
     assert "cp" in cmd
     assert "-r" in cmd
     assert "file.txt" in cmd
@@ -143,17 +136,13 @@ def test_network_plugin():
     assert "example.com" in cmd
 
     # Test curl command
-    cmd = plugin.generate_command(
-        "curl", {"url": "https://example.com", "output": "output.html"}
-    )
+    cmd = plugin.generate_command("curl", {"url": "https://example.com", "output": "output.html"})
     assert "curl" in cmd
     assert "-o output.html" in cmd
     assert "https://example.com" in cmd
 
     # Test ssh command
-    cmd = plugin.generate_command(
-        "ssh", {"host": "example.com", "user": "user", "port": 2222}
-    )
+    cmd = plugin.generate_command("ssh", {"host": "example.com", "user": "user", "port": 2222})
     assert "ssh" in cmd
     assert "-p 2222" in cmd
     assert "user@example.com" in cmd
@@ -169,18 +158,14 @@ def test_text_plugin():
     assert "wc" in plugin.get_verbs()
 
     # Test grep command
-    cmd = plugin.generate_command(
-        "grep", {"pattern": "error", "file": "log.txt", "recursive": True}
-    )
+    cmd = plugin.generate_command("grep", {"pattern": "error", "file": "log.txt", "recursive": True})
     assert "grep" in cmd
     assert "-r" in cmd
     assert "'error'" in cmd
     assert "log.txt" in cmd
 
     # Test sed command
-    cmd = plugin.generate_command(
-        "sed", {"pattern": "old", "replacement": "new", "file": "file.txt"}
-    )
+    cmd = plugin.generate_command("sed", {"pattern": "old", "replacement": "new", "file": "file.txt"})
     assert "sed" in cmd
     assert "s/old/new/g" in cmd
     assert "file.txt" in cmd
@@ -230,6 +215,4 @@ def test_plugin_manager():
 
     verb, args = manager.extract_verb_and_args("grep error in log.txt")
     assert verb == "grep"
-    assert (
-        "text" in args or "path" in args
-    )  # Simple parsing might put this in different args
+    assert "text" in args or "path" in args  # Simple parsing might put this in different args

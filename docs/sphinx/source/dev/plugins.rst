@@ -23,15 +23,15 @@ For straightforward command mapping, you can create a plugin using just YAML:
    description: Basic file system operations
    version: 0.1.0
    author: Your Name
-   
+
    verbs:
      - find
      - count
-   
+
    commands:
      find:
        template: >
-         find {{ path | default('.') }} 
+         find {{ path | default('.') }}
          {% if type %}
          -type {{ type }}
          {% endif %}
@@ -50,7 +50,7 @@ For straightforward command mapping, you can create a plugin using just YAML:
          type: ""
          name: ""
          size: ""
-     
+
      count:
        template: >
          find {{ path | default('.') }} -type f | wc -l
@@ -72,46 +72,46 @@ For more complex functionality, create a Python plugin:
    from plainspeak.types import Intent, CommandResult
    import subprocess
    import json
-   
+
    class GithubPlugin(Plugin):
        """Plugin for GitHub operations."""
-       
+
        def __init__(self):
            super().__init__(
                name="github",
                description="GitHub operations",
                verbs=["clone", "create", "list-repos"]
            )
-       
+
        def execute(self, intent: Intent) -> CommandResult:
            """Execute the GitHub command based on the intent."""
            verb = intent.verb
-           
+
            if verb == "clone":
                return self._clone_repo(intent)
            elif verb == "create":
                return self._create_repo(intent)
            elif verb == "list-repos":
                return self._list_repos(intent)
-           
+
            return CommandResult(
                success=False,
                output=f"Unknown verb: {verb}",
                command=f"github {verb}"
            )
-       
+
        def _clone_repo(self, intent: Intent) -> CommandResult:
            """Clone a GitHub repository."""
            repo = intent.args.get("repo")
            path = intent.args.get("path", ".")
-           
+
            if not repo:
                return CommandResult(
                    success=False,
                    output="Repository name is required",
                    command="git clone"
                )
-           
+
            # Add github.com prefix if not present
            if not repo.startswith("https://") and not repo.startswith("git@"):
                if "/" not in repo:
@@ -120,11 +120,11 @@ For more complex functionality, create a Python plugin:
                        output="Repository should be in format 'owner/repo'",
                        command="git clone"
                    )
-                   
+
                repo = f"https://github.com/{repo}"
-           
+
            command = f"git clone {repo} {path}"
-           
+
            try:
                result = subprocess.run(
                    command,
@@ -144,7 +144,7 @@ For more complex functionality, create a Python plugin:
                    output=e.stderr,
                    command=command
                )
-   
+
    # Register the plugin
    register_plugin(GithubPlugin())
 
@@ -181,7 +181,7 @@ To distribute your plugin as a Python package:
    [build-system]
    requires = ["hatchling"]
    build-backend = "hatchling.build"
-   
+
    [project]
    name = "plainspeak-plugin-myplugin"
    version = "0.1.0"
@@ -193,7 +193,7 @@ To distribute your plugin as a Python package:
    dependencies = [
        "plainspeak>=0.1.0",
    ]
-   
+
    [project.entry-points."plainspeak.plugins"]
    myplugin = "my_plugin.plugin:register"
 
@@ -202,11 +202,11 @@ To distribute your plugin as a Python package:
 .. code-block:: python
 
    from plainspeak.plugins import Plugin, register_plugin
-   
+
    class MyPlugin(Plugin):
        # Plugin implementation
        ...
-   
+
    def register():
        # This function will be called to register your plugin
        return register_plugin(MyPlugin())

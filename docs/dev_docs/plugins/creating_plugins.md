@@ -102,7 +102,7 @@ You can use Jinja2 filters and conditionals to create more dynamic templates:
 commands:
   find:
     template: >
-      find {{ path | default('.') }} 
+      find {{ path | default('.') }}
       {% if type %}
       -type {{ type }}
       {% endif %}
@@ -142,11 +142,11 @@ class YourPlugin(Plugin):
             description="Description of what your plugin does",
             version="1.0.0"
         )
-    
+
     def get_verbs(self):
         """Return a list of verbs this plugin can handle."""
         return ["verb1", "verb2", "verb3"]
-    
+
     def generate_command(self, verb, args):
         """Generate a command string for the given verb and arguments."""
         if verb == "verb1":
@@ -205,14 +205,14 @@ from jinja2 import Template
 
 class YourPlugin(Plugin):
     # ...
-    
+
     def __init__(self):
         super().__init__("your-plugin", "Your plugin description")
         self.templates = {
             "verb1": Template("command1 {{ arg1 }} {{ arg2 }}"),
             "verb2": Template("command2 {{ arg1 }}"),
         }
-    
+
     def generate_command(self, verb, args):
         if verb in self.templates:
             return self.templates[verb].render(args)
@@ -236,7 +236,7 @@ The `args` dictionary contains parameters extracted from the natural language co
 def generate_command(self, verb, args):
     path = args.get("path", ".")  # Default to current directory if path not specified
     pattern = args.get("pattern", "*")  # Default pattern
-    
+
     return f"find {path} -name '{pattern}'"
 ```
 
@@ -250,7 +250,7 @@ def generate_command(self, verb, args, ast=None):
         filter_node = ast.get_node("filter")
         # Process filter conditions
         # ...
-    
+
     # Generate command based on AST analysis
     return command
 ```
@@ -290,7 +290,7 @@ If your plugin requires external Python packages:
 def __init__(self):
     super().__init__("your-plugin", "Your plugin description")
     self.dependencies = ["requests", "beautifulsoup4"]
-    
+
     # Check dependencies
     self.check_dependencies()
 
@@ -302,7 +302,7 @@ def check_dependencies(self):
             __import__(dep)
         except ImportError:
             missing.append(dep)
-    
+
     if missing:
         print(f"Warning: Your plugin is missing these dependencies: {', '.join(missing)}")
         print(f"Install them with: pip install {' '.join(missing)}")
@@ -436,11 +436,11 @@ from your_plugin import YourPlugin
 class TestYourPlugin(unittest.TestCase):
     def setUp(self):
         self.plugin = YourPlugin()
-    
+
     def test_get_verbs(self):
         verbs = self.plugin.get_verbs()
         self.assertIn("verb1", verbs)
-        
+
     def test_generate_command(self):
         cmd = self.plugin.generate_command("verb1", {"arg1": "test"})
         self.assertEqual(cmd, "command1 test ")
@@ -457,22 +457,22 @@ from plainspeak.plugins.base import Plugin, registry
 class WeatherPlugin(Plugin):
     def __init__(self):
         super().__init__("weather", "Get weather information")
-    
+
     def get_verbs(self):
         return ["weather", "forecast", "temperature"]
-    
+
     def generate_command(self, verb, args):
         location = args.get("location", "")
         if not location:
             return "echo 'Please specify a location'"
-        
+
         if verb == "weather":
             return f"curl wttr.in/{location}?format=3"
         elif verb == "forecast":
             return f"curl wttr.in/{location}"
         elif verb == "temperature":
             return f"curl wttr.in/{location}?format=%t"
-        
+
         return None
 
 registry.register(WeatherPlugin())
@@ -487,21 +487,21 @@ from plainspeak.plugins.base import Plugin, registry
 class CalculatorPlugin(Plugin):
     def __init__(self):
         super().__init__("calculator", "Perform calculations")
-    
+
     def get_verbs(self):
         return ["calculate", "compute", "eval"]
-    
+
     def generate_command(self, verb, args):
         expression = args.get("expression", "")
         if not expression:
             return "echo 'Please provide an expression to calculate'"
-        
+
         # Sanitize the expression to prevent command injection
         if not self._is_safe_expression(expression):
             return "echo 'Invalid or unsafe expression'"
-        
+
         return f"echo '{expression}' | bc -l"
-    
+
     def _is_safe_expression(self, expr):
         # Only allow basic math operations and numbers
         return bool(re.match(r'^[\d\s\+\-\*\/\(\)\.]+$', expr))
@@ -522,4 +522,4 @@ Remember these key points:
 
 For more information and examples, check out the [PlainSpeak Plugin Repository](https://github.com/cschanhniem/plainspeak-plugins) and the [Plugin API Reference](../api/plugin_api.md).
 
-Happy plugin development! 
+Happy plugin development!

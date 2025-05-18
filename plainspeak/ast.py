@@ -5,11 +5,10 @@ This module defines the structured representation of commands
 and their relationships.
 """
 
-from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-import re
+from typing import Any, Dict, List, Optional, Union
 
 
 class CommandType(Enum):
@@ -117,9 +116,7 @@ class ASTBuilder:
             return ArgumentType.PATTERN
         return ArgumentType.POSITIONAL
 
-    def _parse_plugin_command(
-        self, plugin: Plugin, verb: str, args_dict: Dict[str, Any]
-    ) -> Command:
+    def _parse_plugin_command(self, plugin: Plugin, verb: str, args_dict: Dict[str, Any]) -> Command:
         """
         Parse a plugin command from verb and arguments.
 
@@ -159,17 +156,13 @@ class ASTBuilder:
             arg_type = self._detect_argument_type(part)
             if arg_type == ArgumentType.OPTION:
                 opt_name, opt_value = part.split("=", 1)
-                args.append(
-                    Argument(type=arg_type, value=opt_value, name=opt_name.lstrip("-"))
-                )
+                args.append(Argument(type=arg_type, value=opt_value, name=opt_name.lstrip("-")))
             else:
                 args.append(Argument(type=arg_type, value=part))
 
         return Command(type=CommandType.SHELL, name=name, args=args)
 
-    def from_natural_language(
-        self, text: str, context: Optional[Dict[str, Any]] = None
-    ) -> Union[Command, Pipeline]:
+    def from_natural_language(self, text: str, context: Optional[Dict[str, Any]] = None) -> Union[Command, Pipeline]:
         """
         Build AST from natural language input.
 
@@ -199,9 +192,7 @@ class ASTBuilder:
         # TODO: Use LLM to generate command first
         return self._parse_shell_command(text)
 
-    def from_command_string(
-        self, command: str, original_text: Optional[str] = None
-    ) -> Union[Command, Pipeline]:
+    def from_command_string(self, command: str, original_text: Optional[str] = None) -> Union[Command, Pipeline]:
         """
         Build AST from a command string.
 

@@ -3,6 +3,7 @@
 import os
 import subprocess
 from pathlib import Path
+
 import pytest
 from PIL import Image
 
@@ -125,9 +126,7 @@ def test_svg_validation():
     for svg_path in ASSET_DIR.rglob("*.svg"):
         # Use xmllint if available
         try:
-            subprocess.run(
-                ["xmllint", "--noout", str(svg_path)], check=True, capture_output=True
-            )
+            subprocess.run(["xmllint", "--noout", str(svg_path)], check=True, capture_output=True)
         except subprocess.CalledProcessError as e:
             pytest.fail(f"Invalid SVG file {svg_path}: {e.stderr}")
         except FileNotFoundError:
@@ -167,9 +166,7 @@ def test_documentation():
         with open(path) as f:
             content = f.read()
             assert len(content) > 100, f"Documentation too short: {file_path}"
-            assert not content.startswith(
-                "TODO"
-            ), f"Incomplete documentation: {file_path}"
+            assert not content.startswith("TODO"), f"Incomplete documentation: {file_path}"
 
 
 if __name__ == "__main__":

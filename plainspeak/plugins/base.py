@@ -4,14 +4,15 @@ Base Plugin for PlainSpeak.
 This module defines the base plugin class and plugin registry.
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Any, Optional, Callable, cast, Set, Tuple
-from pathlib import Path
-import yaml  # type: ignore[import-untyped]
 import logging
+from abc import ABC, abstractmethod
 from functools import lru_cache
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from .schemas import PluginManifest, CommandConfig, PluginConfig
+import yaml  # type: ignore[import-untyped]
+
+from .schemas import PluginManifest
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class Plugin(ABC):
         self.priority = priority
         # Dictionary mapping aliases to their canonical verb
         self.verb_aliases: Dict[str, str] = {}
-        
+
         # Cache for verb handling
         self._verb_cache: Dict[str, bool] = {}
         self._canonical_verb_cache: Dict[str, str] = {}
@@ -56,7 +57,6 @@ class Plugin(ABC):
         Returns:
             List of verb strings.
         """
-        pass
 
     def get_aliases(self) -> Dict[str, str]:
         """
@@ -88,7 +88,6 @@ class Plugin(ABC):
         Returns:
             The generated command string.
         """
-        pass
 
     def can_handle(self, verb: str) -> bool:
         """
@@ -102,22 +101,22 @@ class Plugin(ABC):
         """
         if not verb:
             return False
-            
+
         # Check cache first
         verb_lower = verb.lower()
         if verb_lower in self._verb_cache:
             return self._verb_cache[verb_lower]
-            
+
         result = False
-        
+
         # Check if it's a canonical verb
         if verb_lower in [v.lower() for v in self.get_verbs()]:
             result = True
-            
+
         # Check if it's an alias
         elif verb_lower in [a.lower() for a in self.verb_aliases.keys()]:
             result = True
-            
+
         # Update cache
         self._verb_cache[verb_lower] = result
         return result
@@ -137,26 +136,26 @@ class Plugin(ABC):
         """
         if not verb:
             raise ValueError(f"Empty verb provided to get_canonical_verb")
-            
+
         # Check cache first
         verb_lower = verb.lower()
         if verb_lower in self._canonical_verb_cache:
             return self._canonical_verb_cache[verb_lower]
-            
+
         # Check if it's a canonical verb
         for canonical in self.get_verbs():
             if canonical.lower() == verb_lower:
                 self._canonical_verb_cache[verb_lower] = canonical
                 return canonical
-                
+
         # Check if it's an alias
         for alias, canonical in self.verb_aliases.items():
             if alias.lower() == verb_lower:
                 self._canonical_verb_cache[verb_lower] = canonical
                 return canonical
-                
+
         raise ValueError(f"Verb '{verb}' is not recognized by plugin '{self.name}'")
-        
+
     def clear_caches(self) -> None:
         """Clear the internal caches for verb handling."""
         self._verb_cache.clear()
@@ -179,14 +178,14 @@ class YAMLPlugin(Plugin):
         """
         self.manifest_path = manifest_path
         self.manifest = self._load_manifest()
-        
+
         # Initialize with data from manifest
         super().__init__(
             name=self.manifest.name,
             description=self.manifest.description,
-            priority=self.manifest.priority
+            priority=self.manifest.priority,
         )
-        
+
         # Load verb aliases from manifest
         for verb, aliases in self.manifest.verb_aliases.items():
             for alias in aliases:
@@ -198,14 +197,14 @@ class YAMLPlugin(Plugin):
 
         Returns:
             Validated PluginManifest.
-            
+
         Raises:
             Exception: If the manifest is invalid or cannot be loaded.
         """
         try:
             with open(self.manifest_path, "r") as f:
                 manifest_data = yaml.safe_load(f)
-                
+
             # Validate using Pydantic
             return PluginManifest(**manifest_data)
         except Exception as e:
@@ -231,35 +230,33 @@ class YAMLPlugin(Plugin):
 
         Returns:
             The generated command string.
-            
+
         Raises:
             ValueError: If the verb is not supported or the template is missing.
         """
         # Check if the verb is valid
         if not self.can_handle(verb):
             raise ValueError(f"Plugin '{self.name}' cannot handle verb '{verb}'")
-            
+
         # Get the canonical verb if it's an alias
         canonical_verb = self.get_canonical_verb(verb)
-        
+
         # Check if the command exists in the manifest
         if canonical_verb not in self.manifest.commands:
-            raise ValueError(
-                f"No command template found for verb '{canonical_verb}' in plugin '{self.name}'"
-            )
-            
+            raise ValueError(f"No command template found for verb '{canonical_verb}' in plugin '{self.name}'")
+
         # Get the command template
         command_config = self.manifest.commands[canonical_verb]
-        
+
         # Apply the template (basic implementation, should use Jinja2 in practice)
         command = command_config.template
-        
+
         # Replace placeholders with argument values
         for key, value in args.items():
             placeholder = f"{{{{ {key} }}}}"
             if placeholder in command:
                 command = command.replace(placeholder, str(value))
-                
+
         return command
 
 
@@ -289,12 +286,12 @@ class PluginRegistry:
         """
         if plugin.name in self.plugins:
             logger.warning(f"Replacing existing plugin '{plugin.name}'")
-            
+
         self.plugins[plugin.name] = plugin
-        
+
         # Clear the cache when registering a new plugin
         self.verb_to_plugin_cache.clear()
-        
+
         # Log plugin registration
         logger.debug(
             f"Registered plugin '{plugin.name}' with {len(plugin.get_verbs())} verbs "
@@ -331,35 +328,34 @@ class PluginRegistry:
         if not verb:
             logger.debug("Empty verb provided to get_plugin_for_verb")
             return None
-            
+
         verb_lower = verb.lower()
-        
+
         # First, try to find an exact match
         matching_plugins: List[Tuple[int, Plugin]] = []
-        
+
         for plugin in self.plugins.values():
             if plugin.can_handle(verb_lower):
                 matching_plugins.append((plugin.priority, plugin))
-                
+
         # Sort by priority (highest first)
         if matching_plugins:
             matching_plugins.sort(reverse=True)
             selected_plugin = matching_plugins[0][1]
-            
+
             logger.debug(
-                f"Found plugin '{selected_plugin.name}' for verb '{verb}' "
-                f"(priority: {selected_plugin.priority})"
+                f"Found plugin '{selected_plugin.name}' for verb '{verb}' " f"(priority: {selected_plugin.priority})"
             )
-            
+
             if len(matching_plugins) > 1:
                 # Log when multiple plugins can handle the same verb
                 logger.debug(
-                    f"Multiple plugins can handle verb '{verb}': " +
-                    ", ".join([f"'{p[1].name}' (priority: {p[0]})" for p in matching_plugins])
+                    f"Multiple plugins can handle verb '{verb}': "
+                    + ", ".join([f"'{p[1].name}' (priority: {p[0]})" for p in matching_plugins])
                 )
-                
+
             return selected_plugin
-        
+
         # No match found
         return None
 
@@ -378,29 +374,29 @@ class PluginRegistry:
             for alias, canonical in plugin.get_aliases().items():
                 verbs[alias] = plugin.name
         return verbs
-        
+
     def clear_caches(self) -> None:
         """
         Clear all caches in the registry and plugins.
-        
+
         Call this method when plugins are added or removed, or when
         plugin configurations change.
         """
         # Clear the registry's LRU cache
         self.get_plugin_for_verb.cache_clear()
-        
+
         # Clear verb_to_plugin_cache
         self.verb_to_plugin_cache.clear()
-        
+
         # Clear caches in all plugins
         for plugin in self.plugins.values():
-            if hasattr(plugin, 'clear_caches'):
+            if hasattr(plugin, "clear_caches"):
                 plugin.clear_caches()
 
     def get_plugins_sorted_by_priority(self) -> List[Plugin]:
         """
         Get all plugins sorted by priority (highest first).
-        
+
         Returns:
             List of plugins sorted by priority.
         """

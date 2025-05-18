@@ -3,9 +3,9 @@ Email notification system for the PlainSpeak Plugin Development Contest.
 """
 
 import os
-from typing import Optional
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 import aiosmtplib
 from jinja2 import Environment, FileSystemLoader
 
@@ -22,9 +22,7 @@ template_env = Environment(loader=FileSystemLoader("templates/emails"))
 class EmailNotifier:
     """Handles email notifications for contest events."""
 
-    async def send_email(
-        self, to_email: str, subject: str, template_name: str, context: dict
-    ) -> None:
+    async def send_email(self, to_email: str, subject: str, template_name: str, context: dict) -> None:
         """
         Send an email using a template.
 
@@ -62,9 +60,7 @@ class EmailNotifier:
             raise
 
 
-async def send_registration_confirmation(
-    email: str, name: str, participant_id: str
-) -> None:
+async def send_registration_confirmation(email: str, name: str, participant_id: str) -> None:
     """Send registration confirmation email."""
     notifier = EmailNotifier()
     await notifier.send_email(
@@ -90,9 +86,7 @@ async def send_submission_confirmation(email: str, name: str) -> None:
     )
 
 
-async def send_judging_complete(
-    email: str, name: str, score: float, feedback: str
-) -> None:
+async def send_judging_complete(email: str, name: str, score: float, feedback: str) -> None:
     """Send judging results email."""
     notifier = EmailNotifier()
     await notifier.send_email(
@@ -103,9 +97,7 @@ async def send_judging_complete(
     )
 
 
-async def send_winner_notification(
-    email: str, name: str, category: str, prize: str
-) -> None:
+async def send_winner_notification(email: str, name: str, category: str, prize: str) -> None:
     """Send winner notification email."""
     notifier = EmailNotifier()
     await notifier.send_email(

@@ -7,10 +7,11 @@ It uses the global application configuration for model paths and parameters.
 """
 
 import sys
-import os
 from pathlib import Path
+from typing import Any, List, Optional
+
 from ctransformers import AutoModelForCausalLM  # type: ignore[import-untyped]
-from typing import Optional, List, Dict, Any
+
 from .config import app_config
 
 
@@ -39,15 +40,9 @@ class LLMInterface:
         """
         # Prioritize parameters over config, then fall back to config defaults
         # The model_path from app_config.llm.model_path is already resolved by the validator.
-        self.model_path = (
-            model_path if model_path is not None else app_config.llm.model_path
-        )
-        self.model_type = (
-            model_type if model_type is not None else app_config.llm.model_type
-        )
-        self.gpu_layers = (
-            gpu_layers if gpu_layers is not None else app_config.llm.gpu_layers
-        )
+        self.model_path = model_path if model_path is not None else app_config.llm.model_path
+        self.model_type = model_type if model_type is not None else app_config.llm.model_type
+        self.gpu_layers = gpu_layers if gpu_layers is not None else app_config.llm.gpu_layers
 
         self.model: Optional[AutoModelForCausalLM] = None
         # For **kwargs, these are specific to AutoModelForCausalLM.from_pretrained
@@ -93,9 +88,7 @@ class LLMInterface:
         # Resolve the model path
         resolved_path = Path(self._resolve_model_path())
         if not resolved_path.exists():
-            print(
-                f"Error: Model file not found at '{self.model_path}'.", file=sys.stderr
-            )
+            print(f"Error: Model file not found at '{self.model_path}'.", file=sys.stderr)
             print(
                 "Please ensure the model_path in your config (or passed to LLMInterface) is correct.",
                 file=sys.stderr,
@@ -161,19 +154,11 @@ class LLMInterface:
         # Use generation parameters from app_config.llm as defaults
         cfg_llm = app_config.llm
 
-        final_max_new_tokens = (
-            max_new_tokens if max_new_tokens is not None else cfg_llm.max_new_tokens
-        )
-        final_temperature = (
-            temperature if temperature is not None else cfg_llm.temperature
-        )
+        final_max_new_tokens = max_new_tokens if max_new_tokens is not None else cfg_llm.max_new_tokens
+        final_temperature = temperature if temperature is not None else cfg_llm.temperature
         final_top_k = top_k if top_k is not None else cfg_llm.top_k
         final_top_p = top_p if top_p is not None else cfg_llm.top_p
-        final_repetition_penalty = (
-            repetition_penalty
-            if repetition_penalty is not None
-            else cfg_llm.repetition_penalty
-        )
+        final_repetition_penalty = repetition_penalty if repetition_penalty is not None else cfg_llm.repetition_penalty
         final_stop = stop if stop is not None else cfg_llm.stop
 
         try:
@@ -226,7 +211,9 @@ if __name__ == "__main__":
             f"\nLLMInterface initialized successfully with model: {llm.model_path}",
             file=sys.stderr,
         )
-        test_prompt = "Translate the following English text to a shell command: list all files in the current directory."
+        test_prompt = (
+            "Translate the following English text to a shell command: list all files in the current directory."
+        )
         print(f"\nTesting generation with prompt: '{test_prompt}'", file=sys.stderr)
 
         generated_text = llm.generate(test_prompt)

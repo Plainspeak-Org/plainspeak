@@ -2,15 +2,14 @@
 Tests for the LLMInterface module.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock, Mock
-import sys
-import os
 import io  # For capturing stderr
+import sys
+import unittest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
+from plainspeak.config import LLMConfig
 from plainspeak.llm_interface import LLMInterface
-from plainspeak.config import app_config as global_app_config, LLMConfig
 
 
 class TestLLMInterface(unittest.TestCase):
@@ -135,9 +134,7 @@ class TestLLMInterface(unittest.TestCase):
         self.mock_resolve.return_value = Path(custom_path)
 
         # Create interface with custom settings
-        llm_interface = LLMInterface(
-            model_path=custom_path, model_type=custom_type, gpu_layers=custom_gpu_layers
-        )
+        llm_interface = LLMInterface(model_path=custom_path, model_type=custom_type, gpu_layers=custom_gpu_layers)
 
         # Verify correct path and settings were used
         self.mock_from_pretrained.assert_called_once_with(
@@ -180,9 +177,7 @@ class TestLLMInterface(unittest.TestCase):
                 "Error: Model file not found at 'nonexistent.gguf'",
                 mock_stderr.getvalue(),
             )
-            self.assertIn(
-                "Please ensure the model_path in your config", mock_stderr.getvalue()
-            )
+            self.assertIn("Please ensure the model_path in your config", mock_stderr.getvalue())
 
     def test_initialization_failure_ctransformers_error(self):
         """Test initialization failure if ctransformers.from_pretrained errors."""
@@ -237,9 +232,7 @@ class TestLLMInterface(unittest.TestCase):
         result = llm_interface.generate("Test prompt", **custom_params)
 
         self.assertEqual(result, test_output)
-        self.mock_model_instance.generate.assert_called_once_with(
-            "Test prompt", **custom_params
-        )
+        self.mock_model_instance.generate.assert_called_once_with("Test prompt", **custom_params)
 
     def test_generate_with_empty_stop_list(self):
         """Test generate with empty stop sequence list."""
@@ -262,9 +255,7 @@ class TestLLMInterface(unittest.TestCase):
         with patch("sys.stderr", new_callable=io.StringIO) as mock_stderr:
             result = llm_interface.generate("Test prompt")
             self.assertIsNone(result)
-            self.assertIn(
-                f"Error during text generation: {error_message}", mock_stderr.getvalue()
-            )
+            self.assertIn(f"Error during text generation: {error_message}", mock_stderr.getvalue())
 
 
 if __name__ == "__main__":

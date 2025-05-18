@@ -4,14 +4,15 @@ Learning System for PlainSpeak.
 This module implements the feedback loop for improving command generation over time.
 """
 
-import sqlite3
 import json
-from typing import Dict, List, Any, Optional, Union, Tuple
-import pandas as pd  # type: ignore[import-untyped]
+import logging
+import sqlite3
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from dataclasses import dataclass
-import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -90,9 +91,7 @@ class LearningStore:
             """
             )
 
-    def record_feedback(
-        self, entry: FeedbackEntry, metadata: Optional[Dict[str, Any]] = None
-    ) -> None:
+    def record_feedback(self, entry: FeedbackEntry, metadata: Optional[Dict[str, Any]] = None) -> None:
         """
         Record feedback for a command generation.
 
@@ -181,13 +180,9 @@ class LearningStore:
                 ),
             )
             # lastrowid is guaranteed to be an integer when INSERT is successful
-            return (
-                cursor.lastrowid or 0
-            )  # Return 0 if for some reason lastrowid is None
+            return cursor.lastrowid or 0  # Return 0 if for some reason lastrowid is None
 
-    def add_feedback(
-        self, command_id: int, feedback_type: str, message: Optional[str] = None
-    ) -> None:
+    def add_feedback(self, command_id: int, feedback_type: str, message: Optional[str] = None) -> None:
         """
         Add feedback for a command.
 
@@ -317,9 +312,9 @@ class LearningStore:
             patterns = patterns[patterns["success"] >= min_occurrences]
 
             # Calculate success rate
-            patterns["success_rate"] = patterns["success"] / patterns.groupby(
-                "original_text"
-            )["success"].transform("count")
+            patterns["success_rate"] = patterns["success"] / patterns.groupby("original_text")["success"].transform(
+                "count"
+            )
 
             return patterns
 
@@ -354,9 +349,7 @@ class LearningStore:
                     ),
                 )
 
-    def get_training_data(
-        self, min_success_rate: float = 0.8, limit: Optional[int] = None
-    ) -> List[Tuple[str, str]]:
+    def get_training_data(self, min_success_rate: float = 0.8, limit: Optional[int] = None) -> List[Tuple[str, str]]:
         """
         Get successful command generations for model fine-tuning.
 
@@ -381,9 +374,7 @@ class LearningStore:
             cursor = conn.execute(query, (min_success_rate,))
             return cursor.fetchall()
 
-    def get_similar_examples(
-        self, text: str, limit: int = 5
-    ) -> List[Tuple[str, str, float]]:
+    def get_similar_examples(self, text: str, limit: int = 5) -> List[Tuple[str, str, float]]:
         """
         Find similar examples from historical data.
 
@@ -394,9 +385,7 @@ class LearningStore:
         Returns:
             List of (original_text, command, success_rate) tuples.
         """
-        patterns = pd.read_sql_query(
-            "SELECT * FROM patterns", sqlite3.connect(self.db_path)
-        )
+        patterns = pd.read_sql_query("SELECT * FROM patterns", sqlite3.connect(self.db_path))
 
         # TODO: Implement proper similarity scoring
         # For now, just check if text contains any pattern words

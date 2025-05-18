@@ -4,30 +4,25 @@ Pydantic schemas for PlainSpeak plugins.
 This module defines the schemas used for plugin configuration validation.
 """
 
-from typing import Dict, List, Optional, Union, Any
-from pydantic import BaseModel, Field, field_validator
 import re
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class CommandConfig(BaseModel):
     """Configuration for a single command."""
 
     template: str = Field(..., description="Jinja2 template for generating the command")
-    description: str = Field(
-        ..., description="Human-readable description of what the command does"
-    )
-    examples: List[str] = Field(
-        default_factory=list, description="Example usages of the command"
-    )
-    required_args: List[str] = Field(
-        default_factory=list, description="Arguments that must be provided"
-    )
+    description: str = Field(..., description="Human-readable description of what the command does")
+    examples: List[str] = Field(default_factory=list, description="Example usages of the command")
+    required_args: List[str] = Field(default_factory=list, description="Arguments that must be provided")
     optional_args: Dict[str, Union[str, int, float, bool, None]] = Field(
         default_factory=dict, description="Optional arguments with their default values"
     )
     aliases: List[str] = Field(
-        default_factory=list, 
-        description="Alternative verbs that can be used to invoke this command"
+        default_factory=list,
+        description="Alternative verbs that can be used to invoke this command",
     )
 
     @field_validator("template")
@@ -35,9 +30,7 @@ class CommandConfig(BaseModel):
         """Validate that the template contains valid placeholder syntax."""
         # Check for basic Jinja2 variable syntax
         if not re.search(r"{{\s*\w+\s*}}", v):
-            raise ValueError(
-                "Template must contain at least one variable placeholder ({{ var }})"
-            )
+            raise ValueError("Template must contain at least one variable placeholder ({{ var }})")
         return v
 
 
@@ -76,11 +69,10 @@ class PluginManifest(BaseModel):
         default=0,
         description="Plugin priority (higher values indicate higher priority)",
         ge=0,
-        le=100
+        le=100,
     )
     verb_aliases: Dict[str, List[str]] = Field(
-        default_factory=dict, 
-        description="Mapping of verb aliases to canonical verbs"
+        default_factory=dict, description="Mapping of verb aliases to canonical verbs"
     )
 
     @field_validator("verbs")
@@ -88,9 +80,7 @@ class PluginManifest(BaseModel):
         """Validate that verbs are lowercase and contain no spaces."""
         for verb in v:
             if not verb.islower() or " " in verb:
-                raise ValueError(
-                    f"Verb '{verb}' must be lowercase and contain no spaces"
-                )
+                raise ValueError(f"Verb '{verb}' must be lowercase and contain no spaces")
         return v
 
     @field_validator("commands")  # type: ignore
@@ -101,28 +91,20 @@ class PluginManifest(BaseModel):
         if "verbs" in values:
             missing = set(values["verbs"]) - set(v.keys())
             if missing:
-                raise ValueError(
-                    f"Missing command configurations for verbs: {', '.join(missing)}"
-                )
+                raise ValueError(f"Missing command configurations for verbs: {', '.join(missing)}")
         return v
 
     @field_validator("verb_aliases")
-    def validate_verb_aliases(
-        cls, v: Dict[str, List[str]], values: Dict[str, Any]
-    ) -> Dict[str, List[str]]:
+    def validate_verb_aliases(cls, v: Dict[str, List[str]], values: Dict[str, Any]) -> Dict[str, List[str]]:
         """Validate that all canonical verbs in verb_aliases exist in verbs."""
         if "verbs" in values:
             verbs = values["verbs"]
             for canonical_verb, aliases in v.items():
                 if canonical_verb not in verbs:
-                    raise ValueError(
-                        f"Canonical verb '{canonical_verb}' in verb_aliases is not defined in verbs"
-                    )
+                    raise ValueError(f"Canonical verb '{canonical_verb}' in verb_aliases is not defined in verbs")
                 for alias in aliases:
                     if not alias.islower() or " " in alias:
-                        raise ValueError(
-                            f"Verb alias '{alias}' must be lowercase and contain no spaces"
-                        )
+                        raise ValueError(f"Verb alias '{alias}' must be lowercase and contain no spaces")
         return v
 
 
@@ -137,10 +119,6 @@ class PluginConfig(BaseModel):
     """Runtime configuration for a loaded plugin."""
 
     manifest: PluginManifest
-    instance: Optional[Any] = Field(
-        None, description="Instance of the plugin class once loaded"
-    )
+    instance: Optional[Any] = Field(None, description="Instance of the plugin class once loaded")
     enabled: bool = Field(True, description="Whether the plugin is currently enabled")
-    load_error: Optional[str] = Field(
-        None, description="Error message if plugin failed to load"
-    )
+    load_error: Optional[str] = Field(None, description="Error message if plugin failed to load")

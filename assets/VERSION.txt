@@ -23,6 +23,6 @@ Next Planned Update:
 - Complete store listing assets
 - Initial marketing materials
 
-Note: This version number tracks the asset system independently 
-of the main application version to allow for asset updates 
+Note: This version number tracks the asset system independently
+of the main application version to allow for asset updates
 without requiring software releases.

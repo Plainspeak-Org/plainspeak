@@ -132,4 +132,4 @@ To add more tests to the verification process:
    - `expected_output`: List of strings that should appear in the output
    - `expected_exit_code`: Expected command exit code
    - `interactive`: Set to `True` if the command requires input
-   - `input`: Input to provide if interactive 
+   - `input`: Input to provide if interactive

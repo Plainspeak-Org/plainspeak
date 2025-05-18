@@ -102,10 +102,10 @@ packaging/
    ```bash
    # Verify all tests pass
    pytest
-   
+
    # Update version numbers
    bump2version patch  # or minor/major
-   
+
    # Generate assets
    python scripts/generate_assets.py
    ```
@@ -114,7 +114,7 @@ packaging/
    ```bash
    # Test build all packages
    python submit_packages.py --version 0.1.0 --skip-test
-   
+
    # Verify builds
    pytest tests/binaries/
    ```

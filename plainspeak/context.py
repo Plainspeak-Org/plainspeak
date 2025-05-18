@@ -5,14 +5,14 @@ This module manages the session state and contextual information
 that enhances the natural language understanding capabilities.
 """
 
+import getpass
+import json
 import os
 import platform
 import socket
-import getpass
-from typing import Dict, Any, Optional
-from pathlib import Path
-import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class SessionContext:

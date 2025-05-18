@@ -237,4 +237,4 @@ verify_ssl = true             # Verify SSL certificates by default
 | "No route to host" | Network routing issue or the host is down |
 | "Name or service not known" | DNS resolution failed; check the hostname or DNS settings |
 | "Operation timed out" | Increase timeout values or check network connectivity |
-| "Certificate verification failed" | Use `--no-check-certificate` option (only when you trust the source) | 
+| "Certificate verification failed" | Use `--no-check-certificate` option (only when you trust the source) |

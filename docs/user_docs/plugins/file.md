@@ -222,4 +222,4 @@ confirm_recursive_delete = true   # Ask for confirmation on recursive deletes
 | "No such file or directory" | Check if the file exists or if you have a typo in the path |
 | "Permission denied" | Check file permissions, or try with elevated privileges |
 | "Directory not empty" | Use recursive flag for non-empty directories |
-| "No space left on device" | Free up disk space or use another storage location | 
+| "No space left on device" | Free up disk space or use another storage location |

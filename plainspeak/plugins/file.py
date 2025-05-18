@@ -4,7 +4,8 @@ File Plugin for PlainSpeak.
 This plugin provides file operations like listing, copying, moving, etc.
 """
 
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
 from .base import Plugin, registry
 
 

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Parse and summarize test results from multiple platforms."""
 
-import os
-import sys
-import json
 import argparse
+import json
+import sys
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-import xml.etree.ElementTree as ET
 
 
 def parse_test_results(results_dir: str) -> dict:
@@ -74,9 +73,7 @@ def parse_test_results(results_dir: str) -> dict:
 
             # Update summary
             results["summary"]["total"] += platform_results["total"]
-            results["summary"]["failed"] += (
-                platform_results["failures"] + platform_results["errors"]
-            )
+            results["summary"]["failed"] += platform_results["failures"] + platform_results["errors"]
             results["summary"]["skipped"] += platform_results["skipped"]
             results["summary"]["passed"] += (
                 platform_results["total"]
@@ -131,9 +128,7 @@ def generate_summary(results: dict) -> str:
     summary.append("\n## Test Failures")
     has_failures = False
     for platform, details in results["details"].items():
-        failed_tests = [
-            t for t in details["tests"] if t["status"] in ("failed", "error")
-        ]
+        failed_tests = [t for t in details["tests"] if t["status"] in ("failed", "error")]
         if failed_tests:
             has_failures = True
             summary.append(f"\n### {platform.title()}")
@@ -150,12 +145,8 @@ def generate_summary(results: dict) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Parse test results and generate summary"
-    )
-    parser.add_argument(
-        "--results-dir", required=True, help="Directory containing test results"
-    )
+    parser = argparse.ArgumentParser(description="Parse test results and generate summary")
+    parser.add_argument("--results-dir", required=True, help="Directory containing test results")
     parser.add_argument("--output", help="Output file for JSON results")
     parser.add_argument("--summary", help="Output file for summary markdown")
     args = parser.parse_args()

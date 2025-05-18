@@ -122,4 +122,4 @@ We request:
 
 ### A. Current Maintainers
 ### B. Technical Specification Details
-### C. Example Use Cases 
+### C. Example Use Cases

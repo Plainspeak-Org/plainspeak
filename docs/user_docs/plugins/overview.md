@@ -222,4 +222,4 @@ Global plugin settings:
 disabled = ["email", "calendar"]  # Disable specific plugins
 enabled_only = false  # When true, only explicitly enabled plugins are loaded
 directory = "~/.config/plainspeak/plugins"  # Custom plugin directory
-``` 
+```

@@ -4,24 +4,24 @@ Email Plugin for PlainSpeak.
 This module provides email operations through natural language.
 """
 
-import os
-import json
-from typing import Dict, List, Any, Optional, Tuple, Union
-from pathlib import Path
-import smtplib
-import imaplib
 import email
 import email.utils
-from email import policy
-from email.message import EmailMessage
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
 import getpass
-import keyring  # type: ignore
+import imaplib
+import json
+import os
 import re
+import smtplib
+from email import policy
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-from .base import Plugin, registry, YAMLPlugin
+import keyring  # type: ignore
+
+from .base import YAMLPlugin, registry
 from .platform import platform_manager
 
 
@@ -191,9 +191,7 @@ class EmailClient:
         if self.smtp:
             self.smtp.send_message(msg)
 
-    def list_emails(
-        self, folder: str = "INBOX", limit: int = 10, unread_only: bool = False
-    ) -> List[Dict[str, Any]]:
+    def list_emails(self, folder: str = "INBOX", limit: int = 10, unread_only: bool = False) -> List[Dict[str, Any]]:
         """
         List emails in a folder.
 
@@ -227,8 +225,7 @@ class EmailClient:
                     "subject": message["subject"],
                     "from": message["from"],
                     "date": message["date"],
-                    "unread": "\\Seen"
-                    not in self.imap.fetch(num, "(FLAGS)")[1][0].decode(),
+                    "unread": "\\Seen" not in self.imap.fetch(num, "(FLAGS)")[1][0].decode(),
                 }
             )
 
@@ -326,9 +323,7 @@ class EmailClient:
             logging.error(f"Error reading email: {e}")
             return None
 
-    def search_emails(
-        self, query: str, folder: str = "INBOX", limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def search_emails(self, query: str, folder: str = "INBOX", limit: int = 10) -> List[Dict[str, Any]]:
         """
         Search emails.
 
@@ -400,9 +395,7 @@ class EmailPlugin(YAMLPlugin):
         if "attachment" in processed:
             path = processed["attachment"]
             if path:
-                processed["attachment"] = platform_manager.convert_path_for_command(
-                    path
-                )
+                processed["attachment"] = platform_manager.convert_path_for_command(path)
 
         return processed
 

@@ -2,13 +2,14 @@
 Tests for the learning module.
 """
 
-import os
 import json
-import tempfile
 import sqlite3
+import tempfile
 from pathlib import Path
-import pytest
+
 import pandas as pd
+import pytest
+
 from plainspeak.learning import LearningStore
 
 
@@ -27,7 +28,7 @@ def temp_db_path():
 
 def test_learning_store_init(temp_db_path):
     """Test LearningStore initialization and database creation."""
-    store = LearningStore(temp_db_path)
+    LearningStore(temp_db_path)
 
     # Check that the database file was created
     assert temp_db_path.exists()
@@ -108,9 +109,7 @@ def test_update_command_edit(temp_db_path):
     store = LearningStore(temp_db_path)
 
     # Add a command
-    command_id = store.add_command(
-        natural_text="list files", generated_command="ls", executed=False
-    )
+    command_id = store.add_command(natural_text="list files", generated_command="ls", executed=False)
 
     # Update with edit
     store.update_command_edit(command_id, "ls -la")
@@ -118,9 +117,7 @@ def test_update_command_edit(temp_db_path):
     # Check that the edit was saved
     conn = sqlite3.connect(temp_db_path)
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT edited, edited_command FROM commands WHERE id = ?", (command_id,)
-    )
+    cursor.execute("SELECT edited, edited_command FROM commands WHERE id = ?", (command_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -134,9 +131,7 @@ def test_add_feedback(temp_db_path):
     store = LearningStore(temp_db_path)
 
     # Add a command
-    command_id = store.add_command(
-        natural_text="list files", generated_command="ls -la"
-    )
+    command_id = store.add_command(natural_text="list files", generated_command="ls -la")
 
     # Add feedback
     store.add_feedback(command_id, "approve", "Great command!")
@@ -234,9 +229,7 @@ def test_export_training_data(temp_db_path):
     )
 
     # Add an edited command
-    command_id = store.add_command(
-        natural_text="show hidden files", generated_command="ls", executed=False
-    )
+    command_id = store.add_command(natural_text="show hidden files", generated_command="ls", executed=False)
     store.update_command_edit(command_id, "ls -a")
     store.update_command_execution(command_id, True, True)
 
@@ -268,13 +261,8 @@ def test_export_training_data(temp_db_path):
         examples = [json.loads(line) for line in lines]
 
         # Check the examples
-        assert any(
-            ex["input"] == "list files" and ex["output"] == "ls -la" for ex in examples
-        )
-        assert any(
-            ex["input"] == "show hidden files" and ex["output"] == "ls -a"
-            for ex in examples
-        )
+        assert any(ex["input"] == "list files" and ex["output"] == "ls -la" for ex in examples)
+        assert any(ex["input"] == "show hidden files" and ex["output"] == "ls -a" for ex in examples)
 
     finally:
         # Cleanup

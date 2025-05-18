@@ -52,4 +52,4 @@ This document tracks the implementation of the comprehensive documentation strat
 1. Set up Sphinx configuration for documentation website
 2. Create README files for key directories
 3. Implement API reference documentation
-4. Add contribution guidelines 
+4. Add contribution guidelines
