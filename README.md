@@ -72,6 +72,7 @@ With a simple "y", the command executes—no Unix knowledge required. The user a
 | Capability | Implementation | Philosophical Significance |
 |------------|----------------|----------------------------|
 | **Natural Language Understanding** | Local LLM (e.g., MiniCPM) with specialized fine-tuning for command generation | Preserves privacy while making computing accessible in one's native tongue |
+| **International Support** | Full translations in English, French, German, Spanish, Italian, and Portuguese | Makes the interface accessible to users in their primary language |
 | **Safety Sandbox** | Command preview with explicit confirmation; nothing executes without user approval | Builds trust through transparency and maintains user agency |
 | **Plugin Architecture** | YAML-defined plugins exposing domain-specific verbs with Jinja templates for rendering | Creates an extensible ecosystem that grows with community needs |
 | **Continuous Learning** | Feedback loop capturing command edits and rejections to improve future translations | System that evolves with collective human guidance |
@@ -232,7 +233,7 @@ PlainSpeak's development follows a carefully orchestrated path to ensure both te
 |-------|----------|------------|------------------|
 | **Foundation** | Months 1-3 | Open repository with MIT license; core NL→command pipeline; 10 essential plugins | Early adopters begin contributing; academic interest |
 | **Expansion** | Months 4-6 | Plugin contest; Windows/macOS binaries; learning system implementation | 10,000+ monthly users; corporate pilot programs |
-| **Maturation** | Months 7-12 | 50+ plugins; internationalization; PSF working group formation | 100,000+ users; integration with major platforms |
+| **Maturation** | Months 7-12 | 50+ plugins; comprehensive internationalization (6+ languages); PSF working group formation | 100,000+ users; integration with major platforms |
 | **Transformation** | Years 2-5 | Standard protocol for intent translation; embedded in major operating systems | Becomes the expected way to interact with computers |
 | **Legacy** | Years 5-50 | Evolution into universal computing interface | Fundamentally changes human-computer relationship |
 

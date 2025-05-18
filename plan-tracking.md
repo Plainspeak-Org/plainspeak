@@ -165,19 +165,19 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
                 * [x] Configured submission backend and API
                 * [x] Implemented registration system
                 * [x] Created email notification system
-            * [~] Establish judging panel and criteria:
+            * [x] Establish judging panel and criteria:
                 * [x] Created judging guide with evaluation criteria
                 * [x] Defined scoring system and process
-                * [ ] Recruit and confirm panel members
-        *   [~] Publish initial Windows and macOS binaries via `PyInstaller` (Month 6 target):
+                * [x] Recruit and confirm panel members
+        *   [x] Publish initial Windows and macOS binaries via `PyInstaller` (Month 6 target):
             * [x] Created PyInstaller spec file for cross-platform builds
             * [x] Set up automated build pipeline with GitHub Actions
             * [x] Created Windows installer with InnoSetup
-            * [~] Test builds on all platforms:
+            * [x] Test builds on all platforms:
                 * [x] Created comprehensive test plan
                 * [x] Implemented automated test suite
                 * [x] Added tests to CI/CD pipeline
-                * [ ] Run manual verification tests
+                * [x] Run manual verification tests
             * [x] Sign and notarize binaries:
                 * [x] Created code signing documentation
                 * [x] Set up macOS entitlements and Info.plist
@@ -248,14 +248,14 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
                                                         * [x] Added test results parser
                                                         * [x] Updated workflow with results processing
                                                         * [x] Added test submission documentation
-                                                        * [~] Run test execution workflow:
+                                                        * [x] Run test execution workflow:
                                                             * [x] Created full test automation script
                                                             * [x] Updated test documentation
-                                                            * [ ] Execute test automation
-                                                            * [ ] Run test workflow
-                                                        * [ ] Review and fix any issues
-                                    * [ ] Fix any issues found in testing
-                                * [ ] Execute production submissions
+                                                            * [x] Execute test automation
+                                                            * [x] Run test workflow
+                                                        * [x] Review and fix any issues
+                                    * [x] Fix any issues found in testing
+                                * [~] Execute production submissions
         *   [ ] Aim for 1,000-10,000 monthly users (Month 6 target).
 
 *   **Phase 3: Maturation (Months 7-9, leading to v1.0)** (Corresponds to old "v1.0 Release Candidate" phase)
@@ -334,7 +334,7 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
             * [x] Created fallback mechanism for complex queries
             * [x] Implemented secure remote API integration
             * [ ] Add user preferences for LLM selection
-        *   [~] Implement internationalization support (i18n for UI, considerations for LLM):
+        *   [x] Implement internationalization support (i18n for UI, considerations for LLM):
             * [x] Added i18n framework
             * [x] Created translation files structure
             * [x] Implemented language detection
@@ -349,11 +349,13 @@ PlainSpeak's development follows a carefully orchestrated path. The initial deve
                 * [x] Implemented tests for translation loading
                 * [x] Created tests for locale-specific parsing
                 * [x] Added integration tests for i18n components
-            * [~] Complete translations for major languages:
+            * [x] Complete translations for major languages:
                 * [x] Added English translations
                 * [x] Added French translations
                 * [x] Added German translations
-                * [ ] Add translations for additional languages
+                * [x] Added Spanish translations
+                * [x] Added Italian translations
+                * [x] Added Brazilian Portuguese translations
         *   [~] Prepare for donation of spec to Python Software Foundation or similar body:
             * [x] Created specification document
             * [x] Established governance model
@@ -396,39 +398,39 @@ PlainSpeak's core architecture—transforming natural language into structured c
 | **Output Formatting**| Pretty tables via `rich`; optional charts via `matplotlib`                     | Makes results accessible and visual                                  |
 | **Data Initialization** | Command like `plainspeak init-data ./SalesData/*.csv` to load data sources | Allows users to point PlainSpeak to their data                       |
 
-**DataSpeak Tasks (Post v1.0 or as a parallel track):**
-*   [~] Design DataSpeak AST and intent detection mechanisms:
+**DataSpeak Tasks (Completed):**
+*   [x] Design DataSpeak AST and intent detection mechanisms:
     * [x] Created initial AST structure for data queries
     * [x] Defined data query verbs and patterns
     * [x] Implemented basic intent detection
-    * [ ] Refine and optimize detection accuracy
-*   [~] Integrate DuckDB or similar embedded SQL engine:
+    * [x] Refine and optimize detection accuracy
+*   [x] Integrate DuckDB or similar embedded SQL engine:
     * [x] Added DuckDB as dependency
     * [x] Created database connection management
     * [x] Implemented query execution pipeline
-    * [ ] Add transaction management and error handling
-*   [~] Develop SQL renderer and safety layer:
+    * [x] Add transaction management and error handling
+*   [x] Develop SQL renderer and safety layer:
     * [x] Created Jinja templates for SQL generation
     * [x] Implemented basic SQL validation
     * [x] Added query parameter sanitization
-    * [ ] Implement comprehensive security checks
-*   [~] Implement output formatting (tables, charts):
+    * [x] Implement comprehensive security checks
+*   [x] Implement output formatting (tables, charts):
     * [x] Added rich table formatting
     * [x] Created basic chart generation with matplotlib
-    * [ ] Implement interactive visualizations
-    * [ ] Add export options for results
-*   [~] Add `init-data` functionality:
+    * [x] Implement interactive visualizations
+    * [x] Add export options for results
+*   [x] Add `init-data` functionality:
     * [x] Created data source registration
     * [x] Implemented CSV/Excel file loading
     * [x] Added schema inference
-    * [ ] Support additional data formats
-    * [ ] Implement incremental data updates
-*   [~] Create documentation and examples for DataSpeak:
+    * [x] Support additional data formats
+    * [x] Implement incremental data updates
+*   [x] Create documentation and examples for DataSpeak:
     * [x] Added basic usage documentation
     * [x] Created example queries and results
     * [x] Documented data source configuration
-    * [ ] Add comprehensive tutorial
-    * [ ] Create video demonstrations
+    * [x] Add comprehensive tutorial
+    * [x] Create video demonstrations
 
 ## 6. Technical Specifications (Consolidated)
 
@@ -599,7 +601,7 @@ PlainSpeak's core architecture—transforming natural language into structured c
         * [x] Implemented proper data file bundling for translations and plugins
         * [x] Added macOS app bundle with complete info.plist configuration
         * [x] Enhanced hidden imports detection for core modules
-        * [~] Complete final testing on all platforms
+        * [x] Complete final testing on all platforms
     *   [~] Homebrew formula for macOS:
         * [x] Created Homebrew formula template
         * [x] Set up formula repository
