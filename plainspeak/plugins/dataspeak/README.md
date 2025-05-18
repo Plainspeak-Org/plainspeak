@@ -44,8 +44,8 @@ The visualization module provides interactive and static data visualization capa
 
 - Automatic detection of appropriate visualization types
 - Support for various chart types (bar, line, scatter, pie, etc.)
-- Interactive visualizations using Plotly (when available)
-- Static visualizations using Matplotlib (fallback)
+- Interactive visualizations using Polly (when available)
+- Static visualizations using various plotting libraries (fallback)
 
 #### Key Features
 
@@ -58,7 +58,7 @@ The visualization module provides interactive and static data visualization capa
   - Scatter plots
   - Pie charts
   - Histograms
-  - Heatmaps
+  - Heat maps
   - Box plots
   - And more
 
@@ -134,11 +134,11 @@ DataSpeak can be configured through PlainSpeak's configuration system:
   - SQLite (embedded database)
 
 - **Optional**:
-  - sqlglot (for enhanced SQL parsing)
-  - matplotlib (for static visualizations)
-  - plotly (for interactive visualizations)
-  - openpyxl (for Excel export)
-  - pyarrow (for Parquet export)
+  - Enhanced SQL parsing libraries
+  - Visualization libraries for data plotting
+  - Polly (for interactive visualizations)
+  - Excel export utilities
+  - Advanced data format libraries
   - tabulate (for pretty text tables)
 
 ## Integration with Other Plugins
