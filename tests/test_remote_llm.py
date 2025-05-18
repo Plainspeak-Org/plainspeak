@@ -15,6 +15,7 @@ import json
 import requests
 import uuid
 import certifi
+import time
 
 from plainspeak.core.llm import RemoteLLM
 
@@ -22,14 +23,22 @@ from plainspeak.core.llm import RemoteLLM
 class MockResponse:
     """Mock HTTP response for testing."""
     
-    def __init__(self, json_data, status_code=200, raise_for_status=None):
+    def __init__(self, json_data, status_code=200, raise_for_status=None, headers=None):
         self.json_data = json_data
         self.status_code = status_code
-        self.raise_for_status = raise_for_status or (lambda: None if status_code < 400 else 
-                                              exec('raise requests.HTTPError()'))
+        self.headers = headers or {}
+        self.text = json.dumps(json_data) if isinstance(json_data, (dict, list)) else str(json_data)
+        
+        def default_raise_for_status():
+            if status_code >= 400:
+                raise requests.HTTPError(f"HTTP Error: {status_code}", response=self)
+        
+        self.raise_for_status = raise_for_status or default_raise_for_status
         
     def json(self):
-        return self.json_data
+        if isinstance(self.json_data, (dict, list)):
+            return self.json_data
+        raise ValueError("Invalid JSON")
 
 
 class TestRemoteLLM(unittest.TestCase):
@@ -45,13 +54,23 @@ class TestRemoteLLM(unittest.TestCase):
             api_endpoint=self.api_endpoint,
             api_key=self.api_key,
             retry_count=2,  # Reduce retries for faster tests
-            timeout=1  # Short timeout for faster tests
+            timeout=1,  # Short timeout for faster tests
+            rate_limit_per_minute=10
         )
         
         # Replace logger with mock to avoid cluttering test output
         self.llm.logger = MagicMock()
+        
+        # Mock time.sleep to speed up tests
+        self.sleep_patcher = patch('time.sleep')
+        self.mock_sleep = self.sleep_patcher.start()
     
-    @patch('requests.post')
+    def tearDown(self):
+        """Clean up after each test."""
+        self.llm.close()
+        self.sleep_patcher.stop()
+    
+    @patch('requests.Session.post')
     def test_parse_natural_language_success(self, mock_post):
         """Test successful parsing of natural language."""
         # Mock successful API response
@@ -67,10 +86,10 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify API call
         mock_post.assert_called_once()
         args, kwargs = mock_post.call_args
-        self.assertEqual(kwargs['headers']['Authorization'], f"Bearer {self.api_key}")
+        self.assertEqual(kwargs['url'], f"{self.api_endpoint}/parse")
         self.assertEqual(kwargs['json']['text'], "list files")
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_parse_natural_language_with_locale(self, mock_post):
         """Test parsing with locale information."""
         # Mock successful API response
@@ -88,7 +107,7 @@ class TestRemoteLLM(unittest.TestCase):
         args, kwargs = mock_post.call_args
         self.assertEqual(kwargs['json']['locale'], "fr_FR")
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_api_error_handling(self, mock_post):
         """Test error handling for API failures."""
         # Mock API error
@@ -107,7 +126,7 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify error logging
         self.llm.logger.error.assert_called()
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_invalid_api_response(self, mock_post):
         """Test handling of invalid API responses."""
         # Mock invalid response (missing expected fields)
@@ -122,18 +141,27 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify warning logged
         self.llm.logger.warning.assert_called()
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
+    def test_invalid_json_response(self, mock_post):
+        """Test handling of responses with invalid JSON."""
+        # Mock response with invalid JSON
+        mock_response = MockResponse("not valid json", 200)
+        mock_post.return_value = mock_response
+        
+        # Call method (should fall back to simple parsing)
+        result = self.llm.parse_natural_language("list files")
+        
+        # Verify result is from fallback method
+        self.assertEqual(result["verb"], "list")
+        
+        # Verify warning logged about invalid JSON
+        self.llm.logger.warning.assert_called_with("Invalid JSON response: not valid json...")
+    
+    @patch('requests.Session.post')
     def test_authentication_error(self, mock_post):
         """Test handling of authentication errors."""
         # Mock 401 response
-        response = MockResponse({}, 401)
-        
-        def raise_http_error():
-            raise requests.HTTPError()
-            
-        response.raise_for_status = raise_http_error
-        mock_post.return_value = response
-        mock_post.side_effect = [requests.HTTPError(), requests.HTTPError()]
+        mock_post.return_value = MockResponse({}, 401)
         
         # Call method (should fall back to simple parsing)
         result = self.llm.parse_natural_language("list files")
@@ -144,7 +172,7 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify only tried once (no retry for auth errors)
         self.assertEqual(mock_post.call_count, 1)
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_get_improved_command(self, mock_post):
         """Test getting improved commands based on feedback."""
         # Mock successful API response
@@ -166,7 +194,7 @@ class TestRemoteLLM(unittest.TestCase):
         self.assertEqual(kwargs['json']['feedback_data'], feedback_data)
         self.assertEqual(kwargs['json']['previous_commands'], previous_commands)
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_get_improved_command_fallback(self, mock_post):
         """Test fallback for improved command when API fails."""
         # Mock API error
@@ -194,7 +222,7 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify result falls back to empty string
         self.assertEqual(result, "")
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_suggest_verbs(self, mock_post):
         """Test suggesting verbs based on partial input."""
         # Mock successful API response
@@ -210,7 +238,7 @@ class TestRemoteLLM(unittest.TestCase):
         # Verify API call
         mock_post.assert_called_once()
     
-    @patch('requests.post')
+    @patch('requests.Session.post')
     def test_suggest_verbs_fallback(self, mock_post):
         """Test fallback for verb suggestions when API fails."""
         # Mock API error
@@ -240,7 +268,7 @@ class TestRemoteLLM(unittest.TestCase):
         result = self.llm.parse_natural_language_with_locale("", "en_US")
         self.assertEqual(result, {"verb": None, "args": {}})
 
-    @patch('requests.post')
+    @patch('requests.Session.post')
     @patch('certifi.where')
     def test_ssl_certificate_handling(self, mock_certifi_where, mock_post):
         """Test SSL certificate verification handling."""
@@ -249,122 +277,252 @@ class TestRemoteLLM(unittest.TestCase):
         mock_certifi_where.return_value = expected_cert_path
         mock_post.return_value = MockResponse({"verb": "test", "args": {}})
         
-        # Test default SSL verification (using certifi)
-        llm = RemoteLLM(
+        # Create LLM instances with different SSL settings
+        llm_verify_ssl = RemoteLLM(
             api_endpoint=self.api_endpoint,
             api_key=self.api_key,
             verify_ssl=True
         )
+        llm_verify_ssl.logger = MagicMock()
         
-        llm.parse_natural_language("test command")
+        # Call parse method
+        llm_verify_ssl.parse_natural_language("test")
         
-        # Verify certifi was used
+        # Verify SSL certificate is set correctly
         args, kwargs = mock_post.call_args
         self.assertEqual(kwargs['verify'], expected_cert_path)
         
-        # Test with SSL verification disabled
-        mock_post.reset_mock()
-        llm = RemoteLLM(
+        # Create LLM with custom certificate
+        with tempfile.NamedTemporaryFile() as temp_cert:
+            temp_cert_path = temp_cert.name
+            llm_custom_cert = RemoteLLM(
+                api_endpoint=self.api_endpoint,
+                api_key=self.api_key,
+                verify_ssl=True,
+                ssl_cert_path=temp_cert_path
+            )
+            llm_custom_cert.logger = MagicMock()
+            
+            # Call parse method
+            llm_custom_cert.parse_natural_language("test")
+            
+            # Verify custom certificate is used
+            args, kwargs = mock_post.call_args
+            self.assertEqual(kwargs['verify'], temp_cert_path)
+        
+        # Create LLM with SSL verification disabled
+        llm_no_verify = RemoteLLM(
             api_endpoint=self.api_endpoint,
             api_key=self.api_key,
             verify_ssl=False
         )
+        llm_no_verify.logger = MagicMock()
         
-        llm.parse_natural_language("test command")
+        # Call parse method
+        llm_no_verify.parse_natural_language("test")
         
-        # Verify SSL verification was disabled
+        # Verify SSL verification is disabled
         args, kwargs = mock_post.call_args
         self.assertEqual(kwargs['verify'], False)
         
-        # Test with custom certificate path
-        mock_post.reset_mock()
-        custom_cert_path = '/custom/cert.pem'
-        
-        with patch('os.path.exists', return_value=True):
-            llm = RemoteLLM(
-                api_endpoint=self.api_endpoint,
-                api_key=self.api_key,
-                verify_ssl=True,
-                ssl_cert_path=custom_cert_path
-            )
-            
-            llm.parse_natural_language("test command")
-            
-            # Verify custom certificate was used
-            args, kwargs = mock_post.call_args
-            self.assertEqual(kwargs['verify'], custom_cert_path)
+        # Clean up
+        llm_verify_ssl.close()
+        llm_custom_cert.close()
+        llm_no_verify.close()
 
-    @patch('requests.post')
+    @patch('requests.Session.post')
     @patch('uuid.uuid4')
     def test_request_id_tracking(self, mock_uuid4, mock_post):
-        """Test request ID tracking for API calls."""
+        """Test that request IDs are properly tracked."""
         # Setup mocks
-        request_id = "test-uuid-12345"
-        mock_uuid4.return_value = Mock(
-            __str__=lambda self: request_id
-        )
+        test_uuid = "12345678-1234-5678-1234-567812345678"
+        mock_uuid4.return_value = test_uuid
         mock_post.return_value = MockResponse({"verb": "test", "args": {}})
         
-        # Make API request
-        self.llm.parse_natural_language("test command")
+        # Call method
+        self.llm.parse_natural_language("test request")
         
-        # Verify request ID was tracked
-        self.assertIn(request_id, self.llm.request_ids)
-        self.assertTrue(self.llm.request_ids[request_id])
-        
-        # Verify request ID was included in headers
+        # Verify request ID is in headers and payload
         args, kwargs = mock_post.call_args
-        self.assertEqual(kwargs['headers']['X-Request-ID'], request_id)
+        self.assertEqual(kwargs['headers']['X-Request-ID'], test_uuid)
+        self.assertEqual(kwargs['json']['request_id'], test_uuid)
         
-        # Verify request ID was included in payload
-        self.assertEqual(kwargs['json']['request_id'], request_id)
-        
-    @patch('requests.post')
+        # Verify request ID is tracked in the instance
+        self.assertTrue(test_uuid in self.llm.request_ids)
+
+    @patch('requests.Session.post')
     def test_consecutive_api_calls(self, mock_post):
-        """Test multiple consecutive API calls."""
-        # Setup mock to return different responses
-        mock_post.side_effect = [
-            MockResponse({"verb": "list", "args": {"path": "."}}),
-            MockResponse({"verb": "find", "args": {"pattern": "*.txt"}}),
-            MockResponse({"verb": "grep", "args": {"text": "error", "file": "log.txt"}})
+        """Test that multiple consecutive API calls work properly."""
+        # Setup mock for multiple responses
+        responses = [
+            MockResponse({"verb": "first", "args": {}}),
+            MockResponse({"verb": "second", "args": {}}),
+            MockResponse({"verb": "third", "args": {}})
         ]
+        mock_post.side_effect = responses
         
-        # Make multiple API calls
-        results = [
-            self.llm.parse_natural_language("list files"),
-            self.llm.parse_natural_language("find text files"),
-            self.llm.parse_natural_language("search for errors in log")
-        ]
+        # Make multiple calls
+        result1 = self.llm.parse_natural_language("first call")
+        result2 = self.llm.parse_natural_language("second call")
+        result3 = self.llm.parse_natural_language("third call")
         
-        # Verify all calls were made
+        # Verify results
+        self.assertEqual(result1["verb"], "first")
+        self.assertEqual(result2["verb"], "second")
+        self.assertEqual(result3["verb"], "third")
+        
+        # Verify multiple calls were made
         self.assertEqual(mock_post.call_count, 3)
-        
-        # Verify responses were correctly processed
-        self.assertEqual(results[0]["verb"], "list")
-        self.assertEqual(results[1]["verb"], "find")
-        self.assertEqual(results[2]["verb"], "grep")
-        
-    @patch('requests.post')
+
+    @patch('requests.Session.post')
     def test_rate_limiting_tracking(self, mock_post):
-        """Test tracking for rate limiting."""
-        # Setup mock
+        """Test the rate limiting functionality."""
+        # Mock response
         mock_post.return_value = MockResponse({"verb": "test", "args": {}})
         
-        # Clear the LRU cache first to ensure clean state
-        self.llm.parse_natural_language.cache_clear()
+        # Set a very low rate limit for testing
+        self.llm.rate_limit_per_minute = 2
         
-        # Make multiple API calls with different inputs to avoid cache hits
-        initial_count = self.llm.request_count
+        # Make multiple calls
+        result1 = self.llm.parse_natural_language("first call")
+        result2 = self.llm.parse_natural_language("second call")
         
-        for i in range(5):
-            # Use different input to avoid cache hits
-            self.llm.parse_natural_language(f"test command {i}")
+        # Third call should trigger rate limit
+        with self.assertRaises(RuntimeError) as context:
+            self.llm._make_api_request("test", {})
+            
+        self.assertTrue("Rate limit exceeded" in str(context.exception))
         
-        # Verify request counter was incremented
-        self.assertEqual(self.llm.request_count, initial_count + 5)
+        # Check that warning was logged
+        self.llm.logger.warning.assert_called_with("Rate limit exceeded: 2 requests in the last minute")
+    
+    @patch('requests.Session.post')
+    def test_backoff_retry_logic(self, mock_post):
+        """Test that backoff retry logic works correctly."""
+        # First call fails, second succeeds
+        mock_post.side_effect = [
+            requests.ConnectionError("Connection error"),
+            MockResponse({"verb": "test", "args": {}})
+        ]
         
-        # Verify unique request IDs were generated
-        self.assertEqual(len(self.llm.request_ids), 5)
+        # Set backoff factor
+        self.llm.backoff_factor = 0.1
+        
+        # Call method
+        result = self.llm.parse_natural_language("test backoff")
+        
+        # Verify result
+        self.assertEqual(result["verb"], "test")
+        
+        # Verify sleep was called for backoff
+        self.mock_sleep.assert_called_once_with(0.1)  # backoff_factor * 2^(attempt-1) = 0.1 * 2^0 = 0.1
+    
+    @patch('requests.Session.post')
+    def test_circuit_breaker(self, mock_post):
+        """Test the circuit breaker functionality."""
+        # Set up to consistently fail
+        mock_post.side_effect = requests.ConnectionError("Connection error")
+        
+        # Make calls to trip the circuit breaker (need 5 consecutive failures)
+        for _ in range(5):
+            try:
+                self.llm._make_api_request("test", {})
+            except:
+                pass
+        
+        # Verify circuit breaker is open
+        self.assertTrue(self.llm.circuit_open)
+        
+        # Next call should immediately raise a circuit breaker exception
+        with self.assertRaises(RuntimeError) as context:
+            self.llm._make_api_request("test", {})
+            
+        self.assertTrue("Circuit breaker open" in str(context.exception))
+
+    @patch('requests.Session.post')
+    def test_retry_after_rate_limiting(self, mock_post):
+        """Test handling of 429 rate limiting responses with Retry-After header."""
+        # Mock rate limiting response with Retry-After header
+        rate_limit_response = MockResponse(
+            {"error": "rate limit exceeded"},
+            status_code=429,
+            headers={"Retry-After": "2"}
+        )
+        
+        # First call gets rate limited, second succeeds
+        mock_post.side_effect = [
+            requests.HTTPError("Rate limit", response=rate_limit_response),
+            MockResponse({"verb": "test", "args": {}})
+        ]
+        
+        # Call method (will retry after the rate limit)
+        result = self.llm.parse_natural_language("test rate limit")
+        
+        # Verify result
+        self.assertEqual(result["verb"], "test")
+        
+        # Verify sleep was called with the Retry-After value
+        self.mock_sleep.assert_called_with(2)
+
+    @patch('requests.Session.post')
+    def test_api_key_rotation(self, mock_post):
+        """Test API key rotation on authentication errors."""
+        # Create LLM with key rotation enabled
+        llm_with_rotation = RemoteLLM(
+            api_endpoint=self.api_endpoint,
+            api_key="original-key",
+            rotate_keys=True,
+            api_keys=["original-key", "backup-key-1", "backup-key-2"],
+            retry_count=1  # Only retry once for testing
+        )
+        llm_with_rotation.logger = MagicMock()
+        llm_with_rotation.session = MagicMock()
+        
+        # First call gets auth error, second succeeds with rotated key
+        llm_with_rotation.session.post.side_effect = [
+            requests.HTTPError("Unauthorized", response=MockResponse({}, 401)),
+            MockResponse({"verb": "test", "args": {}})
+        ]
+        
+        # Call method
+        result = llm_with_rotation.parse_natural_language("test key rotation")
+        
+        # Verify key was rotated
+        self.assertEqual(llm_with_rotation.api_key, "backup-key-1")
+        self.assertEqual(llm_with_rotation.current_key_index, 1)
+        
+        # Verify result
+        self.assertEqual(result["verb"], "test")
+        
+        # Clean up
+        llm_with_rotation.close()
+        
+    @patch('requests.Session.post')
+    def test_all_keys_failing(self, mock_post):
+        """Test handling when all API keys fail."""
+        # Create LLM with key rotation enabled but only one key
+        llm_limited_keys = RemoteLLM(
+            api_endpoint=self.api_endpoint,
+            api_key="only-key",
+            rotate_keys=True,
+            retry_count=1  # Only retry once for testing
+        )
+        llm_limited_keys.logger = MagicMock()
+        
+        # Mock authentication error for the only key
+        mock_post.side_effect = requests.HTTPError(
+            "Unauthorized", 
+            response=MockResponse({}, 401)
+        )
+        
+        # Call method (should fall back to simple parsing)
+        result = llm_limited_keys.parse_natural_language("test all keys failing")
+        
+        # Verify result is from fallback
+        self.assertEqual(result["verb"], "test")
+        
+        # Clean up
+        llm_limited_keys.close()
 
 
 if __name__ == "__main__":
