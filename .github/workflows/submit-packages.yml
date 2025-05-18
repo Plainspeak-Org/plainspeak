@@ -28,7 +28,7 @@ jobs:
       channels: ${{ steps.validate.outputs.channels }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Validate Version
         id: validate
@@ -56,10 +56,10 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -73,7 +73,7 @@ jobs:
         run: python scripts/submit_packages.py --version ${{ needs.prepare.outputs.version }} --skip-test --dry-run
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: packages-${{ matrix.os }}
           path: |
@@ -87,10 +87,10 @@ jobs:
     if: contains(needs.prepare.outputs.channels, 'pypi')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-ubuntu-latest
           path: dist
@@ -114,10 +114,10 @@ jobs:
     if: contains(needs.prepare.outputs.channels, 'windows')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-windows-latest
           path: dist
@@ -136,10 +136,10 @@ jobs:
     if: contains(needs.prepare.outputs.channels, 'macos')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-macos-latest
           path: dist
@@ -159,7 +159,7 @@ jobs:
     if: contains(needs.prepare.outputs.channels, 'homebrew')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Create Homebrew PR
         if: ${{ !github.event.inputs.dry_run }}
@@ -175,10 +175,10 @@ jobs:
     if: contains(needs.prepare.outputs.channels, 'linux')
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: packages-ubuntu-latest
           path: dist
@@ -196,7 +196,7 @@ jobs:
 
     steps:
       - name: Notify Team
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const results = {
