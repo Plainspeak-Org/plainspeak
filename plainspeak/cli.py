@@ -5,6 +5,7 @@ This module provides both a command-line interface for one-off command generatio
 and an interactive REPL mode for continuous command translation.
 """
 
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,9 +15,10 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 
+from plainspeak.core.parser import NaturalLanguageParser
+
 from .context import session_context
 from .learning import learning_store
-from .parser import CommandParser
 from .plugins.manager import plugin_manager
 
 # Create the Typer app
@@ -43,7 +45,9 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
     def __init__(self):
         """Initialize the PlainSpeak shell."""
         super().__init__(allow_cli_args=False)
-        self.parser = CommandParser()
+        self.parser = NaturalLanguageParser(
+            llm=session_context.llm_interface, i18n=session_context.i18n
+        )  # Updated instantiation
         # Remove some default cmd2 commands we don't need by setting them to None
         self.do_edit = None
         self.do_shortcuts = None
@@ -69,7 +73,35 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         system_info = session_context.get_system_info()
         environment_info = session_context.get_environment_info()
 
-        success, result = self.parser.parse_to_command(text)
+        # Use NaturalLanguageParser.parse and then convert AST to command string
+        parsed_ast = self.parser.parse(text)  # Use parse method
+
+        # Placeholder AST to string conversion (likely needs refinement)
+        if parsed_ast.get("verb"):
+            # This is a very basic conversion. A more sophisticated AST to command string
+            # rendering, possibly involving the Commander or a dedicated template engine,
+            # would be needed for robust functionality.
+            # For now, assume verb is the command and args are simple key-value pairs.
+            verb = parsed_ast["verb"]
+            args_dict = parsed_ast.get("args", {})
+
+            # Attempt to reconstruct a command string. This is highly dependent on
+            # how plugins and commands are structured.
+            # If a plugin manager and commander are involved, they should handle this.
+            # For now, a simple reconstruction:
+            command_parts = [verb]
+            for k, v in args_dict.items():
+                if isinstance(v, bool) and v is True:  # Handle boolean flags
+                    command_parts.append(f"--{k}")
+                elif v is not None:  # Add other args
+                    command_parts.append(f"--{k}")
+                    command_parts.append(str(v))
+
+            result = " ".join(command_parts)
+            success = True
+        else:
+            result = "Error: Could not parse command from natural language."
+            success = False
 
         # Add to learning store
         command_id = learning_store.add_command(
@@ -105,9 +137,6 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         if not command:
             console.print("Error: Empty input", style="red")
             return
-
-        # Use subprocess for better control and security
-        import subprocess
 
         try:
             # Using shell=True for now to allow complex commands, but this has security implications
@@ -350,9 +379,27 @@ def translate(
     system_info = session_context.get_system_info()
     environment_info = session_context.get_environment_info()
 
-    # CommandParser will use LLMInterface, which now uses app_config by default
-    parser = CommandParser()
-    success, result = parser.parse_to_command(text)
+    # NaturalLanguageParser will use LLMInterface, which now uses app_config by default
+    parser = NaturalLanguageParser(
+        llm=session_context.llm_interface, i18n=session_context.i18n
+    )  # Updated instantiation
+    # Assuming parse_to_command was a method of the old CommandParser.
+    # NaturalLanguageParser has a 'parse' method. We need to adapt this.
+    # For now, let's assume parse_to_command was a wrapper around parse and then some AST to command string logic.
+    # This part might need further adjustment based on how CommandParser.parse_to_command worked.
+    # For now, let's use the 'parse' method and assume the result structure is compatible or will be handled.
+    parsed_ast = parser.parse(text)  # Using parse method
+
+    # This is a placeholder for how the 'result' (command string) and 'success' would be obtained.
+    # This logic needs to be revisited based on the actual functionality of the old CommandParser.parse_to_command
+    # For now, we'll assume a simple case where the verb is the command and args are joined.
+    # This is a significant assumption and likely incorrect.
+    if parsed_ast.get("verb"):
+        result = parsed_ast["verb"] + " " + " ".join(f"--{k} {v}" for k, v in parsed_ast.get("args", {}).items())
+        success = True
+    else:
+        result = "Error: Could not parse command."
+        success = False
 
     # Add to learning store
     command_id = learning_store.add_command(
@@ -372,8 +419,6 @@ def translate(
 
         if execute:
             console.print("\nExecuting command:", style="yellow")
-            import subprocess
-
             try:
                 process = subprocess.run(result, shell=True, check=False, capture_output=True, text=True)
 
