@@ -14,6 +14,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from plainspeak.core.i18n import I18N
+from plainspeak.core.llm import LLMInterface
+
 
 class SessionContext:
     """
@@ -26,7 +29,11 @@ class SessionContext:
     - Command history
     - User preferences
     - Session-specific variables
+    - LLM interface and i18n settings
     """
+
+    llm_interface: Optional[LLMInterface]
+    i18n: Optional[I18N]
 
     def __init__(self, context_file: Optional[Path] = None):
         """
@@ -38,6 +45,8 @@ class SessionContext:
         self.context_file = context_file
         self._session_vars: Dict[str, Any] = {}
         self._command_history: list[Dict[str, Any]] = []
+        self.llm_interface = None  # Will be set by the application
+        self.i18n = None  # Will be set by the application
         self._load_context()
 
     def _load_context(self) -> None:
