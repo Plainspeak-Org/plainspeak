@@ -226,6 +226,9 @@ Recent Commands: {len(self._command_history)} in history
         return context_str.strip()
 
 
+# For backwards compatibility with tests
+PlainSpeakContext = SessionContext
+
 # Default context instance
 default_context_file = Path.home() / ".config" / "plainspeak" / "context.json"
 session_context = SessionContext(default_context_file)

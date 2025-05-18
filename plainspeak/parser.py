@@ -8,6 +8,10 @@ using the LLM interface and prompt templates.
 from typing import Union
 
 from .ast import Command, Pipeline
+from .core.parser import NaturalLanguageParser
+
+# For backward compatibility with tests
+CommandParser = NaturalLanguageParser
 
 
 def parse_command_output(self, command_obj: Union[Command, Pipeline], output: str) -> str:

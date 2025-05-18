@@ -17,7 +17,11 @@ from .schemas import PluginManifest
 logger = logging.getLogger(__name__)
 
 
-class Plugin(ABC):
+class PluginLoadError(Exception):
+    """Raised when a plugin fails to load."""
+
+
+class BasePlugin(ABC):
     """
     Base class for PlainSpeak plugins.
 
@@ -162,7 +166,7 @@ class Plugin(ABC):
         self._canonical_verb_cache.clear()
 
 
-class YAMLPlugin(Plugin):
+class YAMLPlugin(BasePlugin):
     """
     Plugin implementation that loads configuration from a YAML manifest.
 
@@ -199,7 +203,7 @@ class YAMLPlugin(Plugin):
             Validated PluginManifest.
 
         Raises:
-            Exception: If the manifest is invalid or cannot be loaded.
+            PluginLoadError: If the manifest is invalid or cannot be loaded.
         """
         try:
             with open(self.manifest_path, "r") as f:
@@ -208,8 +212,9 @@ class YAMLPlugin(Plugin):
             # Validate using Pydantic
             return PluginManifest(**manifest_data)
         except Exception as e:
-            logger.error(f"Failed to load manifest from {self.manifest_path}: {e}")
-            raise
+            error_msg = f"Failed to load manifest from {self.manifest_path}: {e}"
+            logger.error(error_msg)
+            raise PluginLoadError(error_msg) from e
 
     def get_verbs(self) -> List[str]:
         """
@@ -274,10 +279,10 @@ class PluginRegistry:
 
     def __init__(self):
         """Initialize the plugin registry."""
-        self.plugins: Dict[str, Plugin] = {}
+        self.plugins: Dict[str, BasePlugin] = {}
         self.verb_to_plugin_cache: Dict[str, str] = {}
 
-    def register(self, plugin: Plugin) -> None:
+    def register(self, plugin: BasePlugin) -> None:
         """
         Register a plugin.
 
@@ -298,7 +303,7 @@ class PluginRegistry:
             f"and {len(plugin.get_aliases())} aliases"
         )
 
-    def get_plugin(self, name: str) -> Optional[Plugin]:
+    def get_plugin(self, name: str) -> Optional[BasePlugin]:
         """
         Get a plugin by name.
 
@@ -311,7 +316,7 @@ class PluginRegistry:
         return self.plugins.get(name)
 
     @lru_cache(maxsize=256)
-    def get_plugin_for_verb(self, verb: str) -> Optional[Plugin]:
+    def get_plugin_for_verb(self, verb: str) -> Optional[BasePlugin]:
         """
         Get the plugin that can handle the given verb.
 
@@ -332,7 +337,7 @@ class PluginRegistry:
         verb_lower = verb.lower()
 
         # First, try to find an exact match
-        matching_plugins: List[Tuple[int, Plugin]] = []
+        matching_plugins: List[Tuple[int, BasePlugin]] = []
 
         for plugin in self.plugins.values():
             if plugin.can_handle(verb_lower):
@@ -393,7 +398,7 @@ class PluginRegistry:
             if hasattr(plugin, "clear_caches"):
                 plugin.clear_caches()
 
-    def get_plugins_sorted_by_priority(self) -> List[Plugin]:
+    def get_plugins_sorted_by_priority(self) -> List[BasePlugin]:
         """
         Get all plugins sorted by priority (highest first).
 
@@ -407,3 +412,6 @@ class PluginRegistry:
 
 # Global plugin registry instance
 registry = PluginRegistry()
+
+# Backwards compatibility
+Plugin = BasePlugin  # For backwards compatibility with existing code

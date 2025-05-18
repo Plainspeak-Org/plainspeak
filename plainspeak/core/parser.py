@@ -7,13 +7,42 @@ structured commands using LLM models.
 
 import json
 import os
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from .i18n import I18n
 from .llm import LLMInterface
 
 
-class NaturalLanguageParser:
+class Parser(ABC):
+    """Base class for all parsers in the system."""
+
+    @abstractmethod
+    def parse(self, text: str) -> Dict[str, Any]:
+        """
+        Parse input text into a structured command.
+
+        Args:
+            text: The text to parse.
+
+        Returns:
+            Dictionary with verb and arguments.
+        """
+
+    @abstractmethod
+    def get_examples(self, locale: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        Get examples of valid inputs and their parsed outputs.
+
+        Args:
+            locale: Optional locale code to get language-specific examples.
+
+        Returns:
+            List of example dictionaries with "input" and "output" fields.
+        """
+
+
+class NaturalLanguageParser(Parser):
     """
     Parser for converting natural language to structured commands.
 

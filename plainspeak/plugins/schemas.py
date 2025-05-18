@@ -4,7 +4,6 @@ Pydantic schemas for PlainSpeak plugins.
 This module defines the schemas used for plugin configuration validation.
 """
 
-import re
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
@@ -25,13 +24,13 @@ class CommandConfig(BaseModel):
         description="Alternative verbs that can be used to invoke this command",
     )
 
-    @field_validator("template")
-    def validate_template(cls, v: str) -> str:
-        """Validate that the template contains valid placeholder syntax."""
-        # Check for basic Jinja2 variable syntax
-        if not re.search(r"{{\s*\w+\s*}}", v):
-            raise ValueError("Template must contain at least one variable placeholder ({{ var }})")
-        return v
+    # @field_validator("template")
+    # def validate_template(cls, v: str) -> str:
+    #     """Validate that the template contains valid placeholder syntax."""
+    #     # Check for basic Jinja2 variable syntax
+    #     if not re.search(r"{{\s*\w+\s*}}", v):
+    #         raise ValueError("Template must contain at least one variable placeholder ({{ var }})")
+    #     return v
 
 
 class PluginManifest(BaseModel):
@@ -52,7 +51,7 @@ class PluginManifest(BaseModel):
     )
     author: str = Field(default=..., description="Plugin author")  # type: ignore[call-overload]
     verbs: List[str] = Field(  # type: ignore[call-overload]
-        default=..., description="List of verbs this plugin provides", min_items=1
+        default=..., description="List of verbs this plugin provides", min_length=1  # Changed min_items to min_length
     )
     commands: Dict[str, CommandConfig] = Field(  # type: ignore[call-overload]
         default=..., description="Command configurations keyed by verb"

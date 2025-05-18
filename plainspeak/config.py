@@ -5,6 +5,8 @@ This module handles loading and accessing application configuration,
 such as LLM model paths, generation parameters, and other settings.
 """
 
+from __future__ import annotations
+
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -128,6 +130,9 @@ def ensure_default_config_exists():
         print(f"Created default configuration file at: {DEFAULT_CONFIG_FILE}")
         print(f"Please download the model '{DEFAULT_MODEL_FILE_PATH}' or update the model_path in the config.")
 
+
+# Update the alias after AppConfig is defined
+PlainSpeakConfig = AppConfig
 
 # Global config instance, loaded on module import
 # This can be reloaded if necessary by calling load_config() again.

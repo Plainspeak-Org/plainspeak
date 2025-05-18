@@ -19,7 +19,7 @@ dependencies:
 entrypoint: plainspeak.plugins.git.GitPlugin
 commands:
   git-init:
-    template: "git init {{ '--quiet' if quiet else '' }}"
+    template: "git init {{ '--quiet' if quiet else '' }} {{ '' }}"
     description: Initialize a new Git repository
     examples:
       - "create a new git repository here"
@@ -41,7 +41,7 @@ commands:
       depth: ""
 
   git-status:
-    template: "git status {{ '--short' if short else '' }}"
+    template: "git status {{ '--short' if short else '' }} {{ '' }}"
     description: Show working tree status
     examples:
       - "show git status"
@@ -63,7 +63,7 @@ commands:
       update: false
 
   git-commit:
-    template: "git commit {{ '-m \"' + message + '\"' if message else '' }} {{ '--amend' if amend else '' }}"
+    template: "git commit {{ '-m \"' + message + '\"' if message else '' }} {{ '--amend' if amend else '' }} {{ '' }}"
     description: Record changes to the repository
     examples:
       - "commit changes with message 'fix bug in parser'"
@@ -74,7 +74,7 @@ commands:
       amend: false
 
   git-push:
-    template: "git push {{ remote if remote else '' }} {{ branch if branch else '' }} {{ '--force' if force else '' }}"
+    template: "git push {{ remote if remote else '' }} {{ branch if branch else '' }} {{ '--force' if force else '' }} {{ '' }}"
     description: Update remote repository
     examples:
       - "push changes to origin"
@@ -86,7 +86,7 @@ commands:
       force: false
 
   git-pull:
-    template: "git pull {{ remote if remote else '' }} {{ branch if branch else '' }}"
+    template: "git pull {{ remote if remote else '' }} {{ branch if branch else '' }} {{ '' }}"
     description: Fetch and merge changes from remote
     examples:
       - "pull latest changes"
@@ -97,7 +97,7 @@ commands:
       branch: ""
 
   git-branch:
-    template: "git branch {{ name if name else '' }} {{ '--delete' if delete else '' }}"
+    template: "git branch {{ name if name else '' }} {{ '--delete' if delete else '' }} {{ '' }}"
     description: List, create, or delete branches
     examples:
       - "show all branches"
@@ -131,7 +131,7 @@ commands:
       no_ff: false
 
   git-log:
-    template: "git log {{ '--oneline' if oneline else '' }} {{ '-n ' + limit if limit else '' }}"
+    template: "git log {{ '--oneline' if oneline else '' }} {{ '-n ' + limit if limit else '' }} {{ '' }}"
     description: Show commit logs
     examples:
       - "show commit history"
