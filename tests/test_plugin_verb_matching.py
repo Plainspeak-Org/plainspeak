@@ -12,6 +12,7 @@ import os
 import sys
 from pathlib import Path
 from functools import lru_cache
+from typing import List, Dict, Any, Optional
 
 from plainspeak.plugins.base import Plugin, PluginRegistry
 from plainspeak.plugins.manager import PluginManager
@@ -25,13 +26,29 @@ class TestPlugin(Plugin):
         self._verb_list = verbs or []
         self.verb_aliases = aliases or {}
         
-    def get_verbs(self):
+    def get_verbs(self) -> List[str]:
         """Return the verbs supported by this plugin."""
         return self._verb_list
         
-    def generate_command(self, verb, args):
+    def can_handle(self, verb: str) -> bool:
+        """Check if this plugin can handle the given verb."""
+        return verb.lower() in [v.lower() for v in self._verb_list] or verb.lower() in self.verb_aliases
+    
+    def get_canonical_verb(self, verb: str) -> str:
+        """Return the canonical form of the verb."""
+        verb_lower = verb.lower()
+        if verb_lower in self.verb_aliases:
+            return self.verb_aliases[verb_lower]
+        return verb
+    
+    def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
         """Generate a command for testing."""
         return f"{verb} {' '.join(f'{k}={v}' for k, v in args.items())}"
+    
+    def execute(self, verb: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute the verb with the given arguments."""
+        command = self.generate_command(verb, args)
+        return {"success": True, "output": f"Executed: {command}"}
 
 
 class TestExactMatching(unittest.TestCase):

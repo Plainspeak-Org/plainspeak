@@ -392,6 +392,9 @@ class RemoteLLM(LLMInterface):
         request_id = str(uuid.uuid4())
         self.request_ids[request_id] = True
         
+        # Track request count for rate limiting
+        self.request_count += 1
+        
         # Prepare headers with authentication
         headers = {
             "Content-Type": "application/json",

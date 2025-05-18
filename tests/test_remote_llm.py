@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 import json
 import requests
+import uuid
+import certifi
 
 from plainspeak.core.llm import RemoteLLM
 
@@ -237,6 +239,132 @@ class TestRemoteLLM(unittest.TestCase):
         
         result = self.llm.parse_natural_language_with_locale("", "en_US")
         self.assertEqual(result, {"verb": None, "args": {}})
+
+    @patch('requests.post')
+    @patch('certifi.where')
+    def test_ssl_certificate_handling(self, mock_certifi_where, mock_post):
+        """Test SSL certificate verification handling."""
+        # Setup mocks
+        expected_cert_path = '/path/to/cert.pem'
+        mock_certifi_where.return_value = expected_cert_path
+        mock_post.return_value = MockResponse({"verb": "test", "args": {}})
+        
+        # Test default SSL verification (using certifi)
+        llm = RemoteLLM(
+            api_endpoint=self.api_endpoint,
+            api_key=self.api_key,
+            verify_ssl=True
+        )
+        
+        llm.parse_natural_language("test command")
+        
+        # Verify certifi was used
+        args, kwargs = mock_post.call_args
+        self.assertEqual(kwargs['verify'], expected_cert_path)
+        
+        # Test with SSL verification disabled
+        mock_post.reset_mock()
+        llm = RemoteLLM(
+            api_endpoint=self.api_endpoint,
+            api_key=self.api_key,
+            verify_ssl=False
+        )
+        
+        llm.parse_natural_language("test command")
+        
+        # Verify SSL verification was disabled
+        args, kwargs = mock_post.call_args
+        self.assertEqual(kwargs['verify'], False)
+        
+        # Test with custom certificate path
+        mock_post.reset_mock()
+        custom_cert_path = '/custom/cert.pem'
+        
+        with patch('os.path.exists', return_value=True):
+            llm = RemoteLLM(
+                api_endpoint=self.api_endpoint,
+                api_key=self.api_key,
+                verify_ssl=True,
+                ssl_cert_path=custom_cert_path
+            )
+            
+            llm.parse_natural_language("test command")
+            
+            # Verify custom certificate was used
+            args, kwargs = mock_post.call_args
+            self.assertEqual(kwargs['verify'], custom_cert_path)
+
+    @patch('requests.post')
+    @patch('uuid.uuid4')
+    def test_request_id_tracking(self, mock_uuid4, mock_post):
+        """Test request ID tracking for API calls."""
+        # Setup mocks
+        request_id = "test-uuid-12345"
+        mock_uuid4.return_value = Mock(
+            __str__=lambda self: request_id
+        )
+        mock_post.return_value = MockResponse({"verb": "test", "args": {}})
+        
+        # Make API request
+        self.llm.parse_natural_language("test command")
+        
+        # Verify request ID was tracked
+        self.assertIn(request_id, self.llm.request_ids)
+        self.assertTrue(self.llm.request_ids[request_id])
+        
+        # Verify request ID was included in headers
+        args, kwargs = mock_post.call_args
+        self.assertEqual(kwargs['headers']['X-Request-ID'], request_id)
+        
+        # Verify request ID was included in payload
+        self.assertEqual(kwargs['json']['request_id'], request_id)
+        
+    @patch('requests.post')
+    def test_consecutive_api_calls(self, mock_post):
+        """Test multiple consecutive API calls."""
+        # Setup mock to return different responses
+        mock_post.side_effect = [
+            MockResponse({"verb": "list", "args": {"path": "."}}),
+            MockResponse({"verb": "find", "args": {"pattern": "*.txt"}}),
+            MockResponse({"verb": "grep", "args": {"text": "error", "file": "log.txt"}})
+        ]
+        
+        # Make multiple API calls
+        results = [
+            self.llm.parse_natural_language("list files"),
+            self.llm.parse_natural_language("find text files"),
+            self.llm.parse_natural_language("search for errors in log")
+        ]
+        
+        # Verify all calls were made
+        self.assertEqual(mock_post.call_count, 3)
+        
+        # Verify responses were correctly processed
+        self.assertEqual(results[0]["verb"], "list")
+        self.assertEqual(results[1]["verb"], "find")
+        self.assertEqual(results[2]["verb"], "grep")
+        
+    @patch('requests.post')
+    def test_rate_limiting_tracking(self, mock_post):
+        """Test tracking for rate limiting."""
+        # Setup mock
+        mock_post.return_value = MockResponse({"verb": "test", "args": {}})
+        
+        # Clear the LRU cache first to ensure clean state
+        self.llm.parse_natural_language.cache_clear()
+        
+        # Make multiple API calls with different inputs to avoid cache hits
+        initial_count = self.llm.request_count
+        
+        for i in range(5):
+            # Use different input to avoid cache hits
+            self.llm.parse_natural_language(f"test command {i}")
+        
+        # Verify request counter was incremented
+        self.assertEqual(self.llm.request_count, initial_count + 5)
+        
+        # Verify unique request IDs were generated
+        self.assertEqual(len(self.llm.request_ids), 5)
 
 
 if __name__ == "__main__":
