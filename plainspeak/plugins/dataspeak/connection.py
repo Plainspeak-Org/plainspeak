@@ -317,7 +317,7 @@ class DatabaseConnection:
             self.credential_manager = CredentialManager()
 
         # Connection pool for reuse
-        self._connections = {}
+        self._connections: Dict[str, Dict[str, Any]] = {}
 
     def create_connection(
         self,
@@ -342,6 +342,7 @@ class DatabaseConnection:
         if db_type not in self.DB_TYPES:
             raise ValueError(f"Unsupported database type: {db_type}")
 
+        conn: Any = None
         try:
             if db_type == "sqlite":
                 # Required parameter: database_path

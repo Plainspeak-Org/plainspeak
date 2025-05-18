@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, Optional, Tuple
 
-from plainspeak.config import PlainSpeakConfig
+from plainspeak.config import AppConfig
 from plainspeak.core.sandbox import Sandbox, SandboxExecutionError
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,7 @@ class Commander:
     and executing the command it represents, typically using a Sandbox.
     """
 
-    def __init__(self, config: PlainSpeakConfig, sandbox: Sandbox):
+    def __init__(self, config: AppConfig, sandbox: Sandbox):
         self.config = config
         self.sandbox = sandbox
 

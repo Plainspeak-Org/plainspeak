@@ -7,7 +7,7 @@ This module defines the schemas used for plugin configuration validation.
 import re
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
 class CommandConfig(BaseModel):
@@ -85,22 +85,23 @@ class PluginManifest(BaseModel):
 
     @field_validator("commands")  # type: ignore
     def validate_commands(
-        cls, v: Dict[str, CommandConfig], values: Dict[str, Any]
+        cls, v: Dict[str, CommandConfig], info: ValidationInfo
     ) -> Dict[str, CommandConfig]:  # type: ignore[misc]
         """Validate that all verbs have corresponding commands."""
-        if "verbs" in values:
-            missing = set(values["verbs"]) - set(v.keys())
+        if "verbs" in info.data and isinstance(info.data["verbs"], list):
+            verbs_data = info.data["verbs"]
+            missing = set(verbs_data) - set(v.keys())
             if missing:
                 raise ValueError(f"Missing command configurations for verbs: {', '.join(missing)}")
         return v
 
     @field_validator("verb_aliases")
-    def validate_verb_aliases(cls, v: Dict[str, List[str]], values: Dict[str, Any]) -> Dict[str, List[str]]:
+    def validate_verb_aliases(cls, v: Dict[str, List[str]], info: ValidationInfo) -> Dict[str, List[str]]:
         """Validate that all canonical verbs in verb_aliases exist in verbs."""
-        if "verbs" in values:
-            verbs = values["verbs"]
+        if "verbs" in info.data and isinstance(info.data["verbs"], list):
+            verbs_data = info.data["verbs"]
             for canonical_verb, aliases in v.items():
-                if canonical_verb not in verbs:
+                if canonical_verb not in verbs_data:
                     raise ValueError(f"Canonical verb '{canonical_verb}' in verb_aliases is not defined in verbs")
                 for alias in aliases:
                     if not alias.islower() or " " in alias:

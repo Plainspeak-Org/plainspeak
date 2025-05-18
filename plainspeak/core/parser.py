@@ -177,7 +177,7 @@ class NaturalLanguageParser:
             return self.llm.extract_entities(text)
 
         # Simple fallback extraction
-        entities = {}
+        entities: Dict[str, List[str]] = {}
         words = text.split()
 
         # Extract potential file paths

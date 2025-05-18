@@ -508,15 +508,15 @@ class SQLGenerator:
             # Try to extract a number from the query
             number_match = re.search(r"\b(\d+)\b", query_lower)
             if number_match:
-                params["limit"] = int(number_match.group(1))
+                params["limit"] = int(number_match.group(1))  # type: ignore[assignment]
             template = self.templates["top_n"]
         elif any(word in query_lower for word in ["bottom", "worst", "lowest"]) and columns:
             params["column"] = columns[0]
-            params["limit"] = 10  # Default limit
+            params["limit"] = 10  # Default limit # type: ignore[assignment]
             # Try to extract a number from the query
             number_match = re.search(r"\b(\d+)\b", query_lower)
             if number_match:
-                params["limit"] = int(number_match.group(1))
+                params["limit"] = int(number_match.group(1))  # type: ignore[assignment]
             template = self.templates["bottom_n"]
         elif any(word in query_lower for word in ["where", "equals", "contains", "greater", "less"]) and columns:
             params["column"] = columns[0]
