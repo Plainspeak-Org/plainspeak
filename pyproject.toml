@@ -55,6 +55,7 @@ types-pyyaml = "^6.0.12.20250516"
 types-icalendar = "^6.3.0.20250517"
 types-python-dateutil = "^2.9.0.20250516"
 types-pytz = "^2025.2.0.20250516"
+pre-commit = "^4.2.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -65,8 +66,8 @@ line-length = 88
 target-version = ['py311']
 
 [tool.flake8]
-max-line-length = 88
-extend-ignore = "E203" # Whitespace before ':' - often conflicts with Black
+max-line-length = 120
+extend-ignore = "E203,W293" # E203: Whitespace before ':' - often conflicts with Black, W293: blank line contains whitespace
 
 [tool.mypy]
 python_version = "3.11"

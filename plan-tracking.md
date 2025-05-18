@@ -535,19 +535,19 @@ PlainSpeak's core architecture—transforming natural language into structured c
         * [x] Added usage examples for each plugin
         * [x] Implemented interactive documentation with examples
         * [ ] Complete documentation for all plugins
-    *   [~] Troubleshooting FAQ and "How it Works" for curious users:
+    *   [x] Troubleshooting FAQ and "How it Works" for curious users:
         * [x] Created basic troubleshooting guide
         * [x] Added "How it Works" overview
         * [x] Implemented searchable FAQ
-        * [ ] Expand troubleshooting scenarios
-        * [ ] Add advanced usage tips
+        * [x] Expand troubleshooting scenarios
+        * [x] Add advanced usage tips
 *   **Developer Documentation:**
-    *   [~] How to create and contribute plugins:
+    *   [x] How to create and contribute plugins:
         * [x] Created plugin development guide
         * [x] Added manifest schema documentation
         * [x] Documented template system
         * [x] Created plugin examples
-        * [ ] Add advanced plugin development tutorials
+        * [x] Add advanced plugin development tutorials
     *   [~] Architecture overview:
         * [x] Created high-level architecture documentation
         * [x] Documented core components
@@ -571,13 +571,13 @@ PlainSpeak's core architecture—transforming natural language into structured c
         * [ ] Create contributor mentoring program
 *   **README Files:**
     *   [x] Main `README.md` with project vision, overview, installation, quick start, and prominent link to full docs (https://cschanhniem.github.io/plainspeak/).
-    *   [~] `README.md` in each plugin directory detailing its functionality, verbs, and examples:
+    *   [x] `README.md` in each plugin directory detailing its functionality, verbs, and examples:
         * [x] Created template for plugin README files
         * [x] Added README files for core plugins
-        * [ ] Complete README files for all plugins
-    *   [~] `README.md` in key module directories:
+        * [x] Complete README files for all plugins
+    *   [x] `README.md` in key module directories:
         * [x] Added README files for main directories
-        * [ ] Complete README files for all module directories
+        * [x] Complete README files for all module directories
 *   **Tools:**
     *   [x] Sphinx for generating a documentation website, hosted on GitHub Pages.
     *   [x] GitHub Actions workflow for automatic documentation deployment.
