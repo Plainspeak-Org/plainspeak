@@ -1,0 +1,79 @@
+/**
+ * PlainSpeak Color Palette
+ *
+ * This file contains all the color variables used in the PlainSpeak application.
+ * Import this file to ensure consistent color usage across the application.
+ */
+
+:root {
+  /* Primary Colors */
+  --primary-blue: #4299E1;
+  --dark-slate: #2D3748;
+  --success-green: #48BB78;
+  --light-gray: #E2E8F0;
+
+  /* Secondary Colors */
+  --dark-blue: #2B6CB0;
+  --accent-blue: #63B3ED;
+  --medium-gray: #A0AEC0;
+  --darker-slate: #1A202C;
+
+  /* UI State Colors */
+  --success: #48BB78;
+  --warning: #ECC94B;
+  --error: #F56565;
+  --info: #4299E1;
+
+  /* Text Colors */
+  --primary-text: #E2E8F0;
+  --secondary-text: #A0AEC0;
+  --dark-text: #2D3748;
+  --muted-text: #718096;
+
+  /* Background Colors */
+  --app-background: #2D3748;
+  --panel-background: #1A202C;
+  --hover-background: #4A5568;
+  --active-background: #2C5282;
+
+  /* Gradients */
+  --brand-gradient: linear-gradient(135deg, #4299E1 0%, #2B6CB0 100%);
+  --dark-gradient: linear-gradient(135deg, #2D3748 0%, #1A202C 100%);
+  --accent-gradient: linear-gradient(135deg, #63B3ED 0%, #4299E1 100%);
+}
+
+/* Dark Theme (Default) */
+.theme-dark {
+  --background: var(--dark-slate);
+  --text: var(--light-gray);
+  --accent: var(--primary-blue);
+  --success: var(--success-green);
+  --panel: var(--darker-slate);
+  --border: var(--dark-blue);
+  --hover: var(--hover-background);
+  --active: var(--active-background);
+}
+
+/* Light Theme */
+.theme-light {
+  --background: #F7FAFC;
+  --text: var(--dark-slate);
+  --accent: var(--dark-blue);
+  --success: #38A169;
+  --panel: #EDF2F7;
+  --border: #CBD5E0;
+  --hover: #E2E8F0;
+  --active: #CBD5E0;
+}
+
+/* High Contrast Theme */
+.theme-high-contrast {
+  --background: #000000;
+  --text: #FFFFFF;
+  --accent: #FFFF00;
+  --success: #00FF00;
+  --panel: #0D0D0D;
+  --border: #FFFFFF;
+  --hover: #333333;
+  --active: #666666;
+}
