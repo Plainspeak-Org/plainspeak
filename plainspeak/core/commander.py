@@ -63,8 +63,9 @@ class Commander:
                     return False, stdout, stderr
             except KeyError as e:
                 # This might happen if command_template has a placeholder not in parameters
-                logger.error(f"Missing parameter for command template: {e}. AST: {ast}")
-                err_msg = f"Error rendering command: Missing parameter '{e}'."
+                param_name = str(e).strip("'")
+                logger.error(f"Missing parameter for command template: {param_name}. AST: {ast}")
+                err_msg = f"Error rendering command: Missing parameter '{param_name}'."
                 return False, "", err_msg
             except SandboxExecutionError as e:
                 logger.error(f"Sandbox execution error: {e}")

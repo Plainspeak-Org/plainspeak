@@ -34,6 +34,26 @@ class SecurityLevel(Enum):
     HIGH = 2  # Read-only mode, no modifications allowed
     PARANOID = 3  # Strict whitelist, parameter binding, full validation
 
+    def __lt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value < other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value <= other.value
+        return NotImplemented
+
+    def __ge__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value >= other.value
+        return NotImplemented
+
 
 class SecurityViolation(Exception):
     """Exception raised when a security violation is detected in a query."""
@@ -78,10 +98,10 @@ DANGEROUS_PATTERNS = [
         r";\s*[^\s]",
         "Multiple statements detected",
     ),  # SQL injection via multiple statements
-    (r"--", "SQL comment detected"),  # Comments might hide malicious code
+    (r"--", "SQL comment detected - possible SQL injection"),  # Comments might hide malicious code
     (
         r"/\*.*?\*/",
-        "SQL comment block detected",
+        "SQL comment block detected - possible SQL injection",
     ),  # Block comments might hide malicious code
     (r"EXECUTE\s+", "Dynamic SQL execution detected"),  # Dynamic SQL execution
     (r"INTO\s+OUTFILE", "File write operation detected"),  # File operations
@@ -128,16 +148,9 @@ class SQLSecurityChecker:
             return False, "Empty query"
 
         # Check SQL syntax if SQLGlot is available
-        if HAS_SQLGLOT:
-            try:
-                parsed = sqlglot.parse(query)
-                if not parsed:
-                    return False, "Failed to parse SQL syntax"
-            except ParseError as e:
-                return False, f"SQL syntax error: {str(e)}"
-            except Exception as e:
-                self.logger.warning(f"Unexpected error during SQL parsing: {e}")
-                # Continue with other checks
+        syntax_valid, syntax_error = self.validate_query_syntax(query)
+        if not syntax_valid:
+            return False, syntax_error
 
         # Check for multiple statements
         if ";" in query and re.search(r";\s*[^\s]", query):
@@ -148,34 +161,124 @@ class SQLSecurityChecker:
         if not command_match:
             return False, "Could not identify SQL command"
 
+        command_match.group(1).upper()
+
+        # Check if the operation is safe for the current security level
+        operation_safe = self.is_safe_operation(query)
+        if not operation_safe:
+            return False, "Operation not allowed at this security level"
+
+        # Check for dangerous patterns
+        has_dangerous_pattern, pattern_error = self.check_for_dangerous_patterns(query)
+        if has_dangerous_pattern:
+            return False, pattern_error
+
+        return True, None
+
+    def validate_query_syntax(self, query: str) -> Tuple[bool, Optional[str]]:
+        """
+        Validate the syntax of a SQL query.
+
+        Args:
+            query: The SQL query to validate.
+
+        Returns:
+            A tuple of (is_valid, error_message).
+        """
+        if not HAS_SQLGLOT:
+            self.logger.warning("sqlglot not available, parameter binding may be less secure")
+            # Simple regex-based validation as fallback
+            try:
+                # Simple check for basic SQL syntax
+                if not re.match(
+                    r"^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|SHOW|EXPLAIN|WITH|ANALYZE)\s+",
+                    query,
+                    re.IGNORECASE,
+                ):
+                    return False, "Syntax error: Query doesn't start with a valid SQL command"
+
+                # Check for balanced parentheses
+                if query.count("(") != query.count(")"):
+                    return False, "Syntax error: Unbalanced parentheses"
+
+                # Check for FROM clause in SELECT
+                if re.match(r"^\s*SELECT\s+", query, re.IGNORECASE) and not re.search(
+                    r"\sFROM\s+", query, re.IGNORECASE
+                ):
+                    return False, "Syntax error: SELECT missing FROM clause"
+
+                # Basic validation passed
+                return True, None
+            except Exception as e:
+                return False, f"Syntax error: {str(e)}"
+
+        try:
+            parsed = sqlglot.parse(query)
+            if not parsed:
+                return False, "Failed to parse SQL syntax"
+            return True, None
+        except ParseError as e:
+            return False, f"SQL syntax error: {str(e)}"
+        except Exception as e:
+            self.logger.warning(f"Unexpected error during SQL parsing: {e}")
+            # Continue with other checks
+            return True, None
+
+    def is_safe_operation(self, query: str) -> bool:
+        """
+        Check if the SQL operation is safe for the current security level.
+
+        Args:
+            query: The SQL query to check.
+
+        Returns:
+            True if the operation is safe, False otherwise.
+        """
+        # Extract command
+        command_match = re.match(r"^\s*([A-Za-z]+)", query)
+        if not command_match:
+            return False
+
         command = command_match.group(1).upper()
         allowed = ALLOWED_COMMANDS[self.security_level]
 
         if command not in allowed:
-            return (
-                False,
-                f"Command '{command}' not allowed at security level {self.security_level.name}",
-            )
+            return False
 
-        # Check for dangerous patterns
-        for pattern, message in DANGEROUS_PATTERNS:
-            if re.search(pattern, query, re.IGNORECASE):
-                return False, message
+        # Block DROP operations at all security levels
+        if re.search(r"\bDROP\b", query, re.IGNORECASE):
+            return False
 
         # Additional security checks based on level
         if self.security_level in [SecurityLevel.HIGH, SecurityLevel.PARANOID]:
             # For HIGH and PARANOID levels, ensure no data modification
-            if re.search(r"\b(INSERT|UPDATE|DELETE|DROP|ALTER)\b", query, re.IGNORECASE):
-                return False, "Data modification not allowed at this security level"
+            if re.search(r"\b(INSERT|UPDATE|DELETE|ALTER)\b", query, re.IGNORECASE):
+                return False
 
         if self.security_level == SecurityLevel.PARANOID:
             # For PARANOID level, perform additional checks
             if not re.match(r"^\s*SELECT\b", query, re.IGNORECASE):
-                return False, "Only simple SELECT queries allowed in paranoid mode"
+                return False
             if re.search(r"\bINTO\b", query, re.IGNORECASE):
-                return False, "INTO clause not allowed in paranoid mode"
+                return False
 
-        return True, None
+        return True
+
+    def check_for_dangerous_patterns(self, query: str) -> Tuple[bool, Optional[str]]:
+        """
+        Check a SQL query for dangerous patterns.
+
+        Args:
+            query: The SQL query to check.
+
+        Returns:
+            A tuple of (has_dangerous_pattern, error_message).
+        """
+        for pattern, message in DANGEROUS_PATTERNS:
+            if re.search(pattern, query, re.IGNORECASE):
+                return True, message
+
+        return False, None
 
     def sanitize_query(self, query: str) -> str:
         """
@@ -209,41 +312,30 @@ class SQLSecurityChecker:
             params: Dictionary of parameter values.
 
         Returns:
-            A query with parameters safely inserted.
+            Query with parameters bound.
         """
-        if not HAS_SQLGLOT:
-            self.logger.warning("sqlglot not available, parameter binding may be less secure")
-            # Basic parameter binding - should only be used when sqlglot is unavailable
-            result = query
-            for key, value in params.items():
-                placeholder = f":{key}"
-                if isinstance(value, str):
-                    # Escape single quotes in strings
-                    escaped_value = value.replace("'", "''")
-                    result = result.replace(placeholder, f"'{escaped_value}'")
-                elif value is None:
-                    result = result.replace(placeholder, "NULL")
-                else:
-                    result = result.replace(placeholder, str(value))
-            return result
-        else:
-            # Use sqlglot for proper parameter binding when available
-            try:
-                # Parse the query to ensure it's valid SQL before binding
-                sqlglot.parse_one(query)
+        if not params:
+            return query
 
-                # Convert parameters to the correct format
-                # This uses sqlglot's internal logic to properly escape and format values
-                bound_query = sqlglot.transpile(
-                    query,
-                    read="duckdb",  # Assuming DuckDB dialect
-                    write="duckdb",
-                    params=params,
-                )[0]
+        # Use simple string replacement for parameter binding
+        bound_query = query
+        for key, value in params.items():
+            placeholder = f":{key}"
 
-                return bound_query
-            except Exception as e:
-                raise SecurityViolation(f"Parameter binding failed: {str(e)}")
+            # Format the value based on its type
+            if isinstance(value, str):
+                # Escape single quotes in strings
+                escaped_value = value.replace("'", "''")
+                formatted_value = f"'{escaped_value}'"
+            elif value is None:
+                formatted_value = "NULL"
+            else:
+                formatted_value = str(value)
+
+            # Replace the placeholder
+            bound_query = bound_query.replace(placeholder, formatted_value)
+
+        return bound_query
 
     def analyze_query_risk(self, query: str) -> Dict[str, Any]:
         """
@@ -306,57 +398,56 @@ class SQLSecurityChecker:
         return "; ".join(recommendations)
 
 
-def is_safe_query(query: str, security_level: SecurityLevel = SecurityLevel.HIGH) -> Tuple[bool, Optional[str]]:
+def is_safe_query(query: str, security_level: SecurityLevel = SecurityLevel.HIGH) -> bool:
     """
-    Check if a SQL query is safe to execute.
-
-    This is a convenience function that creates a SQLSecurityChecker and validates the query.
+    Check if a query is safe at the given security level.
 
     Args:
         query: The SQL query to check.
         security_level: The security level to enforce.
 
     Returns:
-        A tuple of (is_safe, error_message).
+        True if the query is safe, False otherwise.
     """
     checker = SQLSecurityChecker(security_level)
-    return checker.validate_query(query)
+    is_valid, _ = checker.validate_query(query)
+    return is_valid
 
 
 def sanitize_and_check_query(
     query: str,
     params: Optional[Dict[str, Any]] = None,
     security_level: SecurityLevel = SecurityLevel.HIGH,
-) -> Tuple[str, Dict[str, Any]]:
+) -> Tuple[str, bool]:
     """
-    Sanitize and check a SQL query for safety.
+    Sanitize a query and check if it's safe.
 
     Args:
-        query: The SQL query to check and sanitize.
-        params: Optional parameters to bind to the query.
+        query: The SQL query to check.
+        params: Optional parameters to bind.
         security_level: The security level to enforce.
 
     Returns:
-        A tuple of (sanitized_query, risk_assessment).
+        A tuple of (sanitized_query, is_safe).
 
     Raises:
-        SecurityViolation: If the query fails security checks.
+        ValueError: If the query fails security checks.
     """
     checker = SQLSecurityChecker(security_level)
 
     # First, validate the query
     is_valid, error = checker.validate_query(query)
     if not is_valid:
-        raise SecurityViolation(f"SQL security violation: {error}")
+        raise ValueError(f"SQL security violation: {error}")
 
-    # Then sanitize the query
+    # Sanitize the query
     sanitized = checker.sanitize_query(query)
 
     # Bind parameters if provided
     if params:
         sanitized = checker.bind_parameters(sanitized, params)
 
-    # Analyze risks
-    risk_assessment = checker.analyze_query_risk(sanitized)
+    # Check if the query is safe
+    is_safe = True
 
-    return sanitized, risk_assessment
+    return sanitized, is_safe

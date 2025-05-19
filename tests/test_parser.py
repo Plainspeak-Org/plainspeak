@@ -1,111 +1,103 @@
-"""
-Tests for the command parser module.
-"""
+"""Tests for the natural language parser."""
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock
 
+from plainspeak.core.parser import NaturalLanguageParser
 from plainspeak.llm_interface import LLMInterface
-from plainspeak.parser import CommandParser
 
 
-class TestCommandParser(unittest.TestCase):
-    """Test suite for the CommandParser class."""
-
+class TestNaturalLanguageParser(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
-        # Create a mock LLM interface
-        self.mock_llm = Mock(spec=LLMInterface)
-        self.parser = CommandParser(llm=self.mock_llm)
+        # Mock LLM
+        self.mock_llm = MagicMock(spec=LLMInterface)
+        self.mock_llm.generate_command.return_value = "ls -l"
+
+        # Create parser with mock LLM
+        self.parser = NaturalLanguageParser(self.mock_llm)
 
     def test_empty_input(self):
-        """Test that empty input is rejected."""
-        success, result = self.parser.parse_to_command("")
-        self.assertFalse(success)
-        self.assertEqual(result, "ERROR: Empty input")
+        """Test that empty input returns empty result."""
+        result = self.parser.parse_to_command("")
+        self.assertEqual(result, {"verb": None, "args": {}})
 
-        success, result = self.parser.parse_to_command("   ")
-        self.assertFalse(success)
-        self.assertEqual(result, "ERROR: Empty input")
+        result = self.parser.parse_to_command("   ")
+        self.assertEqual(result, {"verb": None, "args": {}})
 
     def test_successful_parse(self):
-        """Test successful command generation."""
-        self.mock_llm.generate.return_value = "ls -l"
-        success, result = self.parser.parse_to_command("list files in detail")
-        self.assertTrue(success)
-        self.assertEqual(result, "ls -l")
+        """Test successful command parsing."""
+        # Test basic command
+        self.mock_llm.generate_command.return_value = "ls /tmp"
+        result = self.parser.parse_to_command("list files in temp")
+        self.assertEqual(result, {"verb": "ls", "args": {"path": "/tmp"}})
+        self.mock_llm.generate_command.assert_called_with("list files in temp")
+
+        # Test command with options
+        self.mock_llm.generate_command.return_value = "ls -l /home"
+        result = self.parser.parse_to_command("show detailed list of home directory")
+        self.assertEqual(result, {"verb": "ls", "args": {"path": "/home", "detail": True}})
 
     def test_llm_failure(self):
-        """Test handling of LLM generation failure."""
-        self.mock_llm.generate.return_value = None
-        success, result = self.parser.parse_to_command("list files")
-        self.assertFalse(success)
-        self.assertEqual(result, "ERROR: Failed to generate command")
+        """Test handling of LLM parsing failure."""
+        self.mock_llm.generate_command.side_effect = Exception("LLM Error")
+        result = self.parser.parse_to_command("list files")
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "LLM Error")
 
     def test_llm_error_response(self):
-        """Test handling of LLM error responses."""
-        self.mock_llm.generate.return_value = "ERROR: Unclear or ambiguous request"
-        success, result = self.parser.parse_to_command("do something weird")
-        self.assertFalse(success)
-        self.assertEqual(result, "ERROR: Unclear or ambiguous request")
+        """Test handling of empty response from LLM."""
+        # Test None response
+        self.mock_llm.generate_command.return_value = None
+        result = self.parser.parse_to_command("do something weird")
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "Failed to generate command")
 
-    def test_unsafe_commands(self):
-        """Test detection of unsafe command patterns."""
-        unsafe_commands = {
-            "rm -rf /": "rm -rf",
-            "sudo apt-get update": "sudo",
-            "echo 'hello' > file.txt": ">",
-            "ls -l | grep test": "|",
-            "cd /tmp && rm *": "&&",
-            "test || echo failed": "||",
-            "echo $(whoami)": "$(",
-            "echo `whoami`": "`",
-            "command1; command2": ";",
-            "mkfs.ext4 /dev/sda1": "mkfs",
-        }
+        # Test empty string response
+        self.mock_llm.generate_command.return_value = ""
+        result = self.parser.parse_to_command("do something")
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "Failed to generate command")
 
-        for cmd, pattern in unsafe_commands.items():
-            self.mock_llm.generate.return_value = cmd
-            success, result = self.parser.parse_to_command("some input")
-            self.assertFalse(success, f"Should reject unsafe command: {cmd}")
-            self.assertIn(pattern, result)
-            self.assertIn("ERROR:", result)
+    def test_with_plugin_manager(self):
+        """Test parsing with plugin manager integration."""
+        # Mock plugin manager
+        mock_plugin_manager = MagicMock()
+        mock_plugin = MagicMock()
+        mock_plugin.name = "file_plugin"
+        mock_plugin_manager.get_plugin_for_verb.return_value = mock_plugin
 
-    @patch("platform.system")
-    @patch("os.environ.get")
-    def test_system_context_generation(self, mock_environ_get, mock_platform_system):
-        """Test system context generation with different environments."""
-        test_cases = [
-            # (platform, shell, expected_os, expected_shell)
-            ("Darwin", "/bin/zsh", "macOS", "Zsh"),
-            ("Linux", "/bin/bash", "linux", "Bash"),
-            ("Linux", "/usr/bin/fish", "linux", "Fish"),
-            ("Windows", "cmd.exe", "windows", "standard shell"),
+        # Create parser with mock LLM and plugin manager
+        parser = NaturalLanguageParser(llm=self.mock_llm, plugin_manager=mock_plugin_manager)
+
+        # Set up command return
+        self.mock_llm.generate_command.return_value = "ls -l"
+
+        # Test parsing
+        result = parser.parse_to_command("list files")
+        self.assertEqual(result["plugin"], "file_plugin")
+        self.assertEqual(result["verb"], "ls")
+        self.assertEqual(result["args"], {"path": ".", "detail": True})
+
+        # Verify plugin lookup
+        mock_plugin_manager.get_plugin_for_verb.assert_called_once_with("ls")
+
+    def test_argument_parsing(self):
+        """Test parsing of different argument patterns."""
+        cases = [
+            ("ls", {"path": "."}),
+            ("ls -l", {"path": ".", "detail": True}),
+            ("ls -r /tmp", {"path": "/tmp", "recursive": True}),
+            ("ls --force", {"path": ".", "force": True}),
+            ("ls -l -r /home", {"path": "/home", "detail": True, "recursive": True}),
+            ("find --name test.txt", {"path": ".", "name": "test.txt"}),
         ]
 
-        for platform_name, shell_path, exp_os, exp_shell in test_cases:
-            mock_platform_system.return_value = platform_name
-            mock_environ_get.return_value = shell_path
+        for cmd, expected_args in cases:
+            self.mock_llm.generate_command.return_value = cmd
+            result = self.parser.parse_to_command("dummy input")
+            self.assertEqual(result["args"], expected_args)
 
-            context = self.parser._get_system_context()
-            self.assertIn(exp_os.lower(), context.lower())
-            self.assertIn(exp_shell, context)
 
-    def test_custom_generation_params(self):
-        """Test that custom generation parameters are used."""
-        custom_params = {
-            "temperature": 0.1,
-            "max_new_tokens": 50,
-            "top_p": 0.95,
-            "custom_param": "test",
-        }
-
-        parser = CommandParser(llm=self.mock_llm, generation_params=custom_params)
-
-        parser.parse_to_command("list files")
-
-        # Check that the LLM's generate method was called with our custom params
-        self.mock_llm.generate.assert_called_once()
-        call_args = self.mock_llm.generate.call_args[1]
-        for key, value in custom_params.items():
-            self.assertEqual(call_args[key], value)
+if __name__ == "__main__":
+    unittest.main()

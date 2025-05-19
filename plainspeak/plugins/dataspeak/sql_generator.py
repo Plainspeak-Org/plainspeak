@@ -232,6 +232,7 @@ class SQLGenerator:
             enable_llm: Whether to use LLM assistance for query generation
         """
         self.logger = logging.getLogger("plainspeak.dataspeak.sql_generator")
+        self.security_level = security_level
         self.security_checker = SQLSecurityChecker(security_level)
         self.enable_llm = enable_llm
 

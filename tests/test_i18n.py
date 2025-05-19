@@ -293,11 +293,11 @@ class TestI18nIntegration(unittest.TestCase):
         # Test with different locales
         self.i18n.set_locale("en_US")
         self.session.execute_natural_language("list files")
-        self.mock_llm.parse_natural_language_with_locale.assert_called_with("list files", "en_US")
+        self.mock_llm.parse_natural_language_with_locale.assert_called_with("list files", "en_US", None)
 
         self.i18n.set_locale("fr_FR")
         self.session.execute_natural_language("liste les fichiers")
-        self.mock_llm.parse_natural_language_with_locale.assert_called_with("liste les fichiers", "fr_FR")
+        self.mock_llm.parse_natural_language_with_locale.assert_called_with("liste les fichiers", "fr_FR", None)
 
 
 if __name__ == "__main__":

@@ -56,15 +56,36 @@ class TestLLMInterface(unittest.TestCase):
         # Create CWD mock with path joining
         self.mock_cwd = MagicMock(spec=Path)
         self.mock_cwd.__str__.return_value = "/current/working/dir"
-        self.mock_cwd.__truediv__ = lambda _, x: self.mock_path
+
+        def mock_truediv(_, other):
+            if isinstance(other, (str, Path)):
+                result = MagicMock(spec=Path)
+                result.exists.return_value = True
+                result.is_absolute.return_value = True
+                result.resolve.return_value = result
+                result.__str__.return_value = str(Path(self.mock_cwd.__str__.return_value) / str(other))
+                return result
+            return NotImplemented
+
+        self.mock_cwd.__truediv__ = mock_truediv
+
+        # Mock Path class constructor
+        def mock_path_init(*args, **kwargs):
+            if len(args) > 1:  # Path instance being created
+                path_str = str(args[1])
+                result = MagicMock(spec=Path)
+                result.exists.return_value = True
+                result.is_absolute.return_value = Path(path_str).is_absolute()
+                result.resolve.return_value = result
+                result.__str__.return_value = path_str
+                return result
+            return self.mock_path
 
         # Create and start Path-related patchers
         path_patches = [
-            ("plainspeak.llm_interface.Path", lambda: self.mock_path),
-            ("pathlib.Path.exists", self.mock_path.exists),
-            ("pathlib.Path.is_absolute", self.mock_path.is_absolute),
-            ("pathlib.Path.resolve", self.mock_path.resolve),
-            ("pathlib.Path.cwd", lambda: self.mock_cwd),
+            ("plainspeak.llm_interface.Path", mock_path_init),
+            ("pathlib.Path", mock_path_init),
+            ("pathlib.Path.cwd", MagicMock(return_value=self.mock_cwd)),
         ]
 
         # Start path patchers

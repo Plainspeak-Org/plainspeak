@@ -9,6 +9,14 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 
+class VerbDetails(BaseModel):
+    """Details about a verb's implementation."""
+
+    template: str
+    parameters_schema: Dict[str, Dict[str, Any]]
+    aliases: List[str] = Field(default_factory=list)
+
+
 class CommandConfig(BaseModel):
     """Configuration for a single command."""
 
@@ -23,14 +31,6 @@ class CommandConfig(BaseModel):
         default_factory=list,
         description="Alternative verbs that can be used to invoke this command",
     )
-
-    # @field_validator("template")
-    # def validate_template(cls, v: str) -> str:
-    #     """Validate that the template contains valid placeholder syntax."""
-    #     # Check for basic Jinja2 variable syntax
-    #     if not re.search(r"{{\s*\w+\s*}}", v):
-    #         raise ValueError("Template must contain at least one variable placeholder ({{ var }})")
-    #     return v
 
 
 class PluginManifest(BaseModel):
@@ -51,7 +51,7 @@ class PluginManifest(BaseModel):
     )
     author: str = Field(default=..., description="Plugin author")  # type: ignore[call-overload]
     verbs: List[str] = Field(  # type: ignore[call-overload]
-        default=..., description="List of verbs this plugin provides", min_length=1  # Changed min_items to min_length
+        default=..., description="List of verbs this plugin provides", min_length=1
     )
     commands: Dict[str, CommandConfig] = Field(  # type: ignore[call-overload]
         default=..., description="Command configurations keyed by verb"

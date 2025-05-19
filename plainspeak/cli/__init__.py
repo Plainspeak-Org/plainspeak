@@ -19,6 +19,8 @@ from ..context import session_context
 from ..core.parser import NaturalLanguageParser
 from ..learning import learning_store
 
+# Import compatibility classes for tests
+
 app = typer.Typer(
     name="plainspeak",
     help="Turn natural language into shell commands.",

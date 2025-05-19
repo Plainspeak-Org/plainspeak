@@ -1,0 +1,23 @@
+name: test_yaml_plugin
+description: A test YAML plugin for testing
+version: "0.1.0"
+author: "Test Author"
+priority: 10
+verbs:
+  - testverb
+  - customverb
+verb_aliases:
+  testverb:
+    - tv
+    - test
+  customverb:
+    - cv
+    - custom
+commands:
+  testverb:
+    template: "test-command {{ option }}"
+    description: "A test command"
+  customverb:
+    template: "custom-command {{ param }}"
+    description: "A custom command"
+entrypoint: tests.test_plugins.test_yaml_plugin.YAMLTestPlugin

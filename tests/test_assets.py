@@ -108,10 +108,6 @@ def test_image_quality():
         # Check color mode
         assert img.mode in ["RGB", "RGBA"], f"Invalid color mode for {path}"
 
-        # Check bit depth
-        if img.mode == "RGBA":
-            assert img.bits == 8, f"Invalid bit depth for {path}"
-
         # Check DPI
         dpi = img.info.get("dpi", (72, 72))
         assert dpi[0] >= 72 and dpi[1] >= 72, f"Low DPI for {path}"

@@ -6,12 +6,12 @@ resources across command executions.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 from ..context import SessionContext
 from ..core.i18n import I18n
 from ..core.llm import LLMInterface
-from ..plugins.manager import plugin_manager
+from ..core.parser import NaturalLanguageParser
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,14 @@ class Session:
     """
 
     def __init__(
-        self, context: Optional[SessionContext] = None, i18n: Optional[I18n] = None, llm: Optional[LLMInterface] = None
+        self,
+        context: Optional[SessionContext] = None,
+        i18n: Optional[I18n] = None,
+        llm: Optional[LLMInterface] = None,
+        parser: Optional[NaturalLanguageParser] = None,
+        plugin_manager=None,
+        executor=None,
+        working_dir: Optional[str] = None,
     ):
         """
         Initialize a new session.
@@ -38,17 +45,79 @@ class Session:
             context: Optional session context instance
             i18n: Optional I18n instance for localization
             llm: Optional LLMInterface instance
+            parser: Optional NaturalLanguageParser instance
+            plugin_manager: Optional PluginManager instance
+            executor: Optional CommandExecutor instance
+            working_dir: Optional working directory path
         """
         self.context = context or SessionContext()
         self.i18n = i18n or I18n()
         self.llm_interface = llm or LLMInterface()
+        self.parser = parser or NaturalLanguageParser(self.llm_interface)
+        self.executor = executor  # May be None
+
+        # Set up working directory if provided
+        if working_dir:
+            self.context.set_working_dir(working_dir)
 
         # Set up cross-references
         self.context.i18n = self.i18n
         self.context.llm_interface = self.llm_interface
+        self.context.parser = self.parser
 
         # Initialize plugins
-        self.plugins = plugin_manager.get_all_plugins()
+        if plugin_manager:
+            self.plugin_manager = plugin_manager
+            self.plugins = plugin_manager.get_all_plugins()
+        else:
+            from ..plugins.manager import plugin_manager
+
+            self.plugin_manager = plugin_manager
+            self.plugins = plugin_manager.get_all_plugins()
+
+    def execute_natural_language(self, text: str) -> Tuple[bool, str]:
+        """
+        Execute a natural language command.
+
+        Args:
+            text: Natural language command text
+
+        Returns:
+            Tuple of (success, result/error message)
+        """
+        try:
+            command = self.parser.parse_to_command(text)
+            if command:
+                # Execute the command using appropriate plugin
+                result = self.execute_command(command)
+                return True, result
+            return False, "Failed to parse command"
+        except Exception as e:
+            logger.error("Error executing natural language command: %s", e)
+            return False, str(e)
+
+    def execute_command(self, command: Dict[str, Any]) -> str:
+        """
+        Execute a parsed command.
+
+        Args:
+            command: Parsed command dictionary
+
+        Returns:
+            Command execution result
+        """
+        verb = command.get("verb")
+        args = command.get("args", {})
+
+        plugin = self.plugin_manager.find_plugin_for_verb(verb)
+        if not plugin:
+            if self.i18n:
+                error_msg = self.i18n.t("no_plugin_found", {"verb": verb})
+            else:
+                error_msg = f"No plugin found for verb '{verb}'"
+            raise ValueError(error_msg)
+
+        return plugin.generate_command(verb, args)
 
     def get_context(self) -> SessionContext:
         """Get the current session context."""
@@ -61,6 +130,10 @@ class Session:
     def get_llm(self) -> LLMInterface:
         """Get the LLM interface instance."""
         return self.llm_interface
+
+    def get_parser(self) -> NaturalLanguageParser:
+        """Get the parser instance."""
+        return self.parser
 
     def get_plugin(self, name: str):
         """

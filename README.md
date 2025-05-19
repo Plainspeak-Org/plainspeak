@@ -293,6 +293,43 @@ No SQL knowledge required—just the ability to ask questions in plain language.
 
 This extension demonstrates PlainSpeak's potential to expand beyond system operations into specialized domains, creating a unified natural language interface for all computing tasks.
 
+## **Development Guide**
+
+### **Requirements**
+
+- Python 3.11+
+- Poetry for dependency management
+
+### **Installation**
+
+```bash
+# Clone the repository
+git clone https://github.com/cschanhniem/plainspeak.git
+cd plainspeak
+
+# Install dependencies
+poetry install
+```
+
+### **Running Tests**
+
+We provide a convenient script to run the test suite:
+
+```bash
+# Run all tests
+./scripts/run_tests.sh
+
+# Run tests with verbose output
+./scripts/run_tests.sh -v
+
+# Run specific tests
+./scripts/run_tests.sh tests/test_core
+```
+
+### **Documentation**
+
+The documentation is available at [https://cschanhniem.github.io/plainspeak/](https://cschanhniem.github.io/plainspeak/).
+
 ## **Join the Movement**
 
 PlainSpeak represents more than code—it embodies a vision of computing that serves humanity through understanding rather than requiring humans to understand computers.

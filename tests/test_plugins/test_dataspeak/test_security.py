@@ -168,6 +168,8 @@ class TestHelperFunctions:
         # Setup mock
         mock_checker = MagicMock()
         mock_checker.validate_query.return_value = (True, None)
+        mock_checker.sanitize_query.return_value = "SELECT * FROM users WHERE id = :id"
+        mock_checker.bind_parameters.return_value = "SELECT * FROM users WHERE id = 1"
         mock_checker_class.return_value = mock_checker
 
         # Test with parameters

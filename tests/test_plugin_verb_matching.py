@@ -13,7 +13,7 @@ from plainspeak.plugins.base import Plugin, PluginRegistry
 from plainspeak.plugins.manager import PluginManager
 
 
-class TestPlugin(Plugin):
+class PluginFixture(Plugin):
     """Test plugin implementation for testing verb matching."""
 
     def __init__(self, name, description, verbs=None, priority=0, aliases=None):
@@ -98,7 +98,7 @@ class TestExactMatching(unittest.TestCase):
         self.manager.registry = self.registry
 
         # Create test plugins
-        self.file_plugin = TestPlugin(
+        self.file_plugin = PluginFixture(
             name="file",
             description="File operations",
             verbs=["ls", "find", "copy", "move"],
@@ -106,7 +106,7 @@ class TestExactMatching(unittest.TestCase):
             aliases={"list": "ls", "locate": "find", "cp": "copy", "mv": "move"},
         )
 
-        self.text_plugin = TestPlugin(
+        self.text_plugin = PluginFixture(
             name="text",
             description="Text operations",
             verbs=["grep", "sed", "cat"],
@@ -177,7 +177,7 @@ class TestExactMatching(unittest.TestCase):
         new_manager.registry = new_registry
 
         # Create new plugins with swapped priorities
-        file_plugin = TestPlugin(
+        file_plugin = PluginFixture(
             name="file",
             description="File operations",
             verbs=["ls", "find", "copy", "move"],
@@ -185,7 +185,7 @@ class TestExactMatching(unittest.TestCase):
             aliases={"list": "ls", "locate": "find", "cp": "copy", "mv": "move"},
         )
 
-        text_plugin = TestPlugin(
+        text_plugin = PluginFixture(
             name="text",
             description="Text operations",
             verbs=["grep", "sed", "cat"],
@@ -217,7 +217,7 @@ class TestFuzzyMatching(unittest.TestCase):
         self.manager.FUZZY_MATCH_THRESHOLD = 0.75  # Default threshold
 
         # Create test plugin with common verbs
-        self.plugin = TestPlugin(
+        self.plugin = PluginFixture(
             name="test",
             description="Test plugin",
             verbs=["find", "search", "list", "create", "delete", "update"],
@@ -344,7 +344,7 @@ class TestMatchingPerformance(unittest.TestCase):
 
         # Create 5 test plugins with 5 verbs each
         for i in range(5):
-            plugin = TestPlugin(
+            plugin = PluginFixture(
                 name=f"plugin_{i}",
                 description=f"Test plugin {i}",
                 verbs=[f"verb_{i}_{j}" for j in range(5)],
@@ -353,7 +353,7 @@ class TestMatchingPerformance(unittest.TestCase):
             self.registry.register(plugin)
 
         # Add one special plugin with known verbs for testing
-        self.special_plugin = TestPlugin(
+        self.special_plugin = PluginFixture(
             name="special",
             description="Special test plugin",
             verbs=["special_find", "special_list", "special_create"],
@@ -428,7 +428,7 @@ class TestVerbRegistrationAndLookup(unittest.TestCase):
     def test_plugin_registration(self):
         """Test that plugin registration adds verbs correctly."""
         # Create and register plugin
-        plugin = TestPlugin(
+        plugin = PluginFixture(
             name="test",
             description="Test plugin",
             verbs=["verb1", "verb2", "verb3"],
@@ -447,7 +447,7 @@ class TestVerbRegistrationAndLookup(unittest.TestCase):
     def test_plugin_unregistration(self):
         """Test that plugin unregistration removes verbs correctly."""
         # Create and register plugin
-        plugin = TestPlugin(
+        plugin = PluginFixture(
             name="test",
             description="Test plugin",
             verbs=["verb1", "verb2"],
@@ -473,8 +473,8 @@ class TestVerbRegistrationAndLookup(unittest.TestCase):
     def test_get_all_plugins(self):
         """Test getting all registered plugins."""
         # Create and register plugins
-        plugin1 = TestPlugin(name="test1", description="Test plugin 1", verbs=["verb1"])
-        plugin2 = TestPlugin(name="test2", description="Test plugin 2", verbs=["verb2"])
+        plugin1 = PluginFixture(name="test1", description="Test plugin 1", verbs=["verb1"])
+        plugin2 = PluginFixture(name="test2", description="Test plugin 2", verbs=["verb2"])
 
         self.registry.register(plugin1)
         self.registry.register(plugin2)
@@ -499,7 +499,7 @@ class TestErrorHandling(unittest.TestCase):
         self.manager.registry = self.registry
 
         # Create test plugin
-        self.plugin = TestPlugin(name="test", description="Test plugin", verbs=["verb1", "verb2"])
+        self.plugin = PluginFixture(name="test", description="Test plugin", verbs=["verb1", "verb2"])
         self.registry.register(self.plugin)
 
     def test_none_verb(self):
@@ -524,7 +524,7 @@ class TestErrorHandling(unittest.TestCase):
         new_manager.registry = new_registry
 
         # Register a plugin
-        test_plugin = TestPlugin(name="test", description="Test plugin", verbs=["verb1", "verb2"])
+        test_plugin = PluginFixture(name="test", description="Test plugin", verbs=["verb1", "verb2"])
         new_registry.register(test_plugin)
 
         # Verify the plugin can be found
@@ -546,7 +546,7 @@ class TestErrorHandling(unittest.TestCase):
     def test_plugin_without_verbs(self):
         """Test handling of plugins without verbs."""
         # Create plugin without verbs
-        plugin = TestPlugin(name="empty", description="Empty plugin")
+        plugin = PluginFixture(name="empty", description="Empty plugin")
         self.registry.register(plugin)
 
         # Should not match any verb

@@ -60,23 +60,40 @@ class LearningStore:
     def _init_db(self) -> None:
         """Initialize the SQLite database with required tables."""
         with sqlite3.connect(self.db_path) as conn:
+            # Create the commands table for test compatibility
             conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS feedback (
+                CREATE TABLE IF NOT EXISTS commands (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    original_text TEXT NOT NULL,
+                    natural_text TEXT NOT NULL,
                     generated_command TEXT NOT NULL,
-                    final_command TEXT,
-                    success BOOLEAN NOT NULL,
+                    edited BOOLEAN DEFAULT 0,
+                    edited_command TEXT,
+                    executed BOOLEAN DEFAULT 0,
+                    success BOOLEAN,
                     error_message TEXT,
-                    execution_time REAL NOT NULL,
-                    feedback_type TEXT NOT NULL,
+                    execution_time REAL DEFAULT 0.0,
                     timestamp DATETIME NOT NULL,
                     metadata TEXT
                 )
             """
             )
 
+            # Create the feedback table
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    command_id INTEGER NOT NULL,
+                    feedback_type TEXT NOT NULL,
+                    feedback_text TEXT,
+                    timestamp DATETIME NOT NULL,
+                    FOREIGN KEY (command_id) REFERENCES commands(id)
+                )
+            """
+            )
+
+            # Create the patterns table
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS patterns (
@@ -132,6 +149,7 @@ class LearningStore:
         natural_text: str,
         generated_command: str,
         executed: bool = False,
+        success: Optional[bool] = None,
         system_info: Optional[Dict[str, Any]] = None,
         environment_info: Optional[Dict[str, Any]] = None,
     ) -> int:
@@ -142,6 +160,7 @@ class LearningStore:
             natural_text: The original natural language text.
             generated_command: The generated command.
             executed: Whether the command was executed.
+            success: Whether the command execution was successful.
             system_info: System information.
             environment_info: Environment information.
 
@@ -151,15 +170,22 @@ class LearningStore:
         Raises:
             sqlite3.Error: If there is a database error.
         """
+        metadata = json.dumps(
+            {
+                "system_info": system_info or {},
+                "environment_info": environment_info or {},
+            }
+        )
+
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 """
-                INSERT INTO feedback (
-                    original_text,
+                INSERT INTO commands (
+                    natural_text,
                     generated_command,
+                    executed,
                     success,
                     execution_time,
-                    feedback_type,
                     timestamp,
                     metadata
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -167,16 +193,11 @@ class LearningStore:
                 (
                     natural_text,
                     generated_command,
-                    None,  # success is None until execution
-                    0.0,  # execution time is 0 until executed
-                    "pending",
+                    1 if executed else 0,  # SQLite uses 1/0 for booleans
+                    1 if success else (0 if success is False else None),  # Handle None case
+                    0.0,  # execution time is 0 until measured
                     datetime.now().isoformat(),
-                    json.dumps(
-                        {
-                            "system_info": system_info or {},
-                            "environment_info": environment_info or {},
-                        }
-                    ),
+                    metadata,
                 ),
             )
             # lastrowid is guaranteed to be an integer when INSERT is successful
@@ -192,14 +213,17 @@ class LearningStore:
             message: Optional message associated with the feedback.
         """
         with sqlite3.connect(self.db_path) as conn:
+            # Insert a new feedback entry
             conn.execute(
                 """
-                UPDATE feedback
-                SET feedback_type = ?,
-                    error_message = ?
-                WHERE id = ?
+                INSERT INTO feedback (
+                    command_id,
+                    feedback_type,
+                    feedback_text,
+                    timestamp
+                ) VALUES (?, ?, ?, ?)
                 """,
-                (feedback_type, message, command_id),
+                (command_id, feedback_type, message, datetime.now().isoformat()),
             )
 
     def update_command_execution(
@@ -221,18 +245,37 @@ class LearningStore:
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 """
-                UPDATE feedback
+                UPDATE commands
                 SET executed = ?,
                     success = ?,
                     error_message = ?
                 WHERE id = ?
                 """,
-                (executed, success, error_message, command_id),
+                (1 if executed else 0, 1 if success else 0, error_message, command_id),
+            )
+
+    def update_command_edit(self, command_id: int, edited_command: str) -> None:
+        """
+        Update a command with user edits.
+
+        Args:
+            command_id: The ID of the command.
+            edited_command: The edited command.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                UPDATE commands
+                SET edited = ?,
+                    edited_command = ?
+                WHERE id = ?
+                """,
+                (1, edited_command, command_id),
             )
 
     def get_command_history(self, limit: Optional[int] = None) -> pd.DataFrame:
         """
-        Get the command history from the feedback table.
+        Get the command history from the commands table.
 
         Args:
             limit: Optional limit on the number of records to return.
@@ -240,12 +283,50 @@ class LearningStore:
         Returns:
             DataFrame with command history.
         """
-        query = "SELECT * FROM feedback ORDER BY timestamp DESC"
+        query = "SELECT * FROM commands ORDER BY timestamp DESC"
         if limit is not None:
             query += f" LIMIT {limit}"
 
         with sqlite3.connect(self.db_path) as conn:
             return pd.read_sql_query(query, conn)
+
+    def get_command_with_feedback(self, command_id: int) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+        """
+        Get a command with its feedback.
+
+        Args:
+            command_id: The ID of the command.
+
+        Returns:
+            Tuple of (command_data, feedback_list).
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            # Get command data
+            cursor = conn.execute("SELECT * FROM commands WHERE id = ?", (command_id,))
+            command_row = cursor.fetchone()
+
+            if not command_row:
+                return {}, []
+
+            # Convert to dict
+            columns = [col[0] for col in cursor.description]
+            command_data = dict(zip(columns, command_row))
+
+            # Parse metadata
+            if command_data.get("metadata"):
+                metadata = json.loads(command_data["metadata"])
+                command_data["system_info"] = metadata.get("system_info", {})
+                command_data["environment_info"] = metadata.get("environment_info", {})
+
+            # Get feedback
+            cursor = conn.execute("SELECT * FROM feedback WHERE command_id = ?", (command_id,))
+            feedback_rows = cursor.fetchall()
+
+            # Convert to list of dicts
+            columns = [col[0] for col in cursor.description]
+            feedback_list = [dict(zip(columns, row)) for row in feedback_rows]
+
+            return command_data, feedback_list
 
     def export_training_data(self, output_path: Path) -> int:
         """
@@ -261,7 +342,7 @@ class LearningStore:
         df = self.get_command_history()
 
         # Filter for successful commands
-        df = df[(df["success"] == True) & (df["feedback_type"] == "approve")]
+        df = df[(df["success"] == 1) & (df["executed"] == 1)]  # SQLite stores booleans as 1/0
 
         if df.empty:
             return 0
@@ -269,11 +350,16 @@ class LearningStore:
         # Write to JSONL file
         with open(output_path, "w") as f:
             for _, row in df.iterrows():
+                # Use edited command if available
+                command = (
+                    row["edited_command"] if row["edited"] == 1 and row["edited_command"] else row["generated_command"]
+                )
+
                 f.write(
                     json.dumps(
                         {
-                            "input": row["original_text"],
-                            "output": row["generated_command"],
+                            "input": row["natural_text"],
+                            "output": command,
                         }
                     )
                     + "\n"
@@ -292,29 +378,38 @@ class LearningStore:
             DataFrame with pattern analysis results.
         """
         with sqlite3.connect(self.db_path) as conn:
-            # Load feedback data into pandas
-            df = pd.read_sql_query("SELECT * FROM feedback WHERE success = 1", conn)
+            # Load command data into pandas
+            df = pd.read_sql_query("SELECT * FROM commands WHERE success = 1", conn)
 
-            # Group by original text patterns
+            if df.empty:
+                # Return empty DataFrame with expected columns
+                return pd.DataFrame(
+                    columns=["pattern", "command_template", "success_count", "execution_time", "success_rate"]
+                )
+
+            # Group by natural text patterns
             patterns = (
-                df.groupby("original_text")
+                df.groupby("natural_text")
                 .agg(
                     {
                         "generated_command": "first",
-                        "success": "count",
+                        "id": "count",  # Count as success_count
                         "execution_time": "mean",
                     }
                 )
                 .reset_index()
             )
 
-            # Filter by minimum occurrences
-            patterns = patterns[patterns["success"] >= min_occurrences]
-
-            # Calculate success rate
-            patterns["success_rate"] = patterns["success"] / patterns.groupby("original_text")["success"].transform(
-                "count"
+            # Rename columns for clarity
+            patterns = patterns.rename(
+                columns={"natural_text": "pattern", "generated_command": "command_template", "id": "success_count"}
             )
+
+            # Filter by minimum occurrences
+            patterns = patterns[patterns["success_count"] >= min_occurrences]
+
+            # Calculate success rate (all are successful in this query)
+            patterns["success_rate"] = 1.0
 
             return patterns
 

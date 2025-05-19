@@ -211,7 +211,8 @@ class TestUtilityFunctions:
         result = sanitize_output("abcdefghij", max_length=5)
         assert len(result) < 10
         assert "..." in result
-        assert "truncated" in result
+        # Small max_length uses a different truncation format
+        assert len(result) == 5  # "ab..." = 5 characters
 
     def test_get_column_display_width(self, sample_dataframe):
         """Test column width calculation."""

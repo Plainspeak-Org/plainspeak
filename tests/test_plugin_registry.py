@@ -10,7 +10,7 @@ from plainspeak.plugins.system import SystemPlugin
 from plainspeak.plugins.text import TextPlugin
 
 
-class TestPlugin(Plugin):
+class PluginFixture(Plugin):
     """Test plugin for testing."""
 
     def __init__(self):
@@ -29,7 +29,7 @@ class TestPlugin(Plugin):
 
 def test_plugin_base():
     """Test the base Plugin class."""
-    plugin = TestPlugin()
+    plugin = PluginFixture()
 
     assert plugin.name == "test"
     assert plugin.description == "Test plugin"
@@ -47,7 +47,7 @@ def test_plugin_base():
 def test_plugin_registry():
     """Test the PluginRegistry class."""
     registry = PluginRegistry()
-    plugin = TestPlugin()
+    plugin = PluginFixture()
 
     registry.register(plugin)
 
