@@ -61,12 +61,16 @@ class TestLocaleDetection(unittest.TestCase):
     def test_set_locale(self):
         """Test setting the locale."""
         # Try setting to a supported locale
-        try:
-            success = set_locale("en_US")
-            self.assertTrue(success)
-            self.assertEqual(get_locale(), "en_US")
-        except locale.Error:
-            self.skipTest("Locale en_US not available on this system")
+        # First, check if we can get a list of available locales
+        available = available_locales()
+        if not available:
+            self.skipTest("No locales available on this system")
+
+        # Use the first available locale for testing
+        test_locale = available[0]
+        success = set_locale(test_locale)
+        self.assertTrue(success)
+        self.assertEqual(get_locale(), test_locale)
 
         # Test with unsupported locale (should return False but not error)
         success = set_locale("xx_YY")
