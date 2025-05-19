@@ -165,6 +165,22 @@ class BasePlugin(ABC):
         self._verb_cache.clear()
         self._canonical_verb_cache.clear()
 
+    def __lt__(self, other):
+        """
+        Compare plugins by priority.
+
+        This is used for sorting plugins by priority.
+
+        Args:
+            other: Another plugin to compare to.
+
+        Returns:
+            True if this plugin has lower priority than the other plugin.
+        """
+        if isinstance(other, BasePlugin):
+            return self.priority < other.priority
+        return NotImplemented
+
 
 class YAMLPlugin(BasePlugin):
     """

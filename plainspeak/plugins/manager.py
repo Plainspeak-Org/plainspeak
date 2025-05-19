@@ -12,7 +12,7 @@ import re
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import yaml  # type: ignore[import-untyped]
 
@@ -37,10 +37,26 @@ class PluginManager:
     FUZZY_MATCH_THRESHOLD = 0.75
     MAX_FUZZY_MATCHES = 3  # Maximum number of fuzzy matches to consider
 
-    def __init__(self):
-        """Initialize the plugin manager."""
+    def __init__(self, config=None):
+        """
+        Initialize the plugin manager.
+
+        Args:
+            config: Optional PlainSpeakConfig instance with plugin settings
+        """
         self.registry = PluginRegistry()
-        self._plugin_dirs: List[Path] = [Path(p).expanduser() for p in DEFAULT_PLUGIN_PATHS]
+        self.config = config
+
+        # Get plugin directories from config if available, otherwise use defaults
+        if config and hasattr(config, "plugins_dir"):
+            self._plugin_dirs = [Path(config.plugins_dir).expanduser()]
+        else:
+            self._plugin_dirs = [Path(p).expanduser() for p in DEFAULT_PLUGIN_PATHS]
+
+        # Set fuzzy match threshold from config if available
+        if config and hasattr(config, "plugin_verb_match_threshold"):
+            self.FUZZY_MATCH_THRESHOLD = config.plugin_verb_match_threshold
+
         self._load_plugins()
 
     def _load_plugins(self) -> None:
@@ -64,7 +80,10 @@ class PluginManager:
         """Load built-in plugins."""
         try:
             # Import built-in plugins
+            from .calendar import CalendarPlugin
+            from .email import EmailPlugin
             from .file import FilePlugin
+            from .git import GitPlugin
             from .network import NetworkPlugin
             from .system import SystemPlugin
             from .text import TextPlugin
@@ -74,6 +93,9 @@ class PluginManager:
             self.registry.register(SystemPlugin())
             self.registry.register(NetworkPlugin())
             self.registry.register(TextPlugin())
+            self.registry.register(GitPlugin())
+            self.registry.register(EmailPlugin())
+            self.registry.register(CalendarPlugin())
 
             logger.debug("Loaded built-in plugins")
         except Exception as e:
@@ -202,6 +224,18 @@ class PluginManager:
 
         # Step 2: If no exact match, try fuzzy matching
         return self._find_plugin_with_fuzzy_matching(verb)
+
+    def find_plugin_for_verb(self, verb: str) -> Optional[Plugin]:  # type: ignore[no-any-return]
+        """
+        Alias for get_plugin_for_verb for backwards compatibility.
+
+        Args:
+            verb: The verb to handle.
+
+        Returns:
+            The plugin that can handle the verb, or None if not found.
+        """
+        return self.get_plugin_for_verb(verb)
 
     def _find_plugin_with_fuzzy_matching(self, verb: str) -> Optional[Plugin]:
         """
@@ -375,9 +409,14 @@ class PluginManager:
             key, value = match.groups()
             args[key] = value
 
-        # If no named parameters were found, use the whole text as a positional parameter
+        # If no named parameters were found, intelligently assign based on context
         if not args:
-            args["text"] = args_text
+            # For file operations (list, find, read, etc.), treat the text as a path
+            # This is a very simple heuristic; in practice, we'd use more sophisticated NLP
+            if args_text.startswith("/") or "." in args_text or "/" in args_text:
+                args["path"] = args_text
+            else:
+                args["text"] = args_text
 
         # TODO: Add more sophisticated argument parsing based on context and expected parameters
 
@@ -396,6 +435,16 @@ class PluginManager:
             logger.debug(f"Added plugin directory: {path}")
             # Reload plugins from directories
             self._load_plugins_from_directories()
+
+    def load_plugins(self) -> None:
+        """
+        Load all plugins.
+
+        This is a public method that delegates to the private _load_plugins method.
+        It can be used to explicitly load plugins after initialization.
+        """
+        logger.info("Loading all plugins")
+        self._load_plugins()
 
     def reload_plugins(self) -> None:
         """

@@ -28,7 +28,11 @@ class TextPlugin(Plugin):
 
     def __init__(self):
         """Initialize the text plugin."""
-        super().__init__(name="text", description="Text operations like grep, sed, awk, etc.")
+        super().__init__(
+            name="text",
+            description="Text operations like grep, sed, awk, etc.",
+            priority=10,  # Set higher priority to win conflicts with FilePlugin
+        )
 
     def get_verbs(self) -> List[str]:
         """

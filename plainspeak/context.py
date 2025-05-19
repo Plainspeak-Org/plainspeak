@@ -35,14 +35,21 @@ class SessionContext:
     llm_interface: Optional[LLMInterface]
     i18n: Optional[I18n]
 
-    def __init__(self, context_file: Optional[Path] = None):
+    def __init__(self, context_file_or_config=None):
         """
         Initialize the session context.
 
         Args:
-            context_file: Optional path to a file for persisting context between sessions.
+            context_file_or_config: Either a Path to a context file or a config object.
+                                    If config object is provided, context_file is set to None.
         """
-        self.context_file = context_file
+        # Handle case where config object is passed instead of context_file
+        if context_file_or_config is not None and not isinstance(context_file_or_config, Path):
+            # This is likely a config object; just ignore it
+            self.context_file = None
+        else:
+            self.context_file = context_file_or_config
+
         self._session_vars: Dict[str, Any] = {}
         self._command_history: list[Dict[str, Any]] = []
         self.llm_interface = None  # Will be set by the application
@@ -181,6 +188,38 @@ class SessionContext:
             Dict of all session variables.
         """
         return self._session_vars.copy()
+
+    def get_llm_instruction(self) -> Optional[str]:
+        """
+        Get the LLM instruction string from session variables or a default.
+
+        Returns:
+            The LLM instruction string or None if not set.
+        """
+        return self.get_session_var("llm_instruction")
+
+    def set_working_dir(self, path: str) -> bool:
+        """
+        Set the current working directory.
+
+        Args:
+            path: The new working directory path.
+
+        Returns:
+            True if successful, False otherwise.
+        """
+        try:
+            expanded_path = os.path.expanduser(path)
+            os.chdir(expanded_path)
+            # Update any internal tracking of CWD if necessary, though get_environment_info() reads it dynamically.
+            self.set_session_var("last_known_cwd", os.getcwd())  # Optionally track
+            return True
+        except FileNotFoundError:
+            print(f"Error: Directory not found: {path}")
+            return False
+        except Exception as e:
+            print(f"Error changing directory to {path}: {e}")
+            return False
 
     def get_full_context(self) -> Dict[str, Any]:
         """
