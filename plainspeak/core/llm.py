@@ -37,6 +37,28 @@ class LLMInterface:
         """
         raise NotImplementedError
 
+    def generate_command(self, input_text: str) -> str:
+        """
+        Generate a shell command from natural language input.
+
+        This is a convenience wrapper around generate() that formats the prompt
+        for command generation.
+
+        Args:
+            input_text: Natural language description of the desired command
+
+        Returns:
+            The generated command
+        """
+        # Create a simple prompt for command generation
+        prompt = f"""Generate a shell command that accomplishes the following task:
+{input_text}
+
+Return just the command with no explanation or markdown."""
+
+        # Generate using default parameters
+        return self.generate(prompt)
+
     def parse_intent(self, text: str, context=None) -> Optional[Dict[str, Any]]:
         """
         Parse natural language text into a structured intent.

@@ -144,8 +144,7 @@ class NaturalLanguageParser:
                     return result
 
             # Legacy fallback
-            # Use generate method instead of generate_command which doesn't exist
-            command = self.llm.generate(f"Generate command for: {text}")
+            command = self.llm.generate_command(text)
             if not command:
                 # For backward compatibility
                 if "test" in sys.modules:
@@ -183,20 +182,20 @@ class NaturalLanguageParser:
                 return (False, str(e))
             return {"error": str(e)}
 
-    def _parse_args(self, args: List[str]) -> Dict[str, Any]:
+    def _parse_args(self, args: List[str]) -> Dict[str, Union[str, bool]]:
         """Parse command line args into a structured format."""
-        result = {"path": "."}  # Default path
+        result: Dict[str, Union[str, bool]] = {"path": "."}  # Default path
         i = 0
         while i < len(args):
             arg = args[i]
             if arg.startswith("-"):
                 # Handle flags/options
                 if arg in ["-l", "--long"]:
-                    result["detail"] = "true"
+                    result["detail"] = True
                 elif arg in ["-r", "--recursive"]:
-                    result["recursive"] = "true"
+                    result["recursive"] = True
                 elif arg in ["-f", "--force"]:
-                    result["force"] = "true"
+                    result["force"] = True
                 elif len(args) > i + 1:  # Has value
                     key = arg.lstrip("-").replace("-", "_")
                     result[key] = args[i + 1]
