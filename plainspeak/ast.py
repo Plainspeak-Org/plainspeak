@@ -175,7 +175,10 @@ class ASTBuilder:
         """
         # TODO: Use LLM to identify command structure
         # For now, try plugin-based parsing
-        from .plugins.manager import plugin_manager
+        from .plugins.manager import PluginManager
+
+        # Get the plugin manager instance
+        plugin_manager = PluginManager()
 
         verb, args = plugin_manager.extract_verb_and_args(text)
         if verb:

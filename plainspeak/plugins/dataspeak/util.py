@@ -11,8 +11,28 @@ from typing import Any, Dict, List, Union
 
 import pandas as pd
 
-# Try to import tabulate but provide a fallback implementation
-HAS_TABULATE = False
+
+# Define a simple tabulate function for when the library is not available
+def _simple_tabulate(data: Any, headers: Any = "keys", tablefmt: Any = "pretty", showindex: Any = False) -> str:
+    """Simple tabulate replacement when the library is not available."""
+    if isinstance(data, pd.DataFrame):
+        return data.to_string(index=showindex)
+
+    # Handle list of dicts
+    if data and isinstance(data[0], dict):
+        if headers == "keys":
+            headers = data[0].keys()
+        result = " | ".join(str(h) for h in headers) + "\n"
+        result += "-" * (len(result) - 1) + "\n"
+        for row in data:
+            result += " | ".join(str(row.get(h, "")) for h in headers) + "\n"
+        return result
+
+    # Fallback
+    return str(data)
+
+
+# Try to import tabulate
 try:
     from tabulate import tabulate
 
@@ -21,24 +41,19 @@ except ImportError:
     HAS_TABULATE = False
     logging.warning("tabulate not found, falling back to simple table formatting")
 
-    # Define a simple tabulate replacement for when the module is not available
-    def tabulate(data, headers="keys", tablefmt="pretty", showindex=False):
-        """Simple tabulate replacement when the library is not available."""
-        if isinstance(data, pd.DataFrame):
-            return data.to_string(index=showindex)
+    # Use our simple implementation
+    def tabulate_wrapper(*args: Any, **kwargs: Any) -> str:
+        """Wrapper for simple tabulate to match any signature."""
+        # Extract the data and a few common parameters
+        data = args[0] if args else kwargs.get("tabular_data")
+        headers = args[1] if len(args) > 1 else kwargs.get("headers", "keys")
+        tablefmt = kwargs.get("tablefmt", "pretty")
+        showindex = kwargs.get("showindex", False)
 
-        # Handle list of dicts
-        if data and isinstance(data[0], dict):
-            if headers == "keys":
-                headers = data[0].keys()
-            result = " | ".join(str(h) for h in headers) + "\n"
-            result += "-" * (len(result) - 1) + "\n"
-            for row in data:
-                result += " | ".join(str(row.get(h, "")) for h in headers) + "\n"
-            return result
+        return _simple_tabulate(data, headers, tablefmt, showindex)
 
-        # Fallback
-        return str(data)
+    # Assign the wrapper to the tabulate name
+    tabulate = tabulate_wrapper
 
 
 def results_to_table(results: Union[pd.DataFrame, List[Dict[str, Any]]], table_format: str = "pretty") -> str:

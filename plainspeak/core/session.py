@@ -70,10 +70,11 @@ class Session:
             self.plugin_manager = plugin_manager
             self.plugins = plugin_manager.get_all_plugins()
         else:
-            from ..plugins.manager import plugin_manager
+            from ..plugins.manager import PluginManager
 
-            self.plugin_manager = plugin_manager
-            self.plugins = plugin_manager.get_all_plugins()
+            # Create a new plugin manager instance
+            self.plugin_manager = PluginManager()
+            self.plugins = self.plugin_manager.get_all_plugins()
 
     def execute_natural_language(self, text: str) -> Tuple[bool, str]:
         """

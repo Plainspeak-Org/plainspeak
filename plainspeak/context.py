@@ -34,6 +34,7 @@ class SessionContext:
 
     llm_interface: Optional[LLMInterface]
     i18n: Optional[I18n]
+    parser: Optional[Any]
 
     def __init__(self, context_file_or_config=None):
         """
@@ -54,6 +55,7 @@ class SessionContext:
         self._command_history: list[Dict[str, Any]] = []
         self.llm_interface = None  # Will be set by the application
         self.i18n = None  # Will be set by the application
+        self.parser = None  # Will be set by the application
         self._load_context()
 
     def _load_context(self) -> None:

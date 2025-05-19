@@ -57,10 +57,11 @@ class Commander:
 
                 if return_code == 0:
                     logger.info(f"Command executed successfully. Output: {stdout[:200]}...")
-                    return True, stdout, stderr if stderr else None
+                    # Ensure stdout is a string, not None
+                    return True, stdout if stdout is not None else "", stderr
                 else:
                     logger.warning(f"Command failed with return code {return_code}. Error: {stderr}")
-                    return False, stdout, stderr
+                    return False, stdout if stdout is not None else "", stderr
             except KeyError as e:
                 # This might happen if command_template has a placeholder not in parameters
                 param_name = str(e).strip("'")

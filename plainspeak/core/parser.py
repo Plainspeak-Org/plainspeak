@@ -61,7 +61,7 @@ class Parser:
 
             # Resolve parameters
             parameters = self.plugin_manager.resolve_parameters(verb, llm_ast.get("parameters", {}), context)
-            missing_params = []  # For backward compatibility
+            missing_params: list[str] = []  # For backward compatibility
 
             if missing_params:
                 missing_params_str = ", ".join(missing_params)
@@ -144,7 +144,8 @@ class NaturalLanguageParser:
                     return result
 
             # Legacy fallback
-            command = self.llm.generate_command(text)
+            # Use generate method instead of generate_command which doesn't exist
+            command = self.llm.generate(f"Generate command for: {text}")
             if not command:
                 # For backward compatibility
                 if "test" in sys.modules:
@@ -191,11 +192,11 @@ class NaturalLanguageParser:
             if arg.startswith("-"):
                 # Handle flags/options
                 if arg in ["-l", "--long"]:
-                    result["detail"] = True
+                    result["detail"] = "true"
                 elif arg in ["-r", "--recursive"]:
-                    result["recursive"] = True
+                    result["recursive"] = "true"
                 elif arg in ["-f", "--force"]:
-                    result["force"] = True
+                    result["force"] = "true"
                 elif len(args) > i + 1:  # Has value
                     key = arg.lstrip("-").replace("-", "_")
                     result[key] = args[i + 1]
