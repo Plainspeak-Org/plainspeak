@@ -70,8 +70,8 @@ class TestPluginVerbMatchingIntegration(unittest.TestCase):
         # Test with text operation
         verb, args = self.manager.extract_verb_and_args("grep error in log.txt")
         self.assertEqual(verb, "grep")
-        self.assertIn("path", args)
-        self.assertEqual(args["path"], "error in log.txt")
+        self.assertIn("pattern", args)
+        self.assertEqual(args["pattern"], "error in log.txt")
 
     def test_verb_conflict_resolution(self):
         """Test that verb conflicts are properly resolved by priority."""

@@ -7,7 +7,7 @@ and an interactive REPL mode for continuous command translation.
 
 import subprocess
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 import typer
 from cmd2 import Cmd, Cmd2ArgumentParser, with_argparser
@@ -16,8 +16,51 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from ..context import session_context
+from ..core.llm import LLMInterface
 from ..core.parser import NaturalLanguageParser
 from ..learning import learning_store
+
+
+class CommandParser:
+    """
+    Parser for natural language commands.
+
+    This is a compatibility class for tests that expect a CommandParser class.
+    It wraps the NaturalLanguageParser class.
+    """
+
+    def __init__(self, llm=None):
+        """Initialize the command parser."""
+        self.llm = llm or LLMInterface()
+        self.parser = NaturalLanguageParser(llm=self.llm, i18n=session_context.i18n)
+
+    def parse_to_command(self, text: str) -> Tuple[bool, str]:
+        """
+        Parse natural language text to a shell command.
+
+        Args:
+            text: The natural language text to parse.
+
+        Returns:
+            Tuple of (success, command or error message).
+        """
+        if not text:
+            return False, "Empty input"
+
+        try:
+            parsed_ast = self.parser.parse(text)
+
+            if parsed_ast.get("verb"):
+                # Basic command generation
+                command = (
+                    parsed_ast["verb"] + " " + " ".join(f"--{k} {v}" for k, v in parsed_ast.get("args", {}).items())
+                )
+                return True, command
+            else:
+                return False, "Could not parse command"
+        except Exception as e:
+            return False, f"Error parsing command: {e}"
+
 
 # Import compatibility classes for tests
 
@@ -29,6 +72,56 @@ app = typer.Typer(
 
 # Create console for rich output
 console = Console()
+
+
+@app.command()
+def translate(
+    text: str = typer.Argument(..., help="Natural language command to translate"),
+    execute: bool = typer.Option(False, "--execute", "-e", help="Execute the translated command"),
+):
+    """Translate natural language to a shell command."""
+    if not text:
+        console.print("Error: Empty input", style="red")
+        raise typer.Exit(1)
+
+    # Create a command parser
+    parser = CommandParser()
+
+    # Parse the command
+    success, command = parser.parse_to_command(text)
+
+    if success:
+        syntax = Syntax(command, "bash", theme="monokai")
+        console.print(Panel(syntax, title="Generated Command", border_style="green"))
+
+        if execute:
+            try:
+                process = subprocess.run(command, shell=True, check=False, capture_output=True, text=True)
+                success = process.returncode == 0
+
+                if process.stdout:
+                    console.print(process.stdout, end="")
+                if process.stderr:
+                    console.print(process.stderr, end="")
+
+                if success:
+                    console.print("Command executed successfully", style="green")
+                else:
+                    console.print(f"Command failed with exit code {process.returncode}", style="red")
+                    raise typer.Exit(1)
+            except Exception as e:
+                console.print(f"Error executing command: {e}", style="red")
+                raise typer.Exit(1)
+    else:
+        console.print(Panel(command, title="Error", border_style="red"))
+        raise typer.Exit(1)
+
+
+@app.command()
+def shell():
+    """Start an interactive shell for translating natural language to commands."""
+    shell = PlainSpeakShell()
+    shell.cmdloop()
 
 
 class PlainSpeakShell(Cmd):
@@ -44,7 +137,7 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
     def __init__(self):
         """Initialize the PlainSpeak shell."""
         super().__init__(allow_cli_args=False)
-        self.parser = NaturalLanguageParser(llm=session_context.llm_interface, i18n=session_context.i18n)
+        self.parser = CommandParser(llm=session_context.llm_interface)
         # Remove some default cmd2 commands we don't need
         self.do_edit = None
         self.do_shortcuts = None
@@ -70,16 +163,8 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
         system_info = session_context.get_system_info()
         environment_info = session_context.get_environment_info()
 
-        # Parse using NaturalLanguageParser
-        parsed_ast = self.parser.parse(text)
-
-        # Basic command generation
-        if parsed_ast.get("verb"):
-            result = parsed_ast["verb"] + " " + " ".join(f"--{k} {v}" for k, v in parsed_ast.get("args", {}).items())
-            success = True
-        else:
-            result = "Error: Could not parse command."
-            success = False
+        # Parse using CommandParser
+        success, result = self.parser.parse_to_command(text)
 
         # Add to learning store
         command_id = learning_store.add_command(

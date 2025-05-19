@@ -116,33 +116,20 @@ class LearningStore:
             entry: The feedback entry to record.
             metadata: Optional metadata about the feedback (e.g., user info, context).
         """
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute(
-                """
-                INSERT INTO feedback (
-                    original_text,
-                    generated_command,
-                    final_command,
-                    success,
-                    error_message,
-                    execution_time,
-                    feedback_type,
-                    timestamp,
-                    metadata
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    entry.original_text,
-                    entry.generated_command,
-                    entry.final_command,
-                    entry.success,
-                    entry.error_message,
-                    entry.execution_time,
-                    entry.feedback_type,
-                    entry.timestamp.isoformat(),
-                    json.dumps(metadata) if metadata else None,
-                ),
-            )
+        # First add the command
+        command_id = self.add_command(
+            natural_text=entry.original_text,
+            generated_command=entry.generated_command,
+            executed=entry.success is not None,
+            success=entry.success,
+        )
+
+        # Then add the feedback
+        self.add_feedback(
+            command_id=command_id,
+            feedback_type=entry.feedback_type,
+            message=entry.error_message,
+        )
 
     def add_command(
         self,

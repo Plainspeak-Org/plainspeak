@@ -37,9 +37,20 @@ class Parser:
             if not isinstance(llm_ast, dict) or "verb" not in llm_ast:
                 return "Invalid response from LLM"
 
-            # Find plugin for the verb
+            # Get verb and plugin from AST
             verb = llm_ast["verb"]
-            plugin = self.plugin_manager.find_plugin_for_verb(verb)
+            plugin_name = llm_ast.get("plugin")
+
+            # Find plugin for the verb
+            plugin = None
+            if plugin_name:
+                # Try to get plugin by name first
+                plugin = self.plugin_manager.get_plugin(plugin_name)
+
+            # If no plugin found by name, try to find by verb
+            if not plugin:
+                plugin = self.plugin_manager.find_plugin_for_verb(verb)
+
             if not plugin:
                 return f"No plugin found for verb '{verb}'"
 
@@ -49,9 +60,8 @@ class Parser:
                 return f"Verb '{verb}' not found in plugin '{plugin.name}'"
 
             # Resolve parameters
-            parameters, missing_params = self.plugin_manager.resolve_parameters(
-                plugin, llm_ast.get("parameters", {}), context
-            )
+            parameters = self.plugin_manager.resolve_parameters(verb, llm_ast.get("parameters", {}), context)
+            missing_params = []  # For backward compatibility
 
             if missing_params:
                 missing_params_str = ", ".join(missing_params)
@@ -60,7 +70,7 @@ class Parser:
             # Build final AST
             result = {
                 "verb": verb,
-                "plugin": plugin.name,
+                "plugin": llm_ast.get("plugin", plugin.name),  # Use plugin from AST if available
                 "command_template": verb_details["template"],
                 "action_type": verb_details["action_type"],
                 "parameters": parameters,

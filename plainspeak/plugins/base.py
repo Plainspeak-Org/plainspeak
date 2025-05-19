@@ -92,6 +92,34 @@ class BasePlugin(ABC):
         self._verb_cache.clear()
         self._canonical_verb_cache.clear()
 
+    def get_verb_details(self, verb: str) -> Dict[str, Any]:
+        """
+        Get details about a verb.
+
+        Args:
+            verb: The verb to get details for.
+
+        Returns:
+            Dictionary with verb details.
+        """
+        if not self.can_handle(verb):
+            return {}
+
+        canonical = self.get_canonical_verb(verb)
+
+        # Basic details that all plugins should provide
+        details = {
+            "verb": canonical,
+            "plugin": self.name,
+            "description": f"{canonical} command from {self.name} plugin",
+            "args": {},
+            "template": f"{canonical} {{args}}",  # Default template
+            "action_type": "execute_command",  # Default action type
+        }
+
+        # Add any additional details specific to the plugin implementation
+        return details
+
     def __lt__(self, other):
         """Compare by priority."""
         if isinstance(other, BasePlugin):
@@ -200,7 +228,14 @@ class PluginRegistry:
         verb_lower = verb.lower()
         plugin_name = self.verb_to_plugin_map.get(verb_lower)
         if plugin_name:
-            return self.plugins[plugin_name]
+            # Handle case where plugin was removed but still in verb map
+            if plugin_name in self.plugins:
+                return self.plugins[plugin_name]
+            else:
+                logger.warning(f"Plugin '{plugin_name}' for verb '{verb}' not found in registry")
+                # Clear caches to rebuild verb maps
+                self.clear_caches()
+                return None
 
         return None
 
@@ -220,6 +255,17 @@ class PluginRegistry:
         self.verb_to_plugin_map.clear()
         self.verb_to_plugin_cache.clear()
         self.get_plugin_for_verb.cache_clear()
+
+    def clear_caches(self) -> None:
+        """Clear caches but keep plugins."""
+        self.verb_to_plugin_map.clear()
+        self.verb_to_plugin_cache.clear()
+        self.get_plugin_for_verb.cache_clear()
+
+        # Also clear caches in plugins
+        for plugin in self.plugins.values():
+            if hasattr(plugin, "clear_caches"):
+                plugin.clear_caches()
 
 
 # Global registry

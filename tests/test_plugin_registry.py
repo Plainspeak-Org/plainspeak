@@ -215,4 +215,4 @@ def test_plugin_manager():
 
     verb, args = manager.extract_verb_and_args("grep error in log.txt")
     assert verb == "grep"
-    assert "text" in args or "path" in args  # Simple parsing might put this in different args
+    assert "pattern" in args  # Our implementation puts this in pattern
