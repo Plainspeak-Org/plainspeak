@@ -43,7 +43,44 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Ensure asset directories exist
-      run: python scripts/ensure_asset_dirs.py
+      run: |
+        # Create directory structure script if it doesn't exist
+        mkdir -p scripts
+        cat > scripts/ensure_asset_dirs.py << 'EOF'
+        #!/usr/bin/env python3
+        import os
+        from pathlib import Path
+
+        ASSET_DIR = Path("assets")
+        REQUIRED_DIRS = [
+            "brand/logo", "brand/colors", "brand/typography",
+            "icons/windows", "icons/macos", "icons/source",
+            "screenshots/windows", "screenshots/macos", "screenshots/features",
+            "store/microsoft", "store/apple", "store/web",
+            "marketing/press", "marketing/blog", "marketing/social",
+            "docs/tutorials", "docs/diagrams", "docs/guides",
+        ]
+
+        def main():
+            for dir_path in REQUIRED_DIRS:
+                full_path = ASSET_DIR / dir_path
+                os.makedirs(full_path, exist_ok=True)
+                gitkeep_path = full_path / ".gitkeep"
+                open(gitkeep_path, 'w').close()
+                print(f"Created {dir_path}/.gitkeep")
+
+            missing = [d for d in REQUIRED_DIRS if not (ASSET_DIR / d).exists()]
+            if missing:
+                print(f"Error: Directories still missing: {missing}")
+                return 1
+            print("All required directories exist")
+            return 0
+
+        if __name__ == "__main__":
+            exit(main())
+        EOF
+        chmod +x scripts/ensure_asset_dirs.py
+        python scripts/ensure_asset_dirs.py
 
     - name: Lint with Flake8
       run: |
