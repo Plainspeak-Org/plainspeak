@@ -46,9 +46,9 @@ icalendar = "^5.0.0" # Calendar operations
 keyring = "^24.0.0" # Secure storage
 psutil = "^5.9.0" # Process monitoring
 networkx = "^2.7.0" # Dependency graphs
-transformers = "^4.30.0" # ML model support
-# tokenizers = "0.12.1" # Text tokenization - pinned to a stable version to avoid Rust compilation issues
-huggingface-hub = "^0.19.0" # Use huggingface-hub with pretrained tokenizers instead
+transformers = {version = "^4.30.0", extras = ["sentencepiece"]} # Use transformers with sentencepiece
+huggingface-hub = ">=0.24.0,<1.0" # Upgraded version to be compatible with transformers
+tokenizers = {version = "<=0.20.0", markers = "platform_system != 'Linux'"} # Version that's compatible with transformers
 types-toml = "^0.10.8.20240310"
 types-pyyaml = "^6.0.12.20250516"
 types-icalendar = "^6.3.0.20250517"
