@@ -58,7 +58,7 @@ repos:
       pass_filenames: false
     - id: poetry-check
       name: Verify poetry.lock is up to date
-      entry: bash -c "poetry check && git diff --exit-code poetry.lock"
+      entry: poetry check --lock
       language: system
       pass_filenames: false
       files: ^pyproject.toml$
