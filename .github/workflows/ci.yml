@@ -42,6 +42,9 @@ jobs:
     - name: Install project
       run: poetry install --no-interaction
 
+    - name: Ensure asset directories exist
+      run: python scripts/ensure_asset_dirs.py
+
     - name: Lint with Flake8
       run: |
         poetry run flake8 plainspeak tests docs/website/api --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv
