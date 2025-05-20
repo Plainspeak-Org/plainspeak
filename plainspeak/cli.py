@@ -17,6 +17,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 
+from plainspeak.config import ensure_default_config_exists, load_config
+from plainspeak.core.i18n import I18n
+from plainspeak.core.llm import LLMInterface, get_llm_interface
 from plainspeak.core.parser import NaturalLanguageParser
 
 from .context import session_context
@@ -34,6 +37,36 @@ app = typer.Typer(
 console = Console()
 
 
+# --- Module-level initialization helper ---
+def _initialize_context():
+    """Ensures config is loaded and session_context components are initialized."""
+    ensure_default_config_exists()  # Ensure a default config is present
+    current_config = load_config()  # Load the most up-to-date config
+
+    # Update the global app_config if it was imported and needs to be refreshed
+    # This line assumes direct modification of the imported global_app_config is intended
+    # If global_app_config is just for type hinting, this might not be necessary,
+    # but if other modules rely on plainspeak.config.app_config being the *latest*, it is.
+    # For now, we primarily care that get_llm_interface gets the right config.
+    # plainspeak.config.app_config = current_config # Potentially update global module instance
+
+    if not session_context.llm_interface or not isinstance(session_context.llm_interface, LLMInterface):
+        session_context.llm_interface = get_llm_interface(current_config)
+
+    if not session_context.i18n or not isinstance(session_context.i18n, I18n):
+        # Assuming I18n() default is okay or it uses global_app_config internally if needed.
+        # If I18n needs specific config: session_context.i18n = I18n(config=current_config)
+        session_context.i18n = I18n()
+
+    # Optionally, store the loaded config in session_context if needed elsewhere
+    # session_context.config = current_config
+
+
+# Call initialization immediately after definition
+_initialize_context()
+# --- End module-level initialization ---
+
+
 class PlainSpeakShell(Cmd):
     """
     Interactive shell for translating natural language to commands.
@@ -47,9 +80,25 @@ Type 'help' for a list of commands, or 'exit' to quit.\n"""
     def __init__(self):
         """Initialize the PlainSpeak shell."""
         super().__init__(allow_cli_args=False)
-        self.parser = NaturalLanguageParser(
-            llm=session_context.llm_interface, i18n=session_context.i18n
-        )  # Updated instantiation
+
+        # Ensure llm_interface and i18n are initialized before parser
+        if (
+            not session_context.llm_interface
+            or not isinstance(session_context.llm_interface, LLMInterface)
+            or not session_context.i18n
+            or not isinstance(session_context.i18n, I18n)
+        ):
+            _initialize_context()  # Fallback initialization
+
+        if not session_context.llm_interface or not isinstance(session_context.llm_interface, LLMInterface):
+            # If still not initialized, something is critically wrong
+            console.print("Critical Error: LLM Interface could not be initialized for PlainSpeakShell.", style="red")
+            # Optionally raise an error or prevent shell from starting
+            # For now, we'll let it proceed, but parser init will likely fail or use a None llm.
+            # raise RuntimeError("LLM Interface could not be initialized for PlainSpeakShell.")
+            pass  # Allow to proceed, NaturalLanguageParser might handle None llm if designed for it
+
+        self.parser = NaturalLanguageParser(llm=session_context.llm_interface, i18n=session_context.i18n)
         # Remove some default cmd2 commands we don't need by setting them to None
         self.do_edit = None
         self.do_shortcuts = None
@@ -376,6 +425,19 @@ def translate(
         console.print("Error: Empty input", style="red")
         raise typer.Exit(1)
 
+    # Ensure llm_interface and i18n are initialized before parser
+    if (
+        not session_context.llm_interface
+        or not isinstance(session_context.llm_interface, LLMInterface)
+        or not session_context.i18n
+        or not isinstance(session_context.i18n, I18n)
+    ):
+        _initialize_context()  # Fallback initialization
+
+    if not session_context.llm_interface or not isinstance(session_context.llm_interface, LLMInterface):
+        console.print("Critical Error: LLM Interface could not be initialized for translate command.", style="red")
+        raise typer.Exit(code=1)
+
     system_info = session_context.get_system_info()
     environment_info = session_context.get_environment_info()
 
@@ -527,6 +589,17 @@ def shell():
 
 def main():
     """Entry point for the CLI."""
+    # Ensure context is initialized, as _initialize_context() might have been called
+    # when the module was first imported, but this guarantees it before app() runs,
+    # especially if main can be invoked in ways that bypass full module reload.
+    if (
+        not session_context.llm_interface
+        or not isinstance(session_context.llm_interface, LLMInterface)
+        or not session_context.i18n
+        or not isinstance(session_context.i18n, I18n)
+    ):
+        _initialize_context()
+
     try:
         app()
     except Exception as e:
@@ -535,10 +608,10 @@ def main():
         try:
             session_context.save_context()
         except Exception:
-            pass
+            pass  # Silently ignore if context saving fails during error handling
         sys.exit(1)
     finally:
-        # Save context on normal exit
+        # Save context on normal exit or if an unhandled exception occurs before try/except in main
         session_context.save_context()
 
 

@@ -26,6 +26,7 @@ DEFAULT_MODEL_FILE_PATH = "models/minicpm-2b-sft.Q2_K.gguf"
 class LLMConfig(BaseModel):
     """LLM specific configuration."""
 
+    provider: str = Field("local", description="LLM provider type (e.g., 'local', 'remote', 'openai').")
     model_path: Optional[str] = Field(DEFAULT_MODEL_FILE_PATH, description="Path to the GGUF model file.")
     model_type: str = Field("llama", description="Type of the model (e.g., 'llama', 'gptneox').")
     gpu_layers: int = Field(0, description="Number of model layers to offload to GPU. 0 for CPU only.")
@@ -82,6 +83,7 @@ class AppConfig(BaseModel):
     # Use a proper default factory to create a new LLMConfig instance
     llm: LLMConfig = Field(
         default_factory=lambda: LLMConfig(
+            provider="local",
             model_path=DEFAULT_MODEL_FILE_PATH,
             model_type="llama",
             gpu_layers=0,

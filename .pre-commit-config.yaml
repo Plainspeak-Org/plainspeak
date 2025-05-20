@@ -16,6 +16,7 @@ repos:
     - id: black
       args: ["--preview", "--line-length=120"]
       language_version: python3.11
+      exclude: ^scripts/ensure_asset_dirs\.py$
 
 - repo: https://github.com/PyCQA/autoflake
   rev: v2.3.1

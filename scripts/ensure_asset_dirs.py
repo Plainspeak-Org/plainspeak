@@ -7,25 +7,37 @@ This is needed for CI environments where these directories must exist for tests 
 import os
 from pathlib import Path
 
+# Base directory for all assets
 ASSET_DIR = Path("assets")
 
 # This list must match REQUIRED_DIRS in tests/test_assets.py
 REQUIRED_DIRS = [
+    # Brand assets
     "brand/logo",
     "brand/colors",
     "brand/typography",
+
+    # Icon assets by platform
     "icons/windows",
     "icons/macos",
     "icons/source",
+
+    # Screenshot assets by category
     "screenshots/windows",
     "screenshots/macos",
     "screenshots/features",
+
+    # Store assets by platform
     "store/microsoft",
     "store/apple",
     "store/web",
+
+    # Marketing assets by type
     "marketing/press",
     "marketing/blog",
     "marketing/social",
+
+    # Documentation assets by type
     "docs/tutorials",
     "docs/diagrams",
     "docs/guides",
@@ -36,6 +48,7 @@ def main():
     """Create all required directories and add empty .gitkeep files."""
     print("Creating required directories with empty .gitkeep files...")
 
+    # First pass: create all directories and .gitkeep files
     for dir_path in REQUIRED_DIRS:
         full_path = ASSET_DIR / dir_path
 
@@ -48,13 +61,18 @@ def main():
 
         print(f"✓ Created {dir_path}/.gitkeep")
 
+    # Second pass: verify all directories and files exist
     print("\nVerifying all directories exist...")
     missing = []
+
     for dir_path in REQUIRED_DIRS:
         full_path = ASSET_DIR / dir_path
-        if not full_path.exists() or not (full_path / ".gitkeep").exists():
+        gitkeep_path = full_path / ".gitkeep"
+
+        if not full_path.exists() or not gitkeep_path.exists():
             missing.append(dir_path)
 
+    # Report results
     if missing:
         print(f"! Error: {len(missing)} directories still missing: {', '.join(missing)}")
         return 1
