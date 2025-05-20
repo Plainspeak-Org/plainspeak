@@ -87,14 +87,31 @@ class Session:
             Tuple of (success, result/error message)
         """
         try:
-            command = self.parser.parse_to_command(text)
-            if command:
-                # Execute the command using appropriate plugin
-                result = self.execute_command(command)
-                return True, result
-            return False, "Failed to parse command"
+            # self.parser is NaturalLanguageParser, its .parse() method returns Union[Tuple[bool, str], Dict[str, Any]]
+            parsed_result = self.parser.parse(text)
+
+            if isinstance(parsed_result, dict):
+                # This is the structured command AST
+                command_ast = parsed_result
+                if command_ast.get("verb"):
+                    # Execute the command using appropriate plugin
+                    # self.execute_command expects a Dict[str, Any] which command_ast is.
+                    result_str = self.execute_command(command_ast)
+                    return True, result_str
+                else:
+                    # Dictionary result but no verb, treat as parsing failure.
+                    return False, command_ast.get("error", "Failed to parse command (missing verb).")
+            elif isinstance(parsed_result, tuple) and len(parsed_result) == 2 and isinstance(parsed_result[0], bool):
+                # This is (success: bool, message: str), likely an error or from test mode.
+                # If success is true, message is the command string. This path is less expected for direct execution.
+                # For now, return it as is. Consider if this needs to be converted to AST for execute_command.
+                return parsed_result[0], parsed_result[1]
+            else:
+                logger.error(f"Unexpected result type from parser: {type(parsed_result)}")
+                return False, "Unexpected result from parser"
+
         except Exception as e:
-            logger.error("Error executing natural language command: %s", e)
+            logger.exception("Error executing natural language command: %s", e)  # Use logger.exception for stack trace
             return False, str(e)
 
     def execute_command(self, command: Dict[str, Any]) -> str:

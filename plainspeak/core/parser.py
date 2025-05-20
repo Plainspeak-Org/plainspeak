@@ -94,7 +94,7 @@ class NaturalLanguageParser:
         self.plugin_manager = plugin_manager
         self.config = config
 
-    def parse_to_command(self, text: str, context=None) -> Union[Tuple[bool, str], Dict[str, Any]]:
+    def parse(self, text: str, context=None) -> Union[Tuple[bool, str], Dict[str, Any]]:
         """
         Parse natural language text into a structured command.
 
@@ -177,10 +177,14 @@ class NaturalLanguageParser:
             return result
 
         except Exception as e:
-            # For backward compatibility
+            error_message = str(e).strip()
+            if not error_message:
+                error_message = f"An unexpected error of type {type(e).__name__} occurred during parsing."
+
+            # For backward compatibility with tests
             if "test" in sys.modules:
-                return (False, str(e))
-            return {"error": str(e)}
+                return (False, error_message)
+            return {"error": error_message}
 
     def _parse_args(self, args: List[str]) -> Dict[str, Union[str, bool]]:
         """Parse command line args into a structured format."""

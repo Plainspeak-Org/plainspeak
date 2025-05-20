@@ -148,20 +148,20 @@ plainspeak plugins
 
 If you see an error like "Model file not found", check that:
 
-1. The model file exists at the path specified in your config.toml
-2. The model path in config.toml is correct
+1. The model file exists at the path specified in your `config.toml`
+2. The model path in `config.toml` is correct
 3. You have read permissions for the model file
 
 ### GPU Acceleration
 
 To use GPU acceleration:
 
-1. Install the CUDA version of ctransformers:
+1. Install the CUDA version of `ctransformers`:
    ```bash
    pip install ctransformers[cuda]
    ```
 
-2. Update your config.toml to use GPU layers:
+2. Update your `config.toml` to use GPU layers:
    ```toml
    [llm]
    gpu_layers = 32  # Adjust based on your GPU memory
@@ -187,12 +187,12 @@ If you encounter other issues:
 
 1. Check that all dependencies are installed
 2. Ensure you're using Python 3.11 or higher
-3. Check the logs in ~/.config/plainspeak/logs (if available)
+3. Check the logs in `~/.config/plainspeak/logs` (if available)
 4. Report issues on the GitHub repository
 
 ## Next Steps
 
-- Read the [README.md](README.md) for an overview of PlainSpeak
+- Read the [`README.md`](README.md) for an overview of PlainSpeak
 - Visit the [official documentation](https://cschanhniem.github.io/plainspeak/) for comprehensive guides
 - Explore the [plugins directory](plainspeak/plugins) to learn about available plugins
 - Try out different natural language commands in the shell

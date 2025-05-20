@@ -5,9 +5,11 @@ This module provides both a command-line interface for one-off command generatio
 and an interactive REPL mode for continuous command translation.
 """
 
+import shlex
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 import typer
 from cmd2 import Cmd, Cmd2ArgumentParser, with_argparser
@@ -370,104 +372,112 @@ def translate(
     execute: bool = typer.Option(False, "--execute", "-e", help="Execute the translated command"),
 ):
     """Translate natural language into a shell command."""
-    # Check for empty input first
     if not text.strip():
         console.print("Error: Empty input", style="red")
         raise typer.Exit(1)
 
-    # Get context information for learning store
     system_info = session_context.get_system_info()
     environment_info = session_context.get_environment_info()
 
-    # NaturalLanguageParser will use LLMInterface, which now uses app_config by default
-    parser = NaturalLanguageParser(
-        llm=session_context.llm_interface, i18n=session_context.i18n
-    )  # Updated instantiation
-    # Assuming parse_to_command was a method of the old CommandParser.
-    # NaturalLanguageParser has a 'parse' method. We need to adapt this.
-    # For now, let's assume parse_to_command was a wrapper around parse and then some AST to command string logic.
-    # This part might need further adjustment based on how CommandParser.parse_to_command worked.
-    # For now, let's use the 'parse' method and assume the result structure is compatible or will be handled.
-    parsed_ast = parser.parse(text)  # Using parse method
+    parser = NaturalLanguageParser(llm=session_context.llm_interface, i18n=session_context.i18n)
 
-    # This is a placeholder for how the 'result' (command string) and 'success' would be obtained.
-    # This logic needs to be revisited based on the actual functionality of the old CommandParser.parse_to_command
-    # For now, we'll assume a simple case where the verb is the command and args are joined.
-    # This is a significant assumption and likely incorrect.
-    if parsed_ast.get("verb"):
-        result = parsed_ast["verb"] + " " + " ".join(f"--{k} {v}" for k, v in parsed_ast.get("args", {}).items())
-        success = True
+    result_from_nlp = parser.parse(text)
+
+    final_command_str: Optional[str] = None
+    success: bool = False
+
+    if isinstance(result_from_nlp, dict):
+        parsed_dict = result_from_nlp
+        if parsed_dict.get("verb"):
+            command_parts = [parsed_dict["verb"]]
+            args_dict = parsed_dict.get("args", {})
+            for k, v_raw in args_dict.items():
+                if isinstance(v_raw, bool):
+                    if v_raw is True:
+                        command_parts.append(f"--{k}")
+                else:
+                    command_parts.append(f"--{k}")
+                    command_parts.append(shlex.quote(str(v_raw)))
+            final_command_str = " ".join(command_parts)
+            success = True
+        else:
+            final_command_str = parsed_dict.get("error", "Error: Could not parse command (missing verb).")
+            success = False
+    elif isinstance(result_from_nlp, tuple) and len(result_from_nlp) == 2 and isinstance(result_from_nlp[0], bool):
+        success, final_command_str = result_from_nlp
     else:
-        result = "Error: Could not parse command."
+        final_command_str = "Error: Unexpected result from parser."
         success = False
 
-    # Add to learning store
+    # Add to learning store - ensure 'result' for learning store is the command string or error message
     command_id = learning_store.add_command(
         natural_text=text,
-        generated_command=result,
-        executed=False,  # Will be updated if executed
+        generated_command=final_command_str if final_command_str is not None else "Parsing failed",
+        executed=False,
+        success=success,
         system_info=system_info,
         environment_info=environment_info,
     )
 
-    if success:
-        syntax = Syntax(result, "bash", theme="monokai")
+    if success and final_command_str is not None:
+        syntax = Syntax(final_command_str, "bash", theme="monokai")
         console.print(Panel(syntax, title="Generated Command", border_style="green"))
 
-        # Add positive feedback
+        # Add positive feedback before execution attempt
         learning_store.add_feedback(command_id, "approve")
 
         if execute:
             console.print("\nExecuting command:", style="yellow")
             try:
-                process = subprocess.run(result, shell=True, check=False, capture_output=True, text=True)
+                process = subprocess.run(final_command_str, shell=True, check=False, capture_output=True, text=True)
+                execution_success = process.returncode == 0
 
                 # Display output
                 if process.stdout:
                     console.print(process.stdout, end="")
                 if process.stderr:
-                    console.print(process.stderr, end="")
-
-                # Update execution status
-                execution_success = process.returncode == 0
+                    console.print(
+                        Panel(process.stderr, title="Command Error Output", border_style="orange_red1"), end=""
+                    )
 
                 # Update session context with execution result
-                session_context.add_to_history(text, result, execution_success)
+                session_context.add_to_history(text, final_command_str, execution_success)
 
                 # Update learning store with execution result
                 learning_store.update_command_execution(command_id, True, execution_success)
 
                 if execution_success:
-                    console.print("Command executed successfully", style="green")
+                    console.print("\nCommand executed successfully.", style="green")
                 else:
-                    console.print(
-                        f"Command failed with exit code {process.returncode}",
-                        style="red",
-                    )
-                    if process.stderr:
-                        console.print(process.stderr, style="red")
-                    raise typer.Exit(1)
+                    console.print(f"\nCommand failed with exit code {process.returncode}.", style="red")
+                    # No typer.Exit here, allow flow to complete for learning store updates if any
+
             except subprocess.SubprocessError as e:
                 console.print(f"Error executing command: {e}", style="red")
-                session_context.add_to_history(text, result, False)
+                session_context.add_to_history(text, final_command_str, False)
                 learning_store.update_command_execution(command_id, True, False)
                 raise typer.Exit(1)
             except FileNotFoundError:
-                console.print(f"Error: Command not found: {result.split()[0]}", style="red")
-                session_context.add_to_history(text, result, False)
+                console.print(f"Error: Command not found: {final_command_str.split()[0]}", style="red")
+                session_context.add_to_history(text, final_command_str, False)
                 learning_store.update_command_execution(command_id, True, False)
                 raise typer.Exit(1)
-            except Exception as e:
+            except Exception as e:  # General exception
                 console.print(f"Error executing command: {e}", style="red")
-                session_context.add_to_history(text, result, False)
+                session_context.add_to_history(text, final_command_str, False)
                 learning_store.update_command_execution(command_id, True, False)
                 raise typer.Exit(1)
     else:
-        console.print(Panel(result, title="Error", border_style="red"))
-
-        # Add negative feedback
-        learning_store.add_feedback(command_id, "reject", "Command generation failed")
-
+        console.print(
+            Panel(
+                final_command_str if final_command_str is not None else "Unknown parsing error",
+                title="Error",
+                border_style="red",
+            )
+        )
+        # Add negative feedback if parsing failed or produced no command
+        if command_id:
+            learning_store.add_feedback(command_id, "reject", final_command_str or "Command generation failed")
         raise typer.Exit(1)
 
 

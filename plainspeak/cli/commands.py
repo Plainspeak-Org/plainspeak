@@ -45,7 +45,7 @@ def translate(
     parser = CommandParser(llm=session_context.llm_interface)
 
     # Parse natural language to command
-    success, result = parser.parse_to_command(text)
+    success, result = parser.parse(text)
 
     # Add to learning store
     command_id = learning_store.add_command(

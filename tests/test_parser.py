@@ -19,29 +19,29 @@ class TestNaturalLanguageParser(unittest.TestCase):
 
     def test_empty_input(self):
         """Test that empty input returns empty result."""
-        result = self.parser.parse_to_command("")
+        result = self.parser.parse("")
         self.assertEqual(result, {"verb": None, "args": {}})
 
-        result = self.parser.parse_to_command("   ")
+        result = self.parser.parse("   ")
         self.assertEqual(result, {"verb": None, "args": {}})
 
     def test_successful_parse(self):
         """Test successful command parsing."""
         # Test basic command
         self.mock_llm.generate_command.return_value = "ls /tmp"
-        result = self.parser.parse_to_command("list files in temp")
+        result = self.parser.parse("list files in temp")
         self.assertEqual(result, {"verb": "ls", "args": {"path": "/tmp"}})
         self.mock_llm.generate_command.assert_called_with("list files in temp")
 
         # Test command with options
         self.mock_llm.generate_command.return_value = "ls -l /home"
-        result = self.parser.parse_to_command("show detailed list of home directory")
+        result = self.parser.parse("show detailed list of home directory")
         self.assertEqual(result, {"verb": "ls", "args": {"path": "/home", "detail": True}})
 
     def test_llm_failure(self):
         """Test handling of LLM parsing failure."""
         self.mock_llm.generate_command.side_effect = Exception("LLM Error")
-        result = self.parser.parse_to_command("list files")
+        result = self.parser.parse("list files")
         self.assertIn("error", result)
         self.assertEqual(result["error"], "LLM Error")
 
@@ -49,13 +49,13 @@ class TestNaturalLanguageParser(unittest.TestCase):
         """Test handling of empty response from LLM."""
         # Test None response
         self.mock_llm.generate_command.return_value = None
-        result = self.parser.parse_to_command("do something weird")
+        result = self.parser.parse("do something weird")
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Failed to generate command")
 
         # Test empty string response
         self.mock_llm.generate_command.return_value = ""
-        result = self.parser.parse_to_command("do something")
+        result = self.parser.parse("do something")
         self.assertIn("error", result)
         self.assertEqual(result["error"], "Failed to generate command")
 
@@ -74,7 +74,7 @@ class TestNaturalLanguageParser(unittest.TestCase):
         self.mock_llm.generate_command.return_value = "ls -l"
 
         # Test parsing
-        result = parser.parse_to_command("list files")
+        result = parser.parse("list files")
         self.assertEqual(result["plugin"], "file_plugin")
         self.assertEqual(result["verb"], "ls")
         self.assertEqual(result["args"], {"path": ".", "detail": True})
@@ -95,7 +95,7 @@ class TestNaturalLanguageParser(unittest.TestCase):
 
         for cmd, expected_args in cases:
             self.mock_llm.generate_command.return_value = cmd
-            result = self.parser.parse_to_command("dummy input")
+            result = self.parser.parse("dummy input")
             self.assertEqual(result["args"], expected_args)
 
 

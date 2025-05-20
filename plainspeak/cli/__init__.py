@@ -5,6 +5,7 @@ This module provides both a command-line interface for one-off command generatio
 and an interactive REPL mode for continuous command translation.
 """
 
+import shlex
 import subprocess
 import sys
 from typing import Optional, Tuple
@@ -48,17 +49,45 @@ class CommandParser:
             return False, "Empty input"
 
         try:
-            parsed_ast = self.parser.parse(text)
+            # self.parser is NaturalLanguageParser, its 'parse' method returns Union[Tuple[bool, str], Dict[str, Any]]
+            result_from_nlp = self.parser.parse(text)
 
-            if parsed_ast.get("verb"):
-                # Basic command generation
-                command = (
-                    parsed_ast["verb"] + " " + " ".join(f"--{k} {v}" for k, v in parsed_ast.get("args", {}).items())
-                )
-                return True, command
+            if isinstance(result_from_nlp, dict):
+                parsed_ast = result_from_nlp
+                if parsed_ast.get("verb"):
+                    # Basic command generation
+                    # Ensure args are handled correctly, e.g., boolean flags without values
+                    command_parts = [parsed_ast["verb"]]
+                    args_dict = parsed_ast.get("args", {})
+                    for k, v in args_dict.items():
+                        if isinstance(v, bool):
+                            if v is True:  # Add flag if true
+                                command_parts.append(f"--{k}")
+                        else:  # Add option with value
+                            command_parts.append(f"--{k}")
+                            command_parts.append(shlex.quote(str(v)))  # Quote values
+                    command = " ".join(command_parts)
+                    return True, command
+                else:
+                    # This case implies the dict was returned but had no 'verb'
+                    # which is an issue with the LLM output or its processing.
+                    error_msg = parsed_ast.get("error", "Could not parse command (missing verb in AST)")
+                    return False, error_msg
+            elif (
+                isinstance(result_from_nlp, tuple)
+                and len(result_from_nlp) == 2
+                and isinstance(result_from_nlp[0], bool)
+            ):
+                # This is the (success: bool, message: str) tuple, likely from an error or test mode
+                return result_from_nlp[0], result_from_nlp[1]
             else:
-                return False, "Could not parse command"
+                # Unexpected return type from NaturalLanguageParser.parse
+                return False, "Unexpected result from natural language parser"
+
         except Exception as e:
+            # Log the exception for debugging
+            # import logging
+            # logging.exception("Error in CommandParser.parse_to_command")
             return False, f"Error parsing command: {e}"
 
 
