@@ -63,3 +63,10 @@ repos:
       language: system
       pass_filenames: false
       files: ^pyproject.toml$
+    - id: check-file-length
+      name: Check file length (max 300 lines)
+      description: Ensures files are modular and don't exceed 300 lines
+      entry: python scripts/check_file_length.py
+      language: system
+      pass_filenames: true
+      types: [file, python]

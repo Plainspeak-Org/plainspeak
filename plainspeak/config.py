@@ -20,7 +20,7 @@ DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "config.toml"
 
 # Default model path (can be overridden by config)
 # This is the same as in llm_interface.py, but centralized here for clarity
-DEFAULT_MODEL_FILE_PATH = "models/minicpm-2b-sft.Q2_K.gguf"
+DEFAULT_MODEL_FILE_PATH = "models/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
 
 
 class LLMConfig(BaseModel):

@@ -145,6 +145,23 @@ These tools are configured in `pyproject.toml` and run automatically via pre-com
 - Keep functions focused on a single responsibility
 - Limit line length to 88 characters (as per Black's default)
 - Use f-strings for string formatting
+- **Keep files under 300 lines**: Files exceeding 300 lines should be modularized into smaller, more focused components
+
+### File Length Limits
+
+We enforce a strict limit of 300 lines per file to ensure code remains modular and maintainable. The pre-commit hook will fail if files exceed this limit, requiring you to refactor before committing. This promotes:
+
+- Better code organization
+- Improved readability
+- Easier testing
+- Clear separation of concerns
+- Enhanced maintainability
+
+When a file approaches the limit, consider:
+- Extracting utility functions to separate modules
+- Splitting large classes into smaller, focused ones
+- Moving related functionality to specialized modules
+- Refactoring to remove duplication
 
 ## Testing
 

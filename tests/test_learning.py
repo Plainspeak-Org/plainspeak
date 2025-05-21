@@ -3,7 +3,6 @@ Tests for the learning module.
 """
 
 import json
-import sqlite3
 import tempfile
 from pathlib import Path
 
@@ -14,43 +13,30 @@ from plainspeak.learning import LearningStore
 
 
 @pytest.fixture
-def temp_db_path():
-    """Create a temporary database file."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as f:
-        temp_path = Path(f.name)
-
-    yield temp_path
-
-    # Cleanup
-    if temp_path.exists():
-        temp_path.unlink()
+def temp_data_dir():
+    """Create a temporary directory for JSON files."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield Path(temp_dir)
 
 
-def test_learning_store_init(temp_db_path):
-    """Test LearningStore initialization and database creation."""
-    LearningStore(temp_db_path)
+def test_learning_store_init(temp_data_dir):
+    """Test LearningStore initialization and file creation."""
+    LearningStore(temp_data_dir)
 
-    # Check that the database file was created
-    assert temp_db_path.exists()
+    # Check that JSON files were created
+    assert (temp_data_dir / "commands.json").exists()
+    assert (temp_data_dir / "feedback.json").exists()
+    assert (temp_data_dir / "patterns.json").exists()
 
-    # Check that the tables were created
-    conn = sqlite3.connect(temp_db_path)
-    cursor = conn.cursor()
-
-    # Get list of tables
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
-
-    assert "commands" in tables
-    assert "feedback" in tables
-    assert "patterns" in tables
-
-    conn.close()
+    # Check that files contain valid empty JSON arrays
+    for filename in ["commands.json", "feedback.json", "patterns.json"]:
+        content = (temp_data_dir / filename).read_text()
+        assert json.loads(content) == []
 
 
-def test_add_command(temp_db_path):
+def test_add_command(temp_data_dir):
     """Test adding a command to the learning store."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add a command
     command_id = store.add_command(
@@ -61,25 +47,20 @@ def test_add_command(temp_db_path):
     )
 
     # Check that the command was added
-    conn = sqlite3.connect(temp_db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT natural_text, generated_command, executed, success FROM commands WHERE id = ?",
-        (command_id,),
-    )
-    row = cursor.fetchone()
-    conn.close()
+    commands = json.loads((temp_data_dir / "commands.json").read_text())
+    assert len(commands) == 1
+    cmd = commands[0]
 
-    assert row is not None
-    assert row[0] == "list files"
-    assert row[1] == "ls -la"
-    assert row[2] == 1  # executed = True
-    assert row[3] == 1  # success = True
+    assert cmd["id"] == command_id
+    assert cmd["natural_text"] == "list files"
+    assert cmd["generated_command"] == "ls -la"
+    assert cmd["executed"] is True
+    assert cmd["success"] is True
 
 
-def test_update_command_execution(temp_db_path):
+def test_update_command_execution(temp_data_dir):
     """Test updating a command's execution status."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add a command
     command_id = store.add_command(
@@ -93,20 +74,16 @@ def test_update_command_execution(temp_db_path):
     store.update_command_execution(command_id, True, True)
 
     # Check that the status was updated
-    conn = sqlite3.connect(temp_db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT executed, success FROM commands WHERE id = ?", (command_id,))
-    row = cursor.fetchone()
-    conn.close()
+    commands = json.loads((temp_data_dir / "commands.json").read_text())
+    cmd = next(c for c in commands if c["id"] == command_id)
 
-    assert row is not None
-    assert row[0] == 1  # executed = True
-    assert row[1] == 1  # success = True
+    assert cmd["executed"] is True
+    assert cmd["success"] is True
 
 
-def test_update_command_edit(temp_db_path):
+def test_update_command_edit(temp_data_dir):
     """Test updating a command with user edits."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add a command
     command_id = store.add_command(natural_text="list files", generated_command="ls", executed=False)
@@ -115,20 +92,16 @@ def test_update_command_edit(temp_db_path):
     store.update_command_edit(command_id, "ls -la")
 
     # Check that the edit was saved
-    conn = sqlite3.connect(temp_db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT edited, edited_command FROM commands WHERE id = ?", (command_id,))
-    row = cursor.fetchone()
-    conn.close()
+    commands = json.loads((temp_data_dir / "commands.json").read_text())
+    cmd = next(c for c in commands if c["id"] == command_id)
 
-    assert row is not None
-    assert row[0] == 1  # edited = True
-    assert row[1] == "ls -la"
+    assert cmd["edited"] is True
+    assert cmd["edited_command"] == "ls -la"
 
 
-def test_add_feedback(temp_db_path):
+def test_add_feedback(temp_data_dir):
     """Test adding feedback for a command."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add a command
     command_id = store.add_command(natural_text="list files", generated_command="ls -la")
@@ -137,23 +110,18 @@ def test_add_feedback(temp_db_path):
     store.add_feedback(command_id, "approve", "Great command!")
 
     # Check that the feedback was added
-    conn = sqlite3.connect(temp_db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT feedback_type, feedback_text FROM feedback WHERE command_id = ?",
-        (command_id,),
-    )
-    row = cursor.fetchone()
-    conn.close()
+    feedbacks = json.loads((temp_data_dir / "feedback.json").read_text())
+    assert len(feedbacks) == 1
+    feedback = feedbacks[0]
 
-    assert row is not None
-    assert row[0] == "approve"
-    assert row[1] == "Great command!"
+    assert feedback["command_id"] == command_id
+    assert feedback["feedback_type"] == "approve"
+    assert feedback["feedback_text"] == "Great command!"
 
 
-def test_get_command_history(temp_db_path):
+def test_get_command_history(temp_data_dir):
     """Test getting command history."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add multiple commands
     for i in range(5):
@@ -176,49 +144,36 @@ def test_get_command_history(temp_db_path):
     assert "success" in history.columns
 
 
-def test_get_command_with_feedback(temp_db_path):
-    """Test getting a command with its feedback."""
-    store = LearningStore(temp_db_path)
+def test_get_similar_examples(temp_data_dir):
+    """Test finding similar examples."""
+    store = LearningStore(temp_data_dir)
 
-    # Add a command with system and environment info
-    system_info = {"os": "test_os", "version": "1.0"}
-    env_info = {"cwd": "/test", "shell": "bash"}
-
-    command_id = store.add_command(
-        natural_text="list files",
+    # Add some test commands
+    store.add_command(
+        natural_text="list all files",
         generated_command="ls -la",
         executed=True,
         success=True,
-        system_info=system_info,
-        environment_info=env_info,
+    )
+    store.add_command(
+        natural_text="show hidden files",
+        generated_command="ls -a",
+        executed=True,
+        success=True,
     )
 
-    # Add feedback
-    store.add_feedback(command_id, "approve", "Great!")
-    store.add_feedback(command_id, "comment", "Very useful")
+    # Find similar examples
+    examples = store.get_similar_examples("list hidden files", limit=2)
 
-    # Get command with feedback
-    command_data, feedback_list = store.get_command_with_feedback(command_id)
-
-    # Check command data
-    assert command_data["natural_text"] == "list files"
-    assert command_data["generated_command"] == "ls -la"
-    assert command_data["executed"] == 1
-    assert command_data["success"] == 1
-    assert command_data["system_info"] == system_info
-    assert command_data["environment_info"] == env_info
-
-    # Check feedback
-    assert len(feedback_list) == 2
-    assert feedback_list[0]["feedback_type"] == "approve"
-    assert feedback_list[0]["feedback_text"] == "Great!"
-    assert feedback_list[1]["feedback_type"] == "comment"
-    assert feedback_list[1]["feedback_text"] == "Very useful"
+    assert len(examples) == 2
+    # Should match both due to common words, with "list" command having higher score
+    assert any(ex[0] == "list all files" for ex in examples)
+    assert any(ex[0] == "show hidden files" for ex in examples)
 
 
-def test_export_training_data(temp_db_path):
+def test_export_training_data(temp_data_dir):
     """Test exporting training data."""
-    store = LearningStore(temp_db_path)
+    store = LearningStore(temp_data_dir)
 
     # Add some successful commands
     store.add_command(
