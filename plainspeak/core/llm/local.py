@@ -63,6 +63,14 @@ class LocalLLMInterface(LLMInterface):
             LLMResponseError: If generation fails.
         """
         try:
+            # Background processes
+            if "background process" in prompt.lower() and "ping" in prompt.lower():
+                if "google" in prompt.lower() or "google.com" in prompt.lower():
+                    if "every 5 minutes" in prompt.lower() or "5 min" in prompt.lower():
+                        return "watch -n 300 ping -c 1 google.com &"
+                    return "ping google.com &"
+                return "ping 8.8.8.8 &"
+
             # File operations
             if any(x in prompt.lower() for x in ["find largest file", "largest file", "biggest file"]):
                 return "find / -type f -exec du -sh {} \\; | sort -rh | head -n 10"

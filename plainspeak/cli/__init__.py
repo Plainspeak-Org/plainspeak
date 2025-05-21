@@ -34,6 +34,17 @@ app.command(name="config")(config_command)
 app.command(name="plugins")(plugins_command)
 
 
+# Add a callback to handle direct commands without 'translate' verb
+@app.callback(invoke_without_command=True)
+def callback(ctx: typer.Context, text: str = typer.Argument(None, help="Natural language command to translate")):
+    """Process natural language without requiring the 'translate' verb."""
+    if ctx.invoked_subcommand:
+        return  # Let the subcommand handle it
+
+    if text:
+        translate_command(text)
+
+
 @app.command()
 def shell():
     """Start an interactive shell for translating natural language to commands."""

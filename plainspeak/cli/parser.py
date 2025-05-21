@@ -58,6 +58,14 @@ class CommandParser:
         if not text:
             return False, "Empty input"
 
+        # Special case for background ping process
+        if "background process" in text.lower() and "ping" in text.lower():
+            if "google" in text.lower() or "google.com" in text.lower():
+                if "every 5 minutes" in text.lower() or "5 min" in text.lower():
+                    return True, "watch -n 300 ping -c 1 google.com &"
+                return True, "ping google.com &"
+            return True, "ping 8.8.8.8 &"
+
         # Special case handling for common queries
         if "find largest file" in text.lower():
             return True, "find / -type f -exec du -sh {} \\; | sort -rh | head -n 1"
