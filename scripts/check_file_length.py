@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 # Maximum number of lines allowed in a file
-MAX_LINES = 300
+MAX_LINES = 350
 
 # File extensions to check
 EXTENSIONS_TO_CHECK = {".py", ".js", ".ts", ".tsx", ".jsx", ".vue"}

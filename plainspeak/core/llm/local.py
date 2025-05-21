@@ -141,24 +141,46 @@ class LocalLLMInterface(LLMInterface):
             if "kernel version" in prompt.lower() or "os version" in prompt.lower():
                 return "uname -a"
 
-            # Get max tokens from config or default - use a very small value to avoid context issues
-            max_tokens = getattr(self.config.llm, "max_tokens", 128) if self.config else 128
+            # Get max tokens from config or default - use a reasonable value for command generation
+            max_tokens = getattr(self.config.llm, "max_new_tokens", 256) if self.config else 256
 
             # Get temperature from config or default
-            temperature = getattr(self.config.llm, "temperature", 0.7) if self.config else 0.7
+            temperature = getattr(self.config.llm, "temperature", 0.2) if self.config else 0.2
 
-            # Use the simplest possible prompt
-            simplified_prompt = f"Command: {prompt[:50]}"
+            # Build a prompt that clearly indicates we need a complete command
+            full_prompt = f"""Generate a complete shell command for this task:
+{prompt}
+
+IMPORTANT: Return a complete, well-formed command with all necessary arguments and syntax.
+Response:"""
 
             if self.using_ctransformers:
                 # Generate with ctransformers
                 try:
-                    return self.model(
-                        simplified_prompt,
+                    response = self.model(
+                        full_prompt,
                         max_new_tokens=max_tokens,
                         temperature=temperature,
                         stop=getattr(self.config.llm, "stop_sequences", None) if self.config else None,
                     )
+
+                    # Check if the response is empty or just 'for'
+                    if not response or response.strip() == "for":
+                        logger.warning("Received incomplete response. Retrying with more explicit prompt.")
+                        # Try once more with an even more explicit prompt
+                        retry_prompt = f"""Task: {prompt}
+Generate a COMPLETE shell command with ALL necessary syntax.
+DO NOT just return 'for' - show the FULL command with all syntax.
+
+Command:"""
+                        response = self.model(
+                            retry_prompt,
+                            max_new_tokens=max_tokens,
+                            temperature=temperature,
+                        )
+
+                    return response
+
                 except Exception as e:
                     # If we get a context length error, return a simple fallback
                     if "context length" in str(e).lower():
@@ -167,7 +189,7 @@ class LocalLLMInterface(LLMInterface):
             else:
                 # Generate with transformers
                 try:
-                    inputs = self.tokenizer(simplified_prompt, return_tensors="pt")
+                    inputs = self.tokenizer(full_prompt, return_tensors="pt")
                     outputs = self.model.generate(
                         **inputs,
                         max_new_tokens=max_tokens,

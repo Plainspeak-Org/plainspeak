@@ -84,15 +84,63 @@ class RemoteLLMInterface(LLMInterface):
             raise RuntimeError("Circuit breaker tripped - too many failures")
 
         try:
+            # Get max_tokens from config or use a reasonable default
+            max_tokens = getattr(self.config.llm, "max_tokens", 1024) if self.config else 1024
+
+            # Get temperature from config or use a reasonable default
+            temperature = getattr(self.config.llm, "temperature", 0.2) if self.config else 0.2
+
+            # Get model name from config or use a reasonable default
+            model_name = getattr(self.config.llm, "model_name", "gpt-3.5-turbo") if self.config else "gpt-3.5-turbo"
+
+            # Log the request details
+            logger.debug(f"Sending request to OpenAI API with model={model_name}, max_tokens={max_tokens}")
+            logger.debug(f"Prompt length: {len(prompt)} characters")
+
+            # Define system message content
+            system_msg = (
+                "You are a specialized shell command generator. " "Always provide complete, executable commands."
+            )
+
             response = self.remote_llm.chat.completions.create(
-                model=self.config.llm.model_name,
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=self.config.llm.max_tokens,
-                temperature=self.config.llm.temperature,
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=max_tokens,
+                temperature=temperature,
             )
 
             self.failure_count = 0  # Reset on success
-            return response.choices[0].message.content
+            content = response.choices[0].message.content
+
+            # Ensure we have meaningful content
+            if not content or content.strip() == "for":
+                # If the LLM returns just "for" or empty content, try again with more explicit instructions
+                logger.warning("Received incomplete response. Retrying with more explicit instructions.")
+
+                # Define retry system message
+                retry_system_msg = "You are a specialized shell command generator. " "Never return incomplete commands."
+
+                response = self.remote_llm.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": retry_system_msg},
+                        {"role": "user", "content": prompt},
+                        {
+                            "role": "assistant",
+                            "content": "I need to provide a complete command. Let me generate the full syntax:",
+                        },
+                    ],
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+
+                content = response.choices[0].message.content
+
+            logger.debug(f"Received response: {content[:50]}...")
+            return content
 
         except Exception as e:
             self.failure_count += 1

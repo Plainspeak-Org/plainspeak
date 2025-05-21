@@ -36,6 +36,22 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
 - `pgrep`: Find processes by name
   - `pgrep -u root`: List all root processes
 
+## Service Management
+- `systemctl`: Control the systemd system and service manager
+  - `systemctl list-unit-files --type=service`: List all services
+  - `systemctl list-unit-files --type=service --state=enabled`: List services that start at boot
+  - `systemctl status service_name`: Check status of a service
+  - `systemctl start/stop/restart service_name`: Control a service
+  - `systemctl enable/disable service_name`: Enable/disable a service at boot
+- `service`: Legacy service management (Debian/Ubuntu)
+  - `service --status-all`: List all services and their status
+  - `service service_name status/start/stop/restart`: Control a service
+- `chkconfig`: Legacy service management (Red Hat/CentOS)
+  - `chkconfig --list`: List services and runlevel information
+- `rc-service`: Service management (Alpine/Gentoo)
+  - `rc-service -l`: List available services
+  - `rc-update show`: List services enabled at boot
+
 ## System Information
 - `df`: Disk space usage
   - `df -h`: Human-readable disk space
@@ -47,6 +63,13 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
 - `lsblk`: List block devices
 - `lsof`: List open files
   - `lsof -i :PORT`: Show process using a port
+  - `lsof -i -P -n`: List all open ports and their processes
+- `ss`: Socket statistics (modern alternative to netstat)
+  - `ss -tuln`: List all listening ports
+  - `ss -tulnp`: List all listening ports with the process using them
+- `netstat`: Network statistics
+  - `netstat -tulnp`: List all listening ports with the process
+  - `netstat -an | grep LISTEN`: Show all listening ports
 - `last`: Show last logins
   - `last -10`: Show last 10 logins
   - `last -n 20 -F`: Show last 20 logins with full dates
@@ -162,6 +185,12 @@ Here are examples of complex queries and appropriate commands:
 
 - "Create a backup of all configuration files"
   → `find /etc -type f -name "*.conf" -exec tar -rvf config_backup.tar {} \;`
+
+- "List all services that start at boot"
+  → `systemctl list-unit-files --type=service --state=enabled`
+
+- "What ports are currently in use?"
+  → `ss -tulnp`
 
 When translating queries, consider the user's intent and provide the most appropriate command with necessary options. Prefer safer commands where possible (e.g., add `-i` to `rm` for confirmation). For complex operations, combine commands using pipelines (|), command substitution $(command), or semicolons for sequences.
 

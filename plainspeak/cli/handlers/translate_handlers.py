@@ -144,17 +144,22 @@ def handle_translate(shell, args, parser):
             verb = parsed_ast["verb"]
             args_dict = parsed_ast.get("args", {})
 
-            # Reconstruct command string
-            command_parts = [verb]
-            for k, v in args_dict.items():
-                if isinstance(v, bool) and v is True:  # Handle boolean flags
-                    command_parts.append(f"--{k}")
-                elif v is not None:  # Add other args
-                    command_parts.append(f"--{k}")
-                    command_parts.append(str(v))
+            # Handle complex commands where the entire command is already in the verb
+            if verb.startswith("for ") or verb.startswith("find "):
+                result = verb
+                success = True
+            else:
+                # Reconstruct command string
+                command_parts = [verb]
+                for k, v in args_dict.items():
+                    if isinstance(v, bool) and v is True:  # Handle boolean flags
+                        command_parts.append(f"--{k}")
+                    elif v is not None:  # Add other args
+                        command_parts.append(f"--{k}")
+                        command_parts.append(str(v))
 
-            result = " ".join(command_parts)
-            success = True
+                result = " ".join(command_parts)
+                success = True
         else:
             result = "Error: Could not parse command from natural language."
             success = False

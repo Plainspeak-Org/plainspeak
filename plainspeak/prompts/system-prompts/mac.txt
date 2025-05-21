@@ -93,6 +93,9 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
 - `nettop`: Monitor network usage (built-in macOS tool)
   - `nettop -m route`: Monitor by route
   - `nettop -P -J bytes_in,bytes_out`: Show bytes in/out
+- `lsof -i -P -n`: List all open ports and associated processes
+- `netstat -an | grep LISTEN`: Show all listening ports
+- `sudo lsof -i :PORT`: Show the process using a specific port
 
 ## Spotlight
 - `mdfind`: Command-line Spotlight search
@@ -170,6 +173,19 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
   - `softwareupdate --list`: List available updates
   - `softwareupdate --install -a`: Install all updates
 
+## Service Management
+- `launchctl`: Service management on macOS
+  - `launchctl list`: List all running services
+  - `sudo launchctl list`: List all system services
+  - `ls -la /Library/LaunchDaemons/`: List system-wide daemons that start at boot
+  - `ls -la /Library/LaunchAgents/`: List system-wide agents that start at user login
+  - `ls -la ~/Library/LaunchAgents/`: List user agents that start at login
+  - `launchctl start/stop com.service.name`: Start/stop a service
+  - `sudo launchctl load/unload /Library/LaunchDaemons/service.plist`: Load/unload a service
+- `brew services`: For Homebrew-installed services
+  - `brew services list`: List all available services
+  - `brew services start/stop/restart name`: Control a service
+
 ## Complex Command Examples
 
 Here are examples of complex queries and appropriate commands:
@@ -197,6 +213,12 @@ Here are examples of complex queries and appropriate commands:
 
 - "Create a backup of all configuration files"
   → `find /etc -type f -name "*.conf" -exec tar -rvf config_backup.tar {} \;`
+
+- "List all services that start at boot"
+  → `ls -la /Library/LaunchDaemons/`
+
+- "What ports are currently in use?"
+  → `lsof -i -P -n | grep LISTEN`
 
 When translating queries, consider the user's intent and provide the most appropriate command with necessary options. For complex operations, combine commands using pipelines (|), command substitution $(command), or semicolons for sequences.
 

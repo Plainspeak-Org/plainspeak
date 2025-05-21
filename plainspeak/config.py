@@ -31,7 +31,8 @@ class LLMConfig(BaseModel):
     model_type: str = Field("llama", description="Type of the model (e.g., 'llama', 'gptneox').")
     gpu_layers: int = Field(0, description="Number of model layers to offload to GPU. 0 for CPU only.")
     # Default generation parameters
-    max_new_tokens: int = Field(100, description="Maximum new tokens for command generation.")
+    max_new_tokens: int = Field(256, description="Maximum new tokens for command generation.")
+    max_tokens: int = Field(1024, description="Maximum tokens for remote LLM API calls.")
     temperature: float = Field(0.2, description="Sampling temperature for generation.")
     top_k: int = Field(50, description="Top-k sampling.")
     top_p: float = Field(0.9, description="Top-p (nucleus) sampling.")
@@ -87,7 +88,8 @@ class AppConfig(BaseModel):
             model_path=DEFAULT_MODEL_FILE_PATH,
             model_type="llama",
             gpu_layers=0,
-            max_new_tokens=100,
+            max_new_tokens=256,
+            max_tokens=1024,
             temperature=0.2,
             top_k=50,
             top_p=0.9,

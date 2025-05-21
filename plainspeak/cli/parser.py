@@ -4,6 +4,7 @@ Command Parser for PlainSpeak.
 This module provides the CommandParser class for translating natural language to shell commands.
 """
 
+import logging
 import re
 import shlex
 from typing import Tuple
@@ -16,6 +17,8 @@ from ..core.parser import NaturalLanguageParser
 
 # Create console for rich output
 console = Console()
+# Set up logger
+logger = logging.getLogger(__name__)
 
 
 class CommandParser:
@@ -94,6 +97,39 @@ class CommandParser:
         if "find largest file" in text.lower():
             return True, "find / -type f -exec du -sh {} \\; | sort -rh | head -n 1"
 
+        # Special case for shell or terminal commands
+        if text.lower() in ["shell", "terminal", "console", "open shell", "start shell", "interactive"]:
+            return True, "echo 'Starting interactive shell mode...'"
+
+        # Special case for finding images
+        if "find" in text.lower() and "image" in text.lower():
+            if "current directory" in text.lower() or "current dir" in text.lower() or "this directory" in text.lower():
+                return (
+                    True,
+                    'find . -type f -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o '
+                    '-name "*.gif" -o -name "*.bmp" -o -name "*.svg"',
+                )
+            else:
+                # Try to extract directory if mentioned
+                dir_match = re.search(r"in\s+(\S+\s+\S+|\S+)\s+directory", text.lower())
+                if dir_match:
+                    directory = dir_match.group(1).strip()
+                    # Handle special cases like "home" or "documents"
+                    if directory == "home":
+                        directory = "~"
+                    elif directory in ["documents", "downloads", "pictures", "music", "videos"]:
+                        directory = f"~/{directory.capitalize()}"
+                    return (
+                        True,
+                        f'find {directory} -type f -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o '
+                        f'-name "*.gif" -o -name "*.bmp" -o -name "*.svg"',
+                    )
+                return (
+                    True,
+                    'find . -type f -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o '
+                    '-name "*.gif" -o -name "*.bmp" -o -name "*.svg"',
+                )
+
         if "disk space" in text.lower():
             return True, "df -h"
 
@@ -122,7 +158,7 @@ class CommandParser:
             return True, "mkdir -p new_directory"
 
         try:
-            # self.parser is NaturalLanguageParser, its 'parse' method returns Union[Tuple[bool, str], Dict[str, Any]]
+            # First attempt to use the improved LLM interface with enhanced prompting
             result_from_nlp = self.parser.parse(text)
 
             if isinstance(result_from_nlp, dict):
@@ -132,6 +168,11 @@ class CommandParser:
                     # Ensure args are handled correctly, e.g., boolean flags without values
                     command_parts = [parsed_ast["verb"]]
                     args_dict = parsed_ast.get("args", {})
+
+                    # Handle complex commands where the entire command is in the verb
+                    if parsed_ast["verb"].startswith("for ") or parsed_ast["verb"].startswith("find "):
+                        return True, parsed_ast["verb"]
+
                     for k, v in args_dict.items():
                         if isinstance(v, bool):
                             if v is True:  # Add flag if true
@@ -140,37 +181,98 @@ class CommandParser:
                             command_parts.append(f"--{k}")
                             command_parts.append(shlex.quote(str(v)))  # Quote values
                     command = " ".join(command_parts)
+
+                    # Check if the command is just "for" (a common failure case)
+                    if command == "for":
+                        # Fall back to our OS-specific system commands based on the query
+                        return self._get_fallback_command(text)
+
                     return True, command
                 else:
                     # This case implies the dict was returned but had no 'verb'
-                    # which is an issue with the LLM output or its processing.
-                    error_msg = parsed_ast.get("error", "Could not parse command (missing verb in AST)")
-                    return False, error_msg
+                    # Try the fallback command
+                    return self._get_fallback_command(text)
             elif (
                 isinstance(result_from_nlp, tuple)
                 and len(result_from_nlp) == 2
                 and isinstance(result_from_nlp[0], bool)
             ):
-                # This is the (success: bool, message: str) tuple, likely from an error or test mode
-                return result_from_nlp[0], result_from_nlp[1]
-            else:
-                # Unexpected return type from NaturalLanguageParser.parse
-                return False, "Unexpected result from natural language parser"
+                # This is the (success: bool, message: str) tuple
+                success, message = result_from_nlp
 
-        except NotImplementedError:
-            # Special handling for NotImplementedError which likely means LLM is not configured
-            return False, (
-                "LLM interface not properly configured. Please run 'plainspeak config --download-model' "
-                "to set up the default model, or 'plainspeak config' to view your current configuration."
-            )
+                # If the message is "for", try our fallback
+                if not success or message.strip() == "for":
+                    return self._get_fallback_command(text)
+
+                return success, message
+            else:
+                # Unexpected return type, try fallback
+                return self._get_fallback_command(text)
+
         except Exception as e:
-            # Log the exception for debugging
-            # import logging
-            # logging.exception("Error in CommandParser.parse_to_command")
-            error_message = str(e).strip()
-            if not error_message:
-                error_message = f"An unexpected error of type {type(e).__name__} occurred during parsing."
-            return False, error_message
+            # Log the exception and try fallback
+            logger.error(f"Error in parsing: {e}")
+            return self._get_fallback_command(text)
+
+    def _get_fallback_command(self, text: str) -> Tuple[bool, str]:
+        """
+        Get a fallback command for common system queries.
+
+        Args:
+            text: The natural language text.
+
+        Returns:
+            Tuple of (success, command or error message).
+        """
+        text_lower = text.lower()
+        import platform
+
+        os_name = platform.system().lower()
+
+        # Services that start at boot
+        if "service" in text_lower and "boot" in text_lower:
+            if os_name == "linux":
+                return True, "systemctl list-unit-files --type=service --state=enabled"
+            elif os_name == "darwin":  # macOS
+                return True, "ls -la /Library/LaunchDaemons/"
+            elif os_name == "windows":
+                return True, 'powershell -Command "Get-Service | Where-Object {$_.StartType -eq "Automatic"}"'
+
+        # Ports in use
+        if "port" in text_lower and ("use" in text_lower or "open" in text_lower or "listen" in text_lower):
+            if os_name == "linux":
+                return True, "ss -tulnp"
+            elif os_name == "darwin":  # macOS
+                return True, "lsof -i -P -n | grep LISTEN"
+            elif os_name == "windows":
+                return (
+                    True,
+                    'powershell -Command "Get-NetTCPConnection -State Listen | '
+                    'Select-Object LocalPort, OwningProcess, @{Name="ProcessName";'
+                    'Expression={(Get-Process -Id $_.OwningProcess).Name}} | Sort-Object LocalPort"',
+                )
+
+        # Default fallback: try the enhanced system prompt approach via LLM
+        try:
+            # Create a more specific prompt to guide the LLM
+            import platform
+
+            os_name = platform.system()
+            os_specific_prompt = f"""Generate a complete shell command for this task on {os_name}:
+{text}
+
+IMPORTANT: Return a complete, well-formed command with all necessary arguments and syntax.
+Do not return just 'for' without the full syntax.
+Command:"""
+
+            command = self.llm.generate(os_specific_prompt)
+            if command and command.strip() != "for":
+                return True, command
+        except Exception as e:
+            logger.error(f"Fallback generation failed: {e}")
+
+        # If all else fails, return an apologetic message
+        return False, "Unable to generate a complete command for this request."
 
     def _extract_directory_name(self, text: str) -> str:
         """Extract directory name from natural language text."""

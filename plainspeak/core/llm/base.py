@@ -1,29 +1,30 @@
-"""Base classes for LLM interfaces."""
+"""Base classes and interfaces for LLM integrations."""
 
-import json
 import logging
+import os
 import platform
-import re
-from pathlib import Path
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
+
+from . import parsers
 
 logger = logging.getLogger(__name__)
 
+# Import the LLMParsingError as LLMResponseError for backward compatibility
+LLMResponseError = parsers.LLMParsingError
 
-class LLMResponseError(Exception):
-    """Raised when there's an error processing LLM response."""
 
-
-class LLMInterface:
+class LLMInterface(ABC):
     """Base interface for LLM interactions."""
 
     def __init__(self, config=None):
-        """Initialize LLM interface."""
-        self.config = config
+        """Initialize LLM interface with optional config."""
+        self.config = config  # Configuration object
 
+    @abstractmethod
     def generate(self, prompt: str) -> str:
         """
-        Generate text from prompt.
+        Generate text using the LLM.
 
         Args:
             prompt: Input prompt string.
@@ -32,79 +33,88 @@ class LLMInterface:
             Generated text response.
 
         Raises:
-            NotImplementedError: If the method is not implemented by a subclass.
-            LLMResponseError: If generation fails.
+            NotImplementedError: If not implemented by subclass.
         """
-        raise NotImplementedError(
-            "No LLM provider configured. Please run 'plainspeak config --download-model' to set up the default model."
-        )
+        raise NotImplementedError("Subclass must implement abstract method")
 
     def _get_system_prompt(self) -> str:
         """
-        Get the appropriate system prompt based on the operating system.
+        Get the system prompt based on the current operating system.
 
         Returns:
-            System prompt content as string
+            System prompt as a string.
         """
+        # Identify the current OS
         os_name = platform.system().lower()
 
-        if os_name == "darwin":
-            prompt_file = "mac.txt"
-        elif os_name == "windows":
-            prompt_file = "windows.txt"
-        else:
-            prompt_file = "linux.txt"
+        # Default paths for system prompts
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        prompt_dir = os.path.join(base_dir, "prompts", "system-prompts")
 
-        # Construct path to prompt file
-        base_dir = Path(__file__).parent.parent.parent
-        prompt_path = base_dir / "prompts" / "system-prompts" / prompt_file
+        # Map OS to prompt file
+        prompt_files = {
+            "linux": os.path.join(prompt_dir, "linux.txt"),
+            "darwin": os.path.join(prompt_dir, "mac.txt"),
+            "windows": os.path.join(prompt_dir, "windows.txt"),
+        }
+
+        # Get the appropriate prompt file
+        prompt_file = prompt_files.get(os_name, prompt_files["linux"])  # Default to Linux if OS not recognized
 
         try:
-            if prompt_path.exists():
-                with open(prompt_path, "r") as f:
+            # Try to load the prompt from file
+            if os.path.exists(prompt_file):
+                with open(prompt_file, "r") as f:
                     return f.read()
             else:
-                logger.warning(f"System prompt file not found: {prompt_path}")
-                return ""
+                # Fallback to generic prompt if file not found
+                logger.warning(f"System prompt file not found: {prompt_file}")
+                return "You are a specialized shell command generator. Provide complete, executable commands."
+
         except Exception as e:
             logger.error(f"Error loading system prompt: {e}")
-            return ""
+            # Generic fallback prompt
+            return "You are a specialized shell command generator. Provide complete, executable commands."
 
     def generate_command(self, input_text: str) -> str:
         """
         Generate a shell command from natural language input.
 
-        This is a convenience wrapper around generate() that formats the prompt
-        for command generation and includes system prompts based on OS.
-
         Args:
-            input_text: Natural language description of the desired command
+            input_text: Natural language input describing desired command.
 
         Returns:
-            The generated command
+            Generated shell command as a string.
         """
-        # Get the appropriate system prompt for the current OS
+        # Use system prompt based on OS
         system_prompt = self._get_system_prompt()
 
-        # Create a prompt with system instructions and user query
-        if system_prompt:
-            prompt = f"""{system_prompt}
+        # Create an enhanced prompt that guides the LLM
+        enhanced_prompt = f"""{system_prompt}
 
 USER QUERY: {input_text}
 
-Respond with a single command that accomplishes this task, without explanation."""
-        else:
-            # Fallback to simple prompt if system prompt not available
-            prompt = f"""Generate a shell command that accomplishes the following task:
-{input_text}
+IMPORTANT GUIDANCE:
+1. Respond with ONLY the exact command that would accomplish this task.
+2. For system queries about services, ports, or processes, use the appropriate commands.
+3. Be specific and complete - include all necessary flags and options.
+4. Never return placeholder commands like 'for' without full syntax.
+5. Format your response as a single line executable command.
 
-Return just the command with no explanation or markdown."""
+Now provide the single best command:"""
 
-        # Log the information
-        logger.info(f"Using {'OS-specific' if system_prompt else 'generic'} prompt for command generation")
+        try:
+            response = self.generate(enhanced_prompt)
 
-        # Generate using default parameters
-        return self.generate(prompt)
+            # Simple cleanup - take first non-empty line if there are multiple
+            lines = [line for line in response.strip().split("\n") if line.strip()]
+            if lines:
+                return lines[0].strip()
+
+            return response.strip()
+        except Exception as e:
+            logger.error(f"Command generation failed: {e}")
+            return f"echo 'Error generating command: {str(e)}'"
 
     def parse_intent(self, text: str, context=None) -> Optional[Dict[str, Any]]:
         """
@@ -132,10 +142,27 @@ Return just the command with no explanation or markdown."""
                 logger.info("Using hardcoded response for 'disk space'")
                 return {"verb": "df", "args": {"h": True}}
 
-            # Get the command from the generate method
-            # This will handle context length issues and provide fallbacks
+            # Get the command from the generate method with enhanced prompt
+            # Use a more specific prompt for system commands to help the LLM
             logger.info(f"Generating response for: {text}")
-            response = self.generate(text)
+
+            # Create an enhanced prompt that guides the LLM
+            system_prompt = self._get_system_prompt()
+            enhanced_prompt = f"""{system_prompt}
+
+USER QUERY: {text}
+
+IMPORTANT GUIDANCE:
+1. Respond with ONLY the exact command that would accomplish this task.
+2. For system queries about services, ports, or processes, use the appropriate commands from the reference.
+3. Be specific and complete - include all necessary flags and options.
+4. Never return partial, placeholder, or generic commands like 'for' without the full syntax.
+5. If unsure, use the most common command for the current operating system.
+6. Format your response as a complete, executable command.
+
+Now provide the single best command:"""
+
+            response = self.generate(enhanced_prompt)
             logger.info(f"Generated response: {response}")
 
             # If the response is just a command string, wrap it in a simple structure
@@ -143,11 +170,17 @@ Return just the command with no explanation or markdown."""
                 command = response.strip()
                 # Extract the first word as the verb
                 parts = command.split()
+
+                # Fix for 'for' loops - don't just extract the first word
+                if parts and parts[0] == "for":
+                    # Handle for loop by keeping the full command
+                    return {"verb": command, "args": {}}
+
                 verb = parts[0] if parts else ""
                 logger.info(f"Extracted verb: {verb}")
                 return {"verb": verb, "args": {}}
 
-            return self._parse_llm_response(response, text)
+            return parsers.parse_llm_response(response, text)
         except Exception as e:
             logger.error(f"Failed to parse intent: {e}")
             # If we get a context length error, return a simple fallback
@@ -185,88 +218,13 @@ Return just the command with no explanation or markdown."""
         try:
             # Add locale information to the prompt
             system_prompt = self._get_system_prompt()
-
-            if system_prompt:
-                prompt = f"""{system_prompt}
-
-USER QUERY (locale: {locale}): {text}
-
-Respond with a single command that accomplishes this task, without explanation."""
-            else:
-                prompt = f"Parse intent (locale: {locale}): {text}"
-
+            prompt = parsers.create_prompt_with_locale(system_prompt, text, locale)
             response = self.generate(prompt)
-            return self._parse_llm_response(response, text)
+
+            return parsers.parse_llm_response(response, text)
         except Exception as e:
             logger.error(f"Failed to parse intent with locale: {e}")
             # If parsing fails, fall back to a simple command structure
             if "memory" in text.lower() and "process" in text.lower():
                 return {"verb": "ps", "args": {"aux": True, "sort": "-rss", "head": "10"}}
             return None
-
-    def _parse_llm_response(self, response: str, original_command: str = None) -> Dict[str, Any]:
-        """
-        Parse LLM response into structured data.
-
-        Args:
-            response: Raw LLM response text.
-            original_command: Original user command (optional).
-
-        Returns:
-            Dict containing parsed command structure.
-
-        Raises:
-            LLMResponseError: If parsing fails.
-        """
-        if not response or not response.strip():
-            # Handle empty responses with fallbacks based on original command
-            if original_command:
-                if "memory" in original_command.lower() and "process" in original_command.lower():
-                    return {"verb": "ps", "args": {"aux": True, "sort": "-rss", "head": "10"}}
-
-                # Extract first word as verb from original command
-                parts = original_command.split()
-                verb = parts[0].lower() if parts else "echo"
-
-                # Basic fallback
-                return {"verb": verb, "args": {}}
-
-            raise LLMResponseError("Empty response from LLM")
-
-        # Try to find JSON in markdown code blocks
-        code_block_pattern = r"```(?:json)?\s*({[^`]+})\s*```"
-        matches = re.findall(code_block_pattern, response)
-
-        if matches:
-            # Take first JSON block found
-            json_str = matches[0]
-        else:
-            # Try treating whole response as JSON if it looks like JSON
-            json_str = response.strip()
-            if not (json_str.startswith("{") and json_str.endswith("}")):
-                # If it's not JSON, extract command and create a simple structure
-                command = response.strip().split("\n")[0]  # Take first line
-                parts = command.split()
-                verb = parts[0] if parts else "echo"
-                return {"verb": verb, "args": {}}
-
-        try:
-            data = json.loads(json_str)
-            if not isinstance(data, dict):
-                raise LLMResponseError("Response is not a JSON object")
-            return data
-        except json.JSONDecodeError as e:
-            # Fall back to simple command structure on JSON parse error
-            if original_command:
-                # Create fallbacks for common queries
-                if "memory" in original_command.lower() and "process" in original_command.lower():
-                    return {"verb": "ps", "args": {"aux": True, "sort": "-rss", "head": "10"}}
-
-            # Extract first line as command
-            command = response.strip().split("\n")[0]
-            parts = command.split()
-            verb = parts[0] if parts else "echo"
-
-            # Log the error but return something usable
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
-            return {"verb": verb, "args": {}}

@@ -151,6 +151,22 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
   - `Test-NetConnection -ComputerName example.com -TraceRoute`: Trace route
   - `Test-NetConnection -ComputerName example.com -InformationLevel Detailed`: Detailed connection info
 
+## Network Connections
+
+### CMD
+- `netstat`: Network statistics
+  - `netstat -ano`: Show all connections and ports
+  - `netstat -ano | findstr LISTENING`: Show listening ports
+  - `netstat -ano | findstr :80`: Show connections on port 80
+- `tasklist`: Find process by PID
+  - `tasklist /FI "PID eq 1234"`: Show process with PID 1234
+
+### PowerShell
+- `Get-NetTCPConnection`: Show TCP connections
+  - `Get-NetTCPConnection -State Listen`: Show listening ports
+  - `Get-NetTCPConnection -LocalPort 80,443`: Show connections on ports 80, 443
+- `Get-Process -Id (Get-NetTCPConnection -LocalPort 80).OwningProcess`: Find process using port 80
+
 ## User Management
 
 ### CMD
@@ -208,23 +224,29 @@ IMPORTANT: If you don't know how to generate a specific command, DO NOT default 
 ## Windows Services
 
 ### CMD
-- `sc`: Service control
-  - `sc query`: List services
-  - `sc start service`: Start service
-  - `sc stop service`: Stop service
-  - `sc config service start= auto`: Set to auto-start
-- `net start`: Start service
-- `net stop`: Stop service
-  - `net start "Windows Update"`: Start Windows Update service
+- `sc`: Service Control Manager
+  - `sc query`: List all running services
+  - `sc query type= service state= all`: List all services
+  - `sc query state= inactive`: List all inactive services
+  - `sc qc servicename`: Show service configuration
+  - `sc start/stop/pause/continue servicename`: Control a service
+  - `sc config servicename start= auto/demand/disabled`: Set service startup type
+- `net`: Network Services
+  - `net start`: List running services
+  - `net start/stop servicename`: Start/stop a service
+- `msconfig`: System Configuration (GUI)
 
 ### PowerShell
-- `Get-Service`: List services
+- `Get-Service`: List all services
   - `Get-Service | Where-Object {$_.Status -eq "Running"}`: List running services
-  - `Get-Service | Where-Object {$_.StartType -eq "Automatic"}`: Show auto-start services
-- `Start-Service`: Start service
-- `Stop-Service`: Stop service
-- `Restart-Service`: Restart service
-  - `Restart-Service -Name "spooler" -Force`: Force restart print spooler
+  - `Get-Service | Where-Object {$_.StartType -eq "Automatic"}`: List services that start at boot
+  - `Get-WmiObject Win32_Service | Where-Object {$_.StartMode -eq "Auto"}`: Alternative way to list boot services
+  - `Get-Service -Name servicename`: Get specific service
+- `Start-Service`/`Stop-Service`: Control services
+  - `Start-Service -Name servicename`: Start a service
+  - `Stop-Service -Name servicename`: Stop a service
+- `Set-Service`: Configure a service
+  - `Set-Service -Name servicename -StartupType Automatic/Manual/Disabled`: Set startup type
 
 ## Registry
 
@@ -311,5 +333,11 @@ Here are examples of complex queries and appropriate commands:
 
 - "Create a backup of all configuration files" (CMD)
   → `for /r C:\Windows\System32\config /f "tokens=*" %a in (*.ini) do copy "%a" "C:\Backup\"`
+
+- "List all services that start at boot" (PowerShell)
+  → `Get-Service | Where-Object {$_.StartType -eq "Automatic"}`
+
+- "What ports are currently in use?" (PowerShell)
+  → `Get-NetTCPConnection -State Listen | Select-Object LocalPort, OwningProcess, @{Name="ProcessName";Expression={(Get-Process -Id $_.OwningProcess).Name}} | Sort-Object LocalPort`
 
 When translating queries, consider the user's intent and choose between CMD and PowerShell based on the complexity of the task. For more technical users or advanced operations, prefer PowerShell. For simple tasks, CMD is often sufficient. DO NOT default to simple commands like 'dir' when a more specific command is needed.
