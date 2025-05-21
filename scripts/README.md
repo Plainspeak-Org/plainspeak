@@ -1,8 +1,14 @@
-# PlainSpeak Asset Generation
+# PlainSpeak Scripts
 
-This directory contains scripts for generating and managing PlainSpeak's assets.
+This directory contains scripts for managing and using PlainSpeak.
 
-## Setup
+## Script Categories
+
+### Asset Generation
+
+For generating and managing PlainSpeak's assets.
+
+#### Setup for Asset Generation
 
 1. Install required packages:
 ```bash
@@ -13,9 +19,8 @@ pip install -r requirements-assets.txt
 - `iconutil` (macOS only, for .icns generation)
 - Cairo graphics library (for SVG conversion)
 
-## Usage
+#### Asset Generation Usage
 
-### Generate All Assets
 ```bash
 python generate_assets.py
 ```
@@ -26,9 +31,66 @@ This will:
 - Generate web assets (favicon, PWA icons)
 - Create all required image sizes
 
-### Generated Assets
+### Command Line Utilities
 
-The script generates assets in the following locations:
+#### PlainSpeak 'pls' Alias
+
+The `pls` script provides a more conversational and natural way to interact with PlainSpeak.
+
+##### Installation
+
+**On Linux/macOS:**
+```bash
+./install_pls.sh
+```
+
+**On Windows (PowerShell):**
+```powershell
+.\install_pls.ps1
+```
+
+##### Usage
+
+Once installed, you can use `pls` as a more intuitive alternative to `plainspeak`:
+
+```bash
+# Basic usage
+pls "find large files in my home directory"
+
+# Convert data formats
+pls "convert all CSV files to JSON format"
+```
+
+The `pls` command functions exactly like `plainspeak` but offers a more conversational experience that aligns with everyday language.
+
+### Testing Scripts
+
+For running the test suite:
+
+```bash
+# Run all tests
+./run_tests.sh
+
+# Run tests with verbose output
+./run_tests.sh -v
+
+# Run specific tests
+./run_tests.sh tests/test_core
+```
+
+### Packaging & Verification
+
+Scripts in this category help with building and verifying packages for different platforms.
+
+See the following READMEs for detailed information:
+- [README-PACKAGING.md](README-PACKAGING.md)
+- [README-VERIFICATION.md](README-VERIFICATION.md)
+- [README-TEST-AUTOMATION.md](README-TEST-AUTOMATION.md)
+- [README-TEST-SUBMISSION.md](README-TEST-SUBMISSION.md)
+
+## Generated Assets
+
+The asset scripts generate assets in the following locations:
 
 ```
 assets/
@@ -51,7 +113,7 @@ assets/
 │       └── pwa-{32,192,512}.png
 ```
 
-### Asset Specifications
+## Asset Specifications
 
 1. **Windows Icons**
    - ICO file containing multiple sizes
@@ -67,20 +129,6 @@ assets/
    - Microsoft Store: All required tile sizes
    - Apple App Store: 1024x1024 icon
    - Web: Progressive Web App icons
-
-### Quality Guidelines
-
-1. **Icon Design**
-   - Clear at all sizes
-   - Consistent style
-   - Platform-specific adjustments
-   - High contrast ratios
-
-2. **Image Quality**
-   - No artifacts
-   - Sharp edges
-   - Proper transparency
-   - Optimal compression
 
 ## Development
 
@@ -119,7 +167,7 @@ Before committing generated assets:
 
 ### Support
 
-For issues with asset generation:
+For issues with the scripts:
 1. Check system requirements
 2. Verify source files exist
 3. Check error messages
@@ -127,13 +175,12 @@ For issues with asset generation:
 
 ## Contributing
 
-When adding or modifying assets:
-1. Follow design guidelines
-2. Use vector sources when possible
-3. Test all target sizes
-4. Update documentation
-5. Submit pull request
+When adding or modifying scripts:
+1. Follow project coding standards
+2. Add documentation in the appropriate README
+3. Test on all target platforms
+4. Submit pull request
 
 ## License
 
-All generated assets are subject to the project's MIT license unless otherwise specified.
+All scripts are subject to the project's MIT license unless otherwise specified.
