@@ -58,6 +58,21 @@ class CommandParser:
         if not text:
             return False, "Empty input"
 
+        # Special case for checking if port is open
+        if "port" in text.lower() and "open" in text.lower():
+            # Attempt to extract port number and host
+            port_match = re.search(r"port\s+(\d+)", text.lower())
+            host_match = re.search(r"(?:on|at|for)\s+([a-zA-Z0-9.-]+)", text.lower())
+
+            if port_match and host_match:
+                port = port_match.group(1)
+                host = host_match.group(1)
+                return True, f"nc -zv {host} {port}"
+            elif port_match:
+                port = port_match.group(1)
+                # Default to localhost if no host is specified
+                return True, f"nc -zv localhost {port}"
+
         # Special case for converting CSV to JSON
         if ("convert" in text.lower() and "csv" in text.lower() and "json" in text.lower()) or (
             "change" in text.lower() and "csv" in text.lower() and "json" in text.lower()

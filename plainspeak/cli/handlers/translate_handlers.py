@@ -5,6 +5,7 @@ This module provides the command handler methods for translating natural languag
 """
 
 import platform
+import re
 
 from rich.console import Console
 
@@ -44,6 +45,43 @@ def handle_translate(shell, args, parser):
 
     console.print(f"Translating: '{text}'", style="blue")
     console.print(f"Target OS: {os_display}", style="blue dim")
+
+    # Special case for checking if port is open
+    if "port" in text.lower() and "open" in text.lower():
+        # Attempt to extract port number and host
+        port_match = re.search(r"port\s+(\d+)", text.lower())
+        host_match = re.search(r"(?:on|at|for)\s+([a-zA-Z0-9.-]+)", text.lower())
+
+        if port_match and host_match:
+            port = port_match.group(1)
+            host = host_match.group(1)
+            result = f"nc -zv {host} {port}"
+            display_command(result)
+
+            if args.execute and result.strip():
+                handle_execute(shell, result, original_text=text)
+            else:
+                # Show hints on how to execute the command
+                console.print("\nTo execute this command:", style="cyan")
+                console.print(f"  Option 1: Type !{result}", style="cyan")
+                console.print(f"  Option 2: Type exec {result}", style="cyan")
+                console.print(f"  Option 3: Run the same query with -e flag: {text} -e", style="cyan")
+            return
+        elif port_match:
+            port = port_match.group(1)
+            # Default to localhost if no host is specified
+            result = f"nc -zv localhost {port}"
+            display_command(result)
+
+            if args.execute and result.strip():
+                handle_execute(shell, result, original_text=text)
+            else:
+                # Show hints on how to execute the command
+                console.print("\nTo execute this command:", style="cyan")
+                console.print(f"  Option 1: Type !{result}", style="cyan")
+                console.print(f"  Option 2: Type exec {result}", style="cyan")
+                console.print(f"  Option 3: Run the same query with -e flag: {text} -e", style="cyan")
+            return
 
     # Special case handling for common queries
     # Memory and process queries

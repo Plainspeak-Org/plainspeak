@@ -75,6 +75,9 @@ def translate_command(
             except Exception as e:
                 console.print(f"Error executing command: {e}", style="red")
                 raise typer.Exit(1)
+        else:
+            # If not executing, let the user know how to execute the command
+            console.print("To execute this command, use the --execute/-e flag", style="blue")
     else:
         # Format the error message for better readability
         if "LLM interface not properly configured" in command or "No LLM provider configured" in command:

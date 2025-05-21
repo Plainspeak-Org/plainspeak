@@ -36,13 +36,18 @@ app.command(name="plugins")(plugins_command)
 
 # Add a callback to handle direct commands without 'translate' verb
 @app.callback(invoke_without_command=True)
-def callback(ctx: typer.Context, text: str = typer.Argument(None, help="Natural language command to translate")):
+def callback(
+    ctx: typer.Context,
+    text: str = typer.Argument(None, help="Natural language command to translate"),
+    execute: bool = typer.Option(False, "--execute", "-e", help="Execute the translated command"),
+):
     """Process natural language without requiring the 'translate' verb."""
     if ctx.invoked_subcommand:
         return  # Let the subcommand handle it
 
     if text:
-        translate_command(text)
+        # Explicitly set execute=False unless the user specified -e/--execute flag
+        translate_command(text, execute=execute)
 
 
 @app.command()

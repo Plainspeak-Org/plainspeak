@@ -57,6 +57,9 @@ You are a Linux command translation assistant. Your task is to understand natura
 - `traceroute`: Trace network path
 - `nmap`: Network exploration and port scanning
   - `nmap -p 1-1000 192.168.1.1`: Scan ports 1-1000
+- `nc`: Netcat utility for port checking and network operations
+  - `nc -zv hostname port`: Check if a specific port is open
+  - Example: `nc -zv 192.168.1.1 22`: Check if SSH port is open on 192.168.1.1
 
 ## Text Processing
 - `cat`: Concatenate and display files

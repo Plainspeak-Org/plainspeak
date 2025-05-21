@@ -23,6 +23,7 @@ class NetworkPlugin(Plugin):
     - scp: Copy files to/from remote servers
     - nslookup/dig: DNS lookup
     - traceroute: Trace network path
+    - port: Check if a port is open
     """
 
     def __init__(self):
@@ -58,6 +59,7 @@ class NetworkPlugin(Plugin):
             "dns",
             "traceroute",
             "trace",
+            "port",
         ]
 
     def generate_command(self, verb: str, args: Dict[str, Any]) -> str:
@@ -75,6 +77,10 @@ class NetworkPlugin(Plugin):
 
         # Ping
         if verb in ["ping", "check"]:
+            # If args contains "port", handle this as port checking
+            if "port" in args:
+                return self._handle_port_check(args)
+
             host = args.get("host", "")
             count = args.get("count", "")
 
@@ -83,6 +89,10 @@ class NetworkPlugin(Plugin):
                 cmd += f" -c {count}"
             cmd += f" {host}"
             return cmd
+
+        # Port checking
+        elif verb == "port":
+            return self._handle_port_check(args)
 
         # Curl
         elif verb in ["curl", "http", "request"]:
@@ -194,6 +204,22 @@ class NetworkPlugin(Plugin):
         # Unknown verb
         else:
             return f"echo 'Unknown network operation: {verb}'"
+
+    def _handle_port_check(self, args: Dict[str, Any]) -> str:
+        """
+        Handle port checking command.
+
+        Args:
+            args: Arguments for port checking.
+
+        Returns:
+            The generated command string.
+        """
+        host = args.get("host", "")
+        port = args.get("port", "")
+
+        # Use nc (netcat) for port checking if available
+        return f"nc -zv {host} {port}"
 
 
 # Register the plugin
