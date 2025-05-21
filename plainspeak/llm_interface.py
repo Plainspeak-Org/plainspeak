@@ -228,6 +228,6 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         print(
-            f"Please check your configuration or provide a valid model path.",
+            "Please check your configuration or provide a valid model path.",
             file=sys.stderr,
         )
