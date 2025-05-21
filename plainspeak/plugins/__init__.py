@@ -60,5 +60,36 @@ def load_all_plugins() -> Dict[str, Any]:
     return plugin_registry
 
 
+# Create plugin manager class to handle plugin operations
+class PluginManager:
+    """
+    Plugin Manager for PlainSpeak.
+
+    Handles plugin discovery, loading, and management.
+    """
+
+    def __init__(self):
+        self.plugins = plugin_registry
+
+    def get_plugin(self, name: str) -> Optional[Any]:
+        """Get a plugin by name."""
+        return self.plugins.get(name)
+
+    def get_all_plugins(self) -> Dict[str, Any]:
+        """Get all loaded plugins."""
+        return self.plugins
+
+    def is_plugin_loaded(self, name: str) -> bool:
+        """Check if a plugin is loaded."""
+        return name in self.plugins
+
+    def reload_plugins(self) -> Dict[str, Any]:
+        """Reload all plugins."""
+        return load_all_plugins()
+
+
 # Load all plugins when the package is imported
 load_all_plugins()
+
+# Create a singleton instance of the plugin manager
+plugin_manager = PluginManager()
