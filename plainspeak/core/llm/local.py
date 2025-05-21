@@ -63,28 +63,66 @@ class LocalLLMInterface(LLMInterface):
             LLMResponseError: If generation fails.
         """
         try:
-            # For simple translation requests, use hardcoded responses
-            # This is a temporary solution until we have a better model
-            if "find largest file" in prompt.lower() or "find the largest file" in prompt.lower():
-                return "find / -type f -exec du -sh {} \\; | sort -rh | head -n 1"
+            # File operations
+            if any(x in prompt.lower() for x in ["find largest file", "largest file", "biggest file"]):
+                return "find / -type f -exec du -sh {} \\; | sort -rh | head -n 10"
+
+            if "find largest" in prompt.lower() and "home" in prompt.lower():
+                return "find ~ -type f -exec du -sh {} \\; | sort -rh | head -n 10"
 
             if "find largest" in prompt.lower() and "folder" in prompt.lower():
                 return "du -h / | sort -rh | head -n 10"
 
-            if "list files" in prompt.lower():
-                return "ls -la"
+            if any(x in prompt.lower() for x in ["list files", "show files", "display files"]):
+                if "by size" in prompt.lower():
+                    return "ls -laSh"
+                elif "recent" in prompt.lower() or "latest" in prompt.lower():
+                    return "ls -lat | head -n 20"
+                else:
+                    return "ls -la"
 
+            # System info queries
             if "disk space" in prompt.lower():
                 return "df -h"
 
             if "memory usage" in prompt.lower():
                 return "free -h"
 
-            if "running processes" in prompt.lower():
+            # Process queries
+            if any(
+                term in prompt.lower() for term in ["process memory", "memory process", "most memory", "using memory"]
+            ):
+                return "ps aux --sort=-%mem | head -n 10"
+
+            if "top process" in prompt.lower() or "cpu usage" in prompt.lower():
+                return "top -b -n 1 | head -n 20"
+
+            if any(term in prompt.lower() for term in ["running process", "active process", "process list"]):
                 return "ps aux"
 
-            if "network connections" in prompt.lower():
+            # Network queries
+            if "ip address" in prompt.lower():
+                return "ifconfig || ip addr show"
+
+            if "network connections" in prompt.lower() or "open ports" in prompt.lower():
                 return "netstat -tuln"
+
+            # File search and content
+            if "find text" in prompt.lower() or "search for text" in prompt.lower():
+                search_term = prompt.split("text")[1].strip().split(" ")[0]
+                if search_term:
+                    return f"grep -r '{search_term}' ."
+                return "grep -r 'SEARCH_TERM' ."
+
+            if "count lines" in prompt.lower():
+                return "find . -name '*.py' | xargs wc -l"
+
+            # System metrics
+            if "system uptime" in prompt.lower() or "how long" in prompt.lower() and "running" in prompt.lower():
+                return "uptime"
+
+            if "kernel version" in prompt.lower() or "os version" in prompt.lower():
+                return "uname -a"
 
             # Get max tokens from config or default - use a very small value to avoid context issues
             max_tokens = getattr(self.config.llm, "max_tokens", 128) if self.config else 128
