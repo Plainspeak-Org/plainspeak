@@ -84,7 +84,7 @@ class NetworkPlugin(Plugin):
             host = args.get("host", "")
             count = args.get("count", "")
 
-            cmd = f"ping"
+            cmd = "ping"
             if count:
                 cmd += f" -c {count}"
             cmd += f" {host}"
