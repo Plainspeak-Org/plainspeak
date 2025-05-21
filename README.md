@@ -67,6 +67,30 @@ Execute? [y/N]
 
 With a simple "y", the command executes—no Unix knowledge required. The user accomplishes a complex task while also glimpsing how the machine thinks, creating a pathway to deeper understanding.
 
+### **Using PlainSpeak**
+
+You can use PlainSpeak in two ways:
+
+1. With the standard `plainspeak` command:
+   ```bash
+   # Start the interactive shell
+   plainspeak shell
+   
+   # Translate a natural language query directly
+   plainspeak "find large files in my home directory"
+   ```
+
+2. With the simpler `pls` alias for a more conversational experience:
+   ```bash
+   # Same functionality with a friendlier name
+   pls "find large files in my home directory"
+   
+   # Use it just like you would speak to a person
+   pls "convert all CSV files to JSON format"
+   ```
+
+Both commands provide the same functionality, but `pls` offers a more natural, conversational experience that embodies PlainSpeak's philosophy of making computing accessible through everyday language.
+
 ## **Core Capabilities**
 
 | Capability | Implementation | Philosophical Significance |

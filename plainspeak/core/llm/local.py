@@ -63,6 +63,15 @@ class LocalLLMInterface(LLMInterface):
             LLMResponseError: If generation fails.
         """
         try:
+            # Format conversion operations
+            if ("convert" in prompt.lower() and "csv" in prompt.lower() and "json" in prompt.lower()) or (
+                "change" in prompt.lower() and "csv" in prompt.lower() and "json" in prompt.lower()
+            ):
+                if "all csv files" in prompt.lower() or "all files" in prompt.lower():
+                    return 'for file in *.csv; do csvjson "$file" > "${file%.csv}.json"; done'
+                else:
+                    return "csvjson input.csv > output.json"
+
             # Background processes
             if "background process" in prompt.lower() and "ping" in prompt.lower():
                 if "google" in prompt.lower() or "google.com" in prompt.lower():

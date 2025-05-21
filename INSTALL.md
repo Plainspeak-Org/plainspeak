@@ -55,6 +55,29 @@ If you want the latest development version or want to contribute to PlainSpeak, 
    pip install -r tests/requirements-tests.txt  # Only needed for running tests
    ```
 
+## Setting Up the 'pls' Command
+
+PlainSpeak comes with a user-friendly alias called `pls` for a more conversational experience. To set it up:
+
+1. After installing PlainSpeak, create a symbolic link to make `pls` available:
+   ```bash
+   # For Linux/macOS users
+   mkdir -p "$HOME/bin"
+   ln -s "$(which plainspeak)" "$HOME/bin/pls"
+   echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc for zsh users
+   source ~/.bashrc  # or source ~/.zshrc
+   
+   # For Windows users (run in PowerShell as Administrator)
+   New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\bin\pls.exe" -Target "$(Get-Command plainspeak).Source"
+   ```
+
+2. Verify that the `pls` command works:
+   ```bash
+   pls --version
+   ```
+
+The `pls` command provides the same functionality as `plainspeak` but offers a more conversational interface.
+
 ## Installing the LLM Model
 
 PlainSpeak requires a language model to function. By default, it looks for a model in the `models/` directory.
@@ -95,6 +118,14 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
    pip3 install plainspeak
    ```
 
+3. Set up the `pls` command:
+   ```bash
+   mkdir -p "$HOME/bin"
+   ln -s "$(which plainspeak)" "$HOME/bin/pls"
+   echo 'export PATH="$HOME/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
 ### Linux (Ubuntu/Debian)
 
 1. Install Python 3.11+ and dependencies:
@@ -108,6 +139,14 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
    pip3 install plainspeak
    ```
 
+3. Set up the `pls` command:
+   ```bash
+   mkdir -p "$HOME/bin"
+   ln -s "$(which plainspeak)" "$HOME/bin/pls"
+   echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+   source ~/.bashrc
+   ```
+
 ### Windows
 
 1. Install Python 3.11+ from the [official website](https://www.python.org/downloads/).
@@ -117,12 +156,26 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
    pip install plainspeak
    ```
 
+3. Set up the `pls` command:
+   ```powershell
+   # Run in PowerShell as Administrator
+   mkdir -p "$env:USERPROFILE\bin"
+   New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\bin\pls.exe" -Target "$(Get-Command plainspeak).Source"
+   
+   # Add to PATH (one-time command)
+   [Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";$env:USERPROFILE\bin", "User")
+   
+   # Refresh current terminal
+   $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" + [Environment]::GetEnvironmentVariable("Path", "Machine")
+   ```
+
 ## Verifying Installation
 
 To verify that PlainSpeak is installed correctly:
 
 ```bash
 plainspeak --version
+pls --version  # Both should show the same version
 ```
 
 This should display the version of PlainSpeak.
@@ -135,8 +188,12 @@ To start using PlainSpeak:
 # Start the interactive shell
 plainspeak shell
 
-# Or translate a single command
+# Or translate a single command using plainspeak
 plainspeak translate "list all files in the current directory"
+plainspeak "list all files in the current directory"  # Simplified syntax
+
+# Or use the conversational pls alias
+pls "list all files in the current directory"
 
 # List available plugins
 plainspeak plugins

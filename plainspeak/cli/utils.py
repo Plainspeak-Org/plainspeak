@@ -1,13 +1,17 @@
 """Utility functions for the CLI module."""
+
 import logging
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional, Tuple
+
 import toml
 from rich.console import Console
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn, TimeRemainingColumn
+
 from ..config import DEFAULT_CONFIG_DIR, DEFAULT_CONFIG_FILE, DEFAULT_MODEL_FILE_PATH, AppConfig, load_config
+
 logger = logging.getLogger(__name__)
 # Create console for rich output
 console = Console()
@@ -188,6 +192,7 @@ def initialize_context():
     from ..context import session_context
     from ..core.i18n import I18n
     from ..core.llm import LLMInterface, get_llm_interface
+
     ensure_default_config_exists()  # Ensure a default config is present
     current_config = load_config()  # Load the most up-to-date config
     # Check if model exists and is loadable

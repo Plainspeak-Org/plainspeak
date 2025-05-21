@@ -1,0 +1,11 @@
+#!/bin/bash
+# pls - A simpler alias for plainspeak
+#
+# This script forwards all arguments to plainspeak, making
+# natural language commands more conversational
+#
+# Example:
+# pls "Convert all CSV files to JSON format"
+
+# Forward all arguments to plainspeak
+plainspeak "$@"

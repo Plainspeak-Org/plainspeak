@@ -20,6 +20,40 @@ PlainSpeak 1.0  •  Your natural gateway to computing power
 
 The `>` symbol is where you'll type your natural language commands.
 
+## Command Options
+
+PlainSpeak offers multiple ways to interact with it:
+
+### 1. Interactive Shell
+
+```bash
+plainspeak shell
+```
+
+This starts an interactive session where you can type commands directly.
+
+### 2. Direct Translation
+
+You can use PlainSpeak directly without entering the shell:
+
+```bash
+# Traditional syntax with the translate verb
+plainspeak translate "list files in the current directory"
+
+# Simplified syntax without the translate verb
+plainspeak "list files in the current directory"
+```
+
+### 3. Conversational Alias
+
+For an even more natural experience, you can use the `pls` alias:
+
+```bash
+pls "convert all CSV files to JSON format"
+```
+
+The `pls` command functions exactly like `plainspeak` but offers a more conversational experience that aligns with everyday language.
+
 ## Basic Commands
 
 Let's start with some simple commands to get a feel for how PlainSpeak works:
@@ -30,6 +64,12 @@ Try asking PlainSpeak to list files in your current directory:
 
 ```
 > list files in the current directory
+```
+
+Or if you're using the direct command approach:
+
+```bash
+pls "list files in the current directory"
 ```
 
 PlainSpeak will translate this to a shell command, show it to you, and ask for confirmation:
@@ -48,6 +88,12 @@ You can ask PlainSpeak to find specific files:
 
 ```
 > find all PDF files in my Documents folder
+```
+
+Or using the direct command:
+
+```bash
+pls "find all PDF files in my Documents folder"
 ```
 
 PlainSpeak might translate this as:

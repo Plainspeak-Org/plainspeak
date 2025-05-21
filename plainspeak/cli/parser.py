@@ -58,6 +58,15 @@ class CommandParser:
         if not text:
             return False, "Empty input"
 
+        # Special case for converting CSV to JSON
+        if ("convert" in text.lower() and "csv" in text.lower() and "json" in text.lower()) or (
+            "change" in text.lower() and "csv" in text.lower() and "json" in text.lower()
+        ):
+            if "all csv files" in text.lower() or "all files" in text.lower():
+                return True, 'for file in *.csv; do csvjson "$file" > "${file%.csv}.json"; done'
+            else:
+                return True, "csvjson input.csv > output.json"
+
         # Special case for background ping process
         if "background process" in text.lower() and "ping" in text.lower():
             if "google" in text.lower() or "google.com" in text.lower():
