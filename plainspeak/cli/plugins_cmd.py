@@ -1,16 +1,18 @@
 """Plugin commands for PlainSpeak CLI."""
 
+from typing import Any, Dict
+
 from rich.console import Console
 
 try:
-    from ..plugins import plugin_manager
+    from ..plugins import PluginManager, plugin_manager
 except ImportError:
     # Mock plugin manager for tests
     class MockPluginManager:
-        def get_all_plugins(self):
+        def get_all_plugins(self) -> Dict[str, Any]:
             return {}
 
-    plugin_manager = MockPluginManager()
+    plugin_manager: PluginManager = MockPluginManager()  # type: ignore
 
 # Create console for rich output
 console = Console()

@@ -51,11 +51,11 @@ def config_command(
             console.print(f"GPU layers: {current_config.llm.gpu_layers}")
 
             # Check if model file exists
-            model_path = Path(current_config.llm.model_path).expanduser()
-            if model_path.exists():
-                console.print(f"Model file: [green]Found[/green] ({model_path})")
+            model_file_path = Path(current_config.llm.model_path).expanduser()
+            if model_file_path.exists():
+                console.print(f"Model file: [green]Found[/green] ({model_file_path})")
             else:
-                console.print(f"Model file: [red]Not found[/red] ({model_path})")
+                console.print(f"Model file: [red]Not found[/red] ({model_file_path})")
                 console.print("\nTo download the default model, run: [cyan]plainspeak config --download-model[/cyan]")
         else:
             console.print(f"No configuration file found at {DEFAULT_CONFIG_FILE}", style="yellow")

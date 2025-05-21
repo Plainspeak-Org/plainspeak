@@ -7,7 +7,7 @@ Uses JSON-based storage for flexibility and simplicity.
 
 import json
 import logging
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -31,13 +31,11 @@ class Command:
     error_message: Optional[str] = None
     execution_time: float = 0.0
     timestamp: str = ""  # ISO format
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
-        if self.metadata is None:
-            self.metadata = {}
 
 
 @dataclass
@@ -187,7 +185,7 @@ class LearningStore:
     def get_training_data(self, min_success_rate: float = 0.8, limit: Optional[int] = None) -> List[Tuple[str, str]]:
         """Get successful commands for training."""
         commands = self._load_json(self.commands_file)
-        results = []
+        results: List[Tuple[str, str]] = []
 
         for cmd in commands:
             if cmd.get("success") and cmd.get("executed"):
@@ -203,7 +201,7 @@ class LearningStore:
         """Find similar examples from history."""
         commands = self._load_json(self.commands_file)
         text_words = set(text.lower().split())
-        results = []
+        results: List[Tuple[str, str, float]] = []
 
         for cmd in commands:
             if cmd.get("success"):
