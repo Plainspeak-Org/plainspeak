@@ -94,7 +94,24 @@ def translate(
                 session_context.add_to_history(text, result, False)
                 raise typer.Exit(1)
     else:
-        console.print(Panel(result, title="Error", border_style="red"))
+        # Format the error message for better readability
+        if "LLM interface not properly configured" in result or "No LLM provider configured" in result:
+            # Special handling for configuration errors
+            console.print(
+                Panel(
+                    f"{result}\n\n[bold]Troubleshooting:[/bold]\n"
+                    f"1. Run [cyan]plainspeak config --download-model[/cyan] to set up the model\n"
+                    f"2. Run [cyan]plainspeak config[/cyan] to view your current configuration\n"
+                    f"3. For remote providers like OpenAI, run\n"
+                    f"  [cyan]plainspeak config --provider openai --api-key YOUR_KEY[/cyan]",
+                    title="Configuration Error",
+                    border_style="red",
+                )
+            )
+        else:
+            # General error handling
+            console.print(Panel(result, title="Error", border_style="red"))
+
         learning_store.add_feedback(command_id, "reject", "Command generation failed")
         raise typer.Exit(1)
 

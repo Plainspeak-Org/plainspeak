@@ -11,6 +11,14 @@ from typer.testing import CliRunner
 
 from plainspeak.cli import PlainSpeakShell, app, main
 
+# Import modularized CLI tests
+from tests.test_cli.test_main import TestMainFunction
+from tests.test_cli.test_shell import TestPlainSpeakShell
+from tests.test_cli.test_translate_command import TestTranslateCommand
+
+# This file exists to maintain backward compatibility with existing test runners
+# All new tests should be added to the appropriate files in the test_cli directory
+
 
 # Mock classes for Rich components
 class MockPanel:
@@ -67,34 +75,34 @@ class TestCLI(unittest.TestCase):
     def test_translate_command_success(self, mock_command_parser_class):
         """Test successful command translation."""
         mock_parser = mock_command_parser_class.return_value
-        mock_parser.parse.return_value = (True, "ls -l")
+        mock_parser.parse_to_command.return_value = (True, "ls -l")
 
         result = self.runner.invoke(app, ["translate", "list files in detail"])
 
         self.assertEqual(result.exit_code, 0)
         self.assertIn("Generated Command", result.stdout)
         self.assertIn("ls -l", result.stdout)
-        mock_parser.parse.assert_called_once_with("list files in detail")
+        mock_parser.parse_to_command.assert_called_once_with("list files in detail")
 
     @patch("plainspeak.cli.CommandParser")
     def test_translate_command_failure(self, mock_command_parser_class):
         """Test failed command translation."""
         mock_parser = mock_command_parser_class.return_value
-        mock_parser.parse.return_value = (False, "ERROR: Invalid request")
+        mock_parser.parse_to_command.return_value = (False, "ERROR: Invalid request")
 
         result = self.runner.invoke(app, ["translate", "do something impossible"])
 
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Error", result.stdout)
         self.assertIn("Invalid request", result.stdout)
-        mock_parser.parse.assert_called_once_with("do something impossible")
+        mock_parser.parse_to_command.assert_called_once_with("do something impossible")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("subprocess.run")
     def test_translate_with_execute_success(self, mock_subprocess_run, mock_command_parser_class):
         """Test successful command translation and execution."""
         mock_parser = mock_command_parser_class.return_value
-        mock_parser.parse.return_value = (True, "echo test")
+        mock_parser.parse_to_command.return_value = (True, "echo test")
         mock_subprocess_run.return_value = Mock(stdout="test output\n", stderr="", returncode=0)
 
         result = self.runner.invoke(app, ["translate", "--execute", "print test"])
@@ -105,14 +113,14 @@ class TestCLI(unittest.TestCase):
         mock_subprocess_run.assert_called_once_with(
             "echo test", shell=True, check=False, capture_output=True, text=True
         )
-        mock_parser.parse.assert_called_once_with("print test")
+        mock_parser.parse_to_command.assert_called_once_with("print test")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("subprocess.run")
     def test_translate_with_execute_command_error(self, mock_subprocess_run, mock_command_parser_class):
         """Test command execution failure handling."""
         mock_parser = mock_command_parser_class.return_value
-        mock_parser.parse.return_value = (True, "invalid_command")
+        mock_parser.parse_to_command.return_value = (True, "invalid_command")
         mock_subprocess_run.side_effect = subprocess.SubprocessError("Command failed")
 
         result = self.runner.invoke(app, ["translate", "--execute", "run invalid command"])
@@ -120,14 +128,14 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Error executing command", result.stdout)
         self.assertIn("Command failed", result.stdout)
-        mock_parser.parse.assert_called_once_with("run invalid command")
+        mock_parser.parse_to_command.assert_called_once_with("run invalid command")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("subprocess.run")
     def test_translate_with_execute_non_zero_exit(self, mock_subprocess_run, mock_command_parser_class):
         """Test handling of commands that exit with non-zero status."""
         mock_parser = mock_command_parser_class.return_value
-        mock_parser.parse.return_value = (True, "exit 1")
+        mock_parser.parse_to_command.return_value = (True, "exit 1")
         mock_subprocess_run.return_value = Mock(stdout="", stderr="Some error occurred", returncode=1)
 
         result = self.runner.invoke(app, ["translate", "--execute", "fail command"])
@@ -135,13 +143,13 @@ class TestCLI(unittest.TestCase):
         self.assertEqual(result.exit_code, 1)
         self.assertIn("Command failed with exit code 1", result.stdout)
         self.assertIn("Some error occurred", result.stdout)
-        mock_parser.parse.assert_called_once_with("fail command")
+        mock_parser.parse_to_command.assert_called_once_with("fail command")
 
     @patch("plainspeak.cli.LLMInterface")  # Patch LLMInterface where CommandParser imports it
     def test_translate_cli_uses_default_parser_and_llm(self, mock_llm_interface):
         """Test that cli.translate uses default CommandParser and LLMInterface setup."""
         with patch(
-            "plainspeak.cli.CommandParser.parse",
+            "plainspeak.cli.CommandParser.parse_to_command",
             return_value=(True, "ls"),
         ) as mock_parse:
             result = self.runner.invoke(app, ["translate", "list files"])
@@ -180,7 +188,7 @@ class TestPlainSpeakShell(unittest.TestCase):
     def test_shell_translate_command_success(self, mock_learning_store, mock_console, mock_command_parser_class):
         """Test successful command translation in shell."""
         shell = PlainSpeakShell()
-        shell.parser.parse.return_value = (True, "ls -l")
+        shell.parser.parse_to_command.return_value = (True, "ls -l")
         mock_learning_store.add_command.return_value = 1  # Return a dummy command ID
 
         shell.onecmd("translate list files")
@@ -190,7 +198,7 @@ class TestPlainSpeakShell(unittest.TestCase):
         self.assertIsInstance(last_print, MockPanel)
         self.assertEqual(str(last_print.content), "ls -l")
         self.assertEqual(last_print.kwargs.get("title"), "Generated Command")
-        mock_command_parser_class.return_value.parse.assert_called_once_with("list files")
+        mock_command_parser_class.return_value.parse_to_command.assert_called_once_with("list files")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("plainspeak.cli.Panel", MockPanel)
@@ -200,7 +208,7 @@ class TestPlainSpeakShell(unittest.TestCase):
         """Test failed command translation in shell."""
         shell = PlainSpeakShell()
         error_msg = "ERROR: Invalid command"
-        shell.parser.parse.return_value = (False, error_msg)
+        shell.parser.parse_to_command.return_value = (False, error_msg)
         mock_learning_store.add_command.return_value = 1  # Return a dummy command ID
 
         shell.onecmd("translate invalid command")
@@ -209,7 +217,7 @@ class TestPlainSpeakShell(unittest.TestCase):
         self.assertIsInstance(last_print, MockPanel)
         self.assertEqual(str(last_print.content), error_msg)
         self.assertEqual(last_print.kwargs.get("title"), "Error")
-        mock_command_parser_class.return_value.parse.assert_called_once_with("invalid command")
+        mock_command_parser_class.return_value.parse_to_command.assert_called_once_with("invalid command")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("subprocess.run")
@@ -221,7 +229,7 @@ class TestPlainSpeakShell(unittest.TestCase):
     ):
         """Test successful command execution in shell."""
         shell = PlainSpeakShell()
-        shell.parser.parse.return_value = (True, "echo test")
+        shell.parser.parse_to_command.return_value = (True, "echo test")
         mock_subprocess_run.return_value = Mock(stdout="test output\n", stderr="", returncode=0)
         # Mock check_output to return bytes
         mock_check_output.return_value = b"file output"
@@ -233,7 +241,7 @@ class TestPlainSpeakShell(unittest.TestCase):
             "echo test", shell=True, check=False, capture_output=True, text=True
         )
         mock_console.print.assert_any_call("Command executed successfully", style="green")
-        mock_command_parser_class.return_value.parse.assert_called_once_with("print test")
+        mock_command_parser_class.return_value.parse_to_command.assert_called_once_with("print test")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("subprocess.run")
@@ -245,7 +253,7 @@ class TestPlainSpeakShell(unittest.TestCase):
     ):
         """Test command execution failure in shell."""
         shell = PlainSpeakShell()
-        shell.parser.parse.return_value = (True, "invalid_command")
+        shell.parser.parse_to_command.return_value = (True, "invalid_command")
         mock_subprocess_run.side_effect = subprocess.SubprocessError("Command failed")
         # Mock check_output to return bytes
         mock_check_output.return_value = b"file output"
@@ -254,7 +262,7 @@ class TestPlainSpeakShell(unittest.TestCase):
         shell.onecmd("translate -e fail command")
 
         mock_console.print.assert_any_call("Error executing command: Command failed", style="red")
-        mock_command_parser_class.return_value.parse.assert_called_once_with("fail command")
+        mock_command_parser_class.return_value.parse_to_command.assert_called_once_with("fail command")
 
     @patch("plainspeak.cli.CommandParser")
     @patch("plainspeak.cli.console")
@@ -264,7 +272,7 @@ class TestPlainSpeakShell(unittest.TestCase):
 
         shell.onecmd('translate -e ""')
         mock_console.print.assert_any_call("Error: Empty input", style="red")
-        mock_command_parser_class.return_value.parse.assert_not_called()
+        mock_command_parser_class.return_value.parse_to_command.assert_not_called()
 
     def test_shell_default_handler(self):
         """Test that unknown commands are treated as natural language input."""
@@ -274,7 +282,7 @@ class TestPlainSpeakShell(unittest.TestCase):
         ):
             # Mock the command parser
             mock_parser = Mock()
-            mock_parser.parse.return_value = (True, "ls")
+            mock_parser.parse_to_command.return_value = (True, "ls")
             mock_command_parser_class.return_value = mock_parser
             mock_learning_store.add_command.return_value = 1  # Return a dummy command ID
 
@@ -289,7 +297,7 @@ class TestPlainSpeakShell(unittest.TestCase):
 
             # Test the default handler
             shell.default(mock_statement)
-            mock_parser.parse.assert_called_once_with("show me the files")
+            mock_parser.parse_to_command.assert_called_once_with("show me the files")
 
     @patch("plainspeak.cli.PlainSpeakShell")
     def test_shell_command(self, mock_shell_class):
