@@ -378,7 +378,6 @@ description = "Python bindings for the Transformer models implemented in C/C++ u
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "extra == \"cuda\""
 files = [
     {file = "ctransformers-0.2.27-py3-none-any.whl", hash = "sha256:6a3ba47556471850d95fdbc59299a82ab91c9dc8b40201c5e7e82d71360772d9"},
     {file = "ctransformers-0.2.27.tar.gz", hash = "sha256:25653d4be8a5ed4e2d3756544c1e9881bf95404be5371c3ed506a256c28663d5"},
@@ -1325,7 +1324,6 @@ description = "Get CPU info with pure Python"
 optional = false
 python-versions = "*"
 groups = ["main"]
-markers = "extra == \"cuda\""
 files = [
     {file = "py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690"},
     {file = "py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"},
@@ -2348,4 +2346,4 @@ cuda = ["ctransformers"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "7c0043cec2dac4aa1dcee77c7a66a2202702411b72a19d0305a4cd6c98d5315b"
+content-hash = "99e4282d883dc5b544cb43d1dddd17fbc12812b97a099be767f92df608dbcff8"

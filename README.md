@@ -4,6 +4,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://cschanhniem.github.io/plainspeak/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI Version](https://img.shields.io/pypi/v/plainspeak.svg)](https://pypi.org/project/plainspeak/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **[📚 Documentation](https://cschanhniem.github.io/plainspeak/) | [🚀 Quick Start](#the-experience) | [🔌 Plugins](#built-in-plugins) | [🔮 Future](#the-century-scale-vision)**
@@ -75,7 +76,7 @@ You can use PlainSpeak in two ways:
    ```bash
    # Start the interactive shell
    plainspeak shell
-   
+
    # Translate a natural language query directly
    plainspeak "find large files in my home directory"
    ```
@@ -84,7 +85,7 @@ You can use PlainSpeak in two ways:
    ```bash
    # Same functionality with a friendlier name
    pls "find large files in my home directory"
-   
+
    # Use it just like you would speak to a person
    pls "convert all CSV files to JSON format"
    ```
@@ -325,6 +326,15 @@ This extension demonstrates PlainSpeak's potential to expand beyond system opera
 - Poetry for dependency management
 
 ### **Installation**
+
+#### Option 1: Install from PyPI (Recommended)
+
+```bash
+# Install from PyPI
+pip install plainspeak
+```
+
+#### Option 2: Install from Source
 
 ```bash
 # Clone the repository

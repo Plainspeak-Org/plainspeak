@@ -372,11 +372,18 @@ def register():
 
 ### Publishing to PyPI
 
-Build and publish your package:
+Build and publish your package using Poetry:
 
 ```bash
-python -m build
-python -m twine upload dist/*
+# Configure PyPI token (one-time setup)
+poetry config pypi-token.pypi your-api-token
+
+# Build and publish in one command
+poetry publish --build
+
+# Or separately
+poetry build
+poetry publish
 ```
 
 Users can then install your plugin with:

@@ -6,14 +6,19 @@ This document outlines the distribution channels and processes for releasing Pla
 
 ### PyPI Package
 - Package Name: `plainspeak`
+- PyPI URL: [https://pypi.org/project/plainspeak/](https://pypi.org/project/plainspeak/)
+- Current Version: 1.0.0
 - Release Command: `poetry publish --build`
 - Install Command: `pip install plainspeak`
 - Release Checklist:
-  - [ ] Update version in `pyproject.toml`
+  - [ ] Update version in `pyproject.toml` (both in `[project]` and `[tool.poetry]` sections)
+  - [ ] Update version in `plainspeak/__init__.py`
   - [ ] Generate documentation
-  - [ ] Build package with Poetry
+  - [ ] Create git tag: `git tag -a v1.0.0 -m "Release version 1.0.0"`
+  - [ ] Build package with Poetry: `poetry build`
   - [ ] Test installation in clean environment
-  - [ ] Upload to PyPI
+  - [ ] Publish to PyPI: `poetry publish`
+  - [ ] Create GitHub release
 
 ### Windows Distribution
 

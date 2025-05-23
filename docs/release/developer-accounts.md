@@ -5,9 +5,10 @@
 ### Account Setup
 1. Organization Account: cschanhniem
 2. Multi-factor Authentication: Required
-3. Project Name Reservation: plainspeak
-4. Trusted Publishers: Enabled
-5. API Tokens: Generated per CI/CD pipeline
+3. Project Name: plainspeak (registered and published)
+4. PyPI URL: [https://pypi.org/project/plainspeak/](https://pypi.org/project/plainspeak/)
+5. Trusted Publishers: Enabled
+6. API Tokens: Generated per CI/CD pipeline
 
 ### Security Requirements
 - OIDC-based authentication
@@ -16,15 +17,25 @@
 - Supply chain security measures
 - Dependency pinning
 
+### Publishing Process
+1. Configure Poetry with PyPI token:
+   ```bash
+   poetry config pypi-token.pypi your-api-token
+   ```
+2. Build and publish:
+   ```bash
+   poetry publish --build
+   ```
+
 ### Configuration Files
 ```toml
 # pyproject.toml additions
 [project]
 name = "plainspeak"
-version = "0.1.0"
-description = "Natural language interface for computing"
+version = "1.0.0"
+description = "Turns everyday English into real terminal commands and API calls."
 authors = [
-    {name = "PlainSpeak Organization", email = "team@plainspeak.org"}
+    {name = "cschanhniem", email = "contact@plainspeak.pro"}
 ]
 readme = "README.md"
 license = {file = "LICENSE"}

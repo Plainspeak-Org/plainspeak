@@ -1,3 +1,52 @@
+# This file has been updated to use the newer PEP 621 format
+# The [project] section replaces the older [tool.poetry] section
+
+[project]
+name = "plainspeak"
+version = "1.0.0"
+description = "Turns everyday English into real terminal commands and API calls."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "cschanhniem", email = "contact@plainspeak.pro"}
+]
+keywords = ["nlp", "cli", "automation", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "cmd2>=2.4.3",
+    "ctransformers>=0.2.27",
+    "jinja2>=3.1.3",
+    "pydantic>=2.5.3",
+    "typer[all]>=0.9.0",
+    "toml>=0.10.2",
+]
+
+[project.urls]
+Homepage = "https://cschanhniem.github.io/plainspeak/"
+Repository = "https://github.com/cschanhniem/plainspeak"
+Documentation = "https://cschanhniem.github.io/plainspeak/"
+
+[project.scripts]
+plainspeak = "plainspeak.cli:main"
+
+[project.optional-dependencies]
+cuda = ["ctransformers"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+# The original tool.poetry section is kept for backward compatibility
+# but will be ignored in favor of the [project] section above
 [tool.poetry]
 name = "plainspeak"
 version = "1.0.0"
@@ -12,22 +61,14 @@ keywords = ["nlp", "cli", "automation", "llm"]
 
 [tool.poetry.dependencies]
 python = "^3.11" # Specify a compatible Python version, e.g., 3.11+
-
 cmd2 = "^2.4.3"
-# ctransformers is a core dependency.
-# For GPU support, users may need to install ctransformers with its CUDA extras
-# (e.g., pip install ctransformers[cuda]) before installing plainspeak,
-# or ensure their environment allows ctransformers to build with GPU support.
 ctransformers = "^0.2.27"
 jinja2 = "^3.1.3"
-pydantic = "^2.5.3" # Using Pydantic v2
+pydantic = "^2.5.3"
 typer = {extras = ["all"], version = "^0.9.0"}
-toml = "^0.10.2" # Added for configuration file parsing
-# python-dotenv = "^1.0.0" # For managing API keys if needed for remote LLMs
+toml = "^0.10.2"
 
 [tool.poetry.extras]
-# The 'cuda' extra indicates that ctransformers is a key component for CUDA functionality.
-# Users installing with this extra should be aware of ctransformers' GPU requirements.
 cuda = ["ctransformers"]
 
 [tool.poetry.scripts]
@@ -58,9 +99,7 @@ pre-commit = "^4.2.0"
 types-tabulate = "^0.9.0.20241207"
 types-requests = "^2.32.0.20250515"
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+# Build system configuration moved to the top of the file
 
 [tool.black]
 line-length = 120

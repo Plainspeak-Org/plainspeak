@@ -3,10 +3,11 @@
 ## Package Information
 
 **Name:** plainspeak
-**Version:** 0.1.0
+**Version:** 1.0.0
 **License:** MIT
 **Python Versions:** >=3.11
 **Platform:** Any
+**PyPI URL:** [https://pypi.org/project/plainspeak/](https://pypi.org/project/plainspeak/)
 
 ## Package Description
 
@@ -177,13 +178,23 @@ git = "plainspeak.plugins.git:GitPlugin"
 ## Package URL Structure
 ```
 https://pypi.org/project/plainspeak/
-https://pypi.org/project/plainspeak/0.1.0/
+https://pypi.org/project/plainspeak/1.0.0/
+```
+
+## Installation
+
+```bash
+# Install the latest version
+pip install plainspeak
+
+# Install a specific version
+pip install plainspeak==1.0.0
 ```
 
 ## Release Checklist
 
 1. Update version number in:
-   - `pyproject.toml`
+   - `pyproject.toml` (both in `[project]` and `[tool.poetry]` sections)
    - `plainspeak/__init__.py`
    - Documentation
 
@@ -191,22 +202,37 @@ https://pypi.org/project/plainspeak/0.1.0/
 
 3. Create release tag:
    ```bash
-   git tag -a v0.1.0 -m "Release version 0.1.0"
+   git tag -a v1.0.0 -m "Release version 1.0.0"
    ```
 
-4. Build distribution:
+4. Build and publish using Poetry:
    ```bash
-   python -m build
+   # Build only
+   poetry build
+
+   # Publish to PyPI (requires configured credentials)
+   poetry publish
+
+   # Or build and publish in one command
+   poetry publish --build
    ```
 
-5. Upload to PyPI:
+5. Create GitHub release
+
+6. Update documentation site
+
+7. Verify package installation:
    ```bash
-   python -m twine upload dist/*
+   # Create a clean environment
+   python -m venv test-env
+   source test-env/bin/activate  # On Windows: test-env\Scripts\activate
+
+   # Install the package
+   pip install plainspeak
+
+   # Test the installation
+   plainspeak --version
    ```
-
-6. Create GitHub release
-
-7. Update documentation site
 
 ## Package Metadata
 ```toml

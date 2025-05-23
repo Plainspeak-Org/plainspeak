@@ -71,25 +71,25 @@ class PackageSubmitter:
                     shutil.rmtree(file_path)
 
     def submit_pypi(self, test: bool = True):
-        """Submit package to PyPI."""
+        """Submit package to PyPI using Poetry."""
         logger.info(f"Preparing PyPI submission (test={test})...")
 
         # Build package
-        subprocess.run(["python", "-m", "build"], check=True)
+        logger.info("Building package with Poetry...")
+        subprocess.run(["poetry", "build"], check=True)
 
         # Submit to Test PyPI first if requested
         if test:
             logger.info("Uploading to Test PyPI...")
+            # Configure Poetry to use Test PyPI
             subprocess.run(
-                [
-                    "python",
-                    "-m",
-                    "twine",
-                    "upload",
-                    "--repository-url",
-                    "https://test.pypi.org/legacy/",
-                    "dist/*",
-                ],
+                ["poetry", "config", "repositories.testpypi", "https://test.pypi.org/legacy/"],
+                check=True,
+            )
+
+            # Publish to Test PyPI
+            subprocess.run(
+                ["poetry", "publish", "--repository", "testpypi"],
                 check=True,
             )
 
@@ -110,7 +110,7 @@ class PackageSubmitter:
 
         # Submit to production PyPI
         logger.info("Uploading to production PyPI...")
-        subprocess.run(["python", "-m", "twine", "upload", "dist/*"], check=True)
+        subprocess.run(["poetry", "publish"], check=True)
 
     def submit_windows_store(self):
         """Submit package to Microsoft Store."""

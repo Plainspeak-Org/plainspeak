@@ -1,6 +1,6 @@
 # Installing PlainSpeak
 
-This guide will help you install and set up PlainSpeak on your system. 
+This guide will help you install and set up PlainSpeak on your system.
 
 [![Documentation](https://img.shields.io/badge/docs-online-blue.svg)](https://cschanhniem.github.io/plainspeak/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -21,6 +21,14 @@ The simplest way to install PlainSpeak is using pip:
 
 ```bash
 pip install plainspeak
+```
+
+PlainSpeak is now available on PyPI: [https://pypi.org/project/plainspeak/](https://pypi.org/project/plainspeak/)
+
+You can also install a specific version:
+
+```bash
+pip install plainspeak==1.0.0
 ```
 
 This will install PlainSpeak and all its dependencies.
@@ -66,7 +74,7 @@ PlainSpeak comes with a user-friendly alias called `pls` for a more conversation
    ln -s "$(which plainspeak)" "$HOME/bin/pls"
    echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc for zsh users
    source ~/.bashrc  # or source ~/.zshrc
-   
+
    # For Windows users (run in PowerShell as Administrator)
    New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\bin\pls.exe" -Target "$(Get-Command plainspeak).Source"
    ```
@@ -161,10 +169,10 @@ PlainSpeak requires a language model to function. By default, it looks for a mod
    # Run in PowerShell as Administrator
    mkdir -p "$env:USERPROFILE\bin"
    New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\bin\pls.exe" -Target "$(Get-Command plainspeak).Source"
-   
+
    # Add to PATH (one-time command)
    [Environment]::SetEnvironmentVariable("Path", [Environment]::GetEnvironmentVariable("Path", "User") + ";$env:USERPROFILE\bin", "User")
-   
+
    # Refresh current terminal
    $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" + [Environment]::GetEnvironmentVariable("Path", "Machine")
    ```
