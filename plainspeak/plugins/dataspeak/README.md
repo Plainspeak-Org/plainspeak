@@ -2,6 +2,23 @@
 
 The DataSpeak plugin is a powerful extension for PlainSpeak that transforms natural language queries into SQL, providing a seamless natural language interface to data analysis.
 
+## Architecture Overview
+
+```mermaid
+graph TD
+    A[Natural Language Query] --> B[SQL Generator]
+    B --> C[Security Checker]
+    C --> D[Connection Manager]
+    D --> E[Query Execution]
+    E --> F[Results Formatter]
+    F --> G[Visualization]
+    F --> H[Export]
+
+    I[Connection Store] --> D
+    J[Template Library] --> B
+    K[Security Rules] --> C
+```
+
 ## Overview
 
 DataSpeak enables users to query and visualize data using everyday language without needing to write SQL code. It provides:
@@ -21,6 +38,21 @@ The security module implements multiple layers of defense for SQL queries:
 - Command whitelisting
 - Query analysis for potentially dangerous operations
 - Parameter sanitization
+
+```mermaid
+graph TD
+    A[SQL Query] --> B[Syntax Validation]
+    B --> C[Command Whitelisting]
+    C --> D[Query Analysis]
+    D --> E[Parameter Sanitization]
+    E --> F[Execution Permissions]
+
+    B -- Fail --> G[Reject]
+    C -- Fail --> G
+    D -- Fail --> G
+    E -- Fail --> G
+    F -- Fail --> G
+```
 
 #### Security Levels
 
@@ -101,6 +133,20 @@ The SQL generation module provides natural language parsing for SQL generation:
 - Pattern matching for common query types
 - Context-aware query generation based on available tables and columns
 - Security integration with parameterized queries
+
+```mermaid
+graph TD
+    A[Natural Language Input] --> B[Pattern Matching]
+    B -- Match Found --> C[Template Selection]
+    B -- No Match --> D[Fuzzy Table/Column Detection]
+    D --> E[Template Selection]
+    C --> F[Parameter Extraction]
+    E --> F
+    F --> G[Template Filling]
+    G --> H[Security Validation]
+    H -- Valid --> I[Final SQL Query]
+    H -- Invalid --> J[Fallback Query]
+```
 
 #### Key Components
 

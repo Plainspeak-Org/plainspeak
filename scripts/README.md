@@ -2,6 +2,29 @@
 
 This directory contains scripts for managing and using PlainSpeak.
 
+## Script Overview
+
+```mermaid
+graph TD
+    A[Scripts] --> B[Asset Generation]
+    A --> C[Command Line Utilities]
+    A --> D[Testing Scripts]
+    A --> E[Packaging & Verification]
+
+    B --> F[generate_assets.py]
+
+    C --> G[pls Alias]
+    C --> H[install_pls.sh]
+    C --> I[install_pls.ps1]
+
+    D --> J[run_tests.sh]
+
+    E --> K[Packaging]
+    E --> L[Verification]
+    E --> M[Test Automation]
+    E --> N[Test Submission]
+```
+
 ## Script Categories
 
 ### Asset Generation
@@ -172,6 +195,32 @@ For issues with the scripts:
 2. Verify source files exist
 3. Check error messages
 4. File an issue if needed
+
+## Development Workflow
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant Scripts
+    participant Assets as Asset Generation
+    participant Tests as Testing
+    participant Package as Packaging
+
+    Dev->>Scripts: ./install_pls.sh
+    Scripts->>Dev: pls alias installed
+
+    Dev->>Scripts: python generate_assets.py
+    Scripts->>Assets: Generate icons and assets
+    Assets-->>Dev: Assets created
+
+    Dev->>Scripts: ./run_tests.sh
+    Scripts->>Tests: Run test suite
+    Tests-->>Dev: Test results
+
+    Dev->>Scripts: Packaging scripts
+    Scripts->>Package: Build packages
+    Package-->>Dev: Installable packages
+```
 
 ## Contributing
 

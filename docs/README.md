@@ -4,6 +4,38 @@ This directory contains the documentation for the PlainSpeak project, a century 
 
 ## Documentation Structure
 
+```mermaid
+graph TD
+    A[Documentation] --> B[User Docs]
+    A --> C[Dev Docs]
+    A --> D[Sphinx]
+    A --> E[Website]
+    A --> F[Release]
+    A --> G[Store]
+    A --> H[Legal]
+
+    B --> B1[Installation]
+    B --> B2[Getting Started]
+    B --> B3[Guides]
+    B --> B4[Plugins]
+    B --> B5[FAQ]
+
+    C --> C1[API]
+    C --> C2[Architecture]
+    C --> C3[Plugins]
+    C --> C4[Contributing]
+    C --> C5[Roadmap]
+
+    D --> D1[Source]
+    D --> D2[Build]
+
+    E --> E1[CSS]
+    E --> E2[JS]
+    E --> E3[Templates]
+    E --> E4[API]
+    E --> E5[Contest]
+```
+
 The documentation is organized as follows:
 
 - `user_docs/`: Documentation for users of PlainSpeak
@@ -44,6 +76,20 @@ The documentation is organized as follows:
 
 The documentation is built using [Sphinx](https://www.sphinx-doc.org/), a powerful documentation generator.
 
+```mermaid
+graph LR
+    A[Source Files] --> B[Sphinx]
+    B --> C[HTML]
+    B --> D[PDF]
+    B --> E[EPUB]
+
+    F[Code Docstrings] --> G[autodoc]
+    G --> B
+
+    H[Markdown] --> I[myst-parser]
+    I --> B
+```
+
 ### Prerequisites
 
 - Python 3.11 or higher (required for sphinx-autodoc-typehints)
@@ -66,6 +112,15 @@ poetry run make html
 The built documentation will be available in `docs/sphinx/build/html/`.
 
 ## Deployment
+
+```mermaid
+graph TD
+    A[Git Push to main] --> B[GitHub Actions]
+    B --> C[Build Docs]
+    C --> D[Deploy to GitHub Pages]
+
+    E[Manual Trigger] --> B
+```
 
 The documentation is automatically deployed to GitHub Pages when changes are pushed to the `main` branch. The deployment is handled by the GitHub Actions workflow defined in `.github/workflows/deploy-docs.yml`.
 

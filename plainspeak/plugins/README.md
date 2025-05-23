@@ -8,11 +8,47 @@ The plugin system allows PlainSpeak to be extended with new functionality. Plugi
 
 ### Plugin Architecture
 
+```mermaid
+graph TD
+    A[Plugin Manager] --> B[Plugin Registry]
+    B --> C[Base Plugin]
+    C --> D[File Plugin]
+    C --> E[System Plugin]
+    C --> F[Network Plugin]
+    C --> G[Text Plugin]
+    C --> H[DataSpeak Plugin]
+    C --> I[Custom Plugins]
+
+    J[Entry Points] --> A
+    K[Plugin Directories] --> A
+    L[Built-in Plugins] --> A
+```
+
 The plugin system consists of the following components:
 
 - `base.py`: Defines the base `Plugin` class and `PluginRegistry` class.
 - `manager.py`: Provides the `PluginManager` class for loading and using plugins.
+- `schemas.py`: Pydantic schemas for plugin configuration validation.
 - Individual plugin modules (e.g., `file.py`, `system.py`, etc.).
+
+### Plugin Loading Process
+
+```mermaid
+sequenceDiagram
+    participant PM as Plugin Manager
+    participant BP as Built-in Plugins
+    participant EP as Entry Points
+    participant PD as Plugin Directories
+    participant PR as Plugin Registry
+
+    PM->>BP: Load built-in plugins
+    BP-->>PR: Register plugins
+    PM->>EP: Discover entry points
+    EP-->>PR: Register plugins
+    PM->>PD: Scan plugin directories
+    PD-->>PR: Register plugins
+    PR-->>PM: Return loaded plugins
+```
 
 ### Creating a Plugin
 
