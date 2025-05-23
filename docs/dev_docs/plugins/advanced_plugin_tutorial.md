@@ -377,28 +377,28 @@ class DataVisualizerPlugin(Plugin):
                 </div>
                 <script>
                     const ctx = document.getElementById('chart').getContext('2d');
-                    new Chart(ctx, {{
+                    new Chart(ctx, {
                         type: '{chart_type}',
-                        data: {{
+                        data: {
                             labels: {json.dumps(x_values)},
-                            datasets: [{{
+                            datasets: [{
                                 label: '{y_column}',
                                 data: {json.dumps(y_values)},
                                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                                 borderColor: 'rgba(75, 192, 192, 1)',
                                 borderWidth: 1
-                            }}]
-                        }},
-                        options: {{
+                            }]
+                        },
+                        options: {
                             responsive: true,
-                            plugins: {{
-                                title: {{
+                            plugins: {
+                                title: {
                                     display: true,
                                     text: '{title}'
-                                }}
-                            }}
-                        }}
-                    }});
+                                }
+                            }
+                        }
+                    });
                 </script>
             </body>
             </html>
